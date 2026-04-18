@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useNavigate } from 'react-router-dom'
 import ConnectWallet from '../components/ConnectWallet'
@@ -8,15 +8,9 @@ import '../styles/landing.css'
 
 export default function Landing() {
   const { activeAddress } = useWallet()
-  const { loading } = useRole()
+  const { shortId, loading } = useRole()
   const navigate = useNavigate()
   const [walletModalOpen, setWalletModalOpen] = useState(false)
-
-  useEffect(() => {
-    if (activeAddress && !loading) {
-      navigate('/patient')
-    }
-  }, [activeAddress, loading, navigate])
 
   const openWallet = (e?: React.MouseEvent) => {
     e?.preventDefault()
@@ -63,8 +57,11 @@ export default function Landing() {
             </div>
             <div className="navactions">
               <a href="/admin" onClick={goto('/admin')} className="cta">Admin</a>
+              <a href="https://perawallet.app/" target="_blank" rel="noreferrer" className="cta" style={{ textDecoration: 'none' }}>
+                Add Pera Wallet
+              </a>
               <a href="#connect" onClick={openWallet} className="cta lime" data-magnetic>
-                <span className="dot"></span>Connect wallet
+                <span className="dot"></span>{activeAddress ? 'Wallet connected' : 'Connect wallet'}
               </a>
             </div>
           </div>
@@ -114,14 +111,43 @@ export default function Landing() {
               </p>
               <div className="ctas reveal d4">
                 <a href="#connect" onClick={openWallet} className="cta lime" data-magnetic>
-                  Access patient portal
+                  {activeAddress ? 'Switch wallet' : 'Connect wallet'}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M13 5l7 7-7 7"/>
                   </svg>
                 </a>
+                <a href="https://perawallet.app/" target="_blank" rel="noreferrer" className="cta">
+                  Add Pera Wallet
+                </a>
+                {activeAddress && !loading && (
+                  <a href="/patient" onClick={goto('/patient')} className="cta">
+                    Enter patient portal
+                  </a>
+                )}
                 <a href="/beneficiary-login" onClick={goto('/beneficiary-login')} className="cta">Beneficiary login</a>
               </div>
             </div>
+
+            {activeAddress && !loading && (
+              <div className="hero-meta reveal d5" style={{ marginTop: '16px' }}>
+                <div className="item">
+                  <span>User ID</span>
+                  <b>{shortId || 'Unregistered'}</b>
+                </div>
+                <div className="item">
+                  <span>Wallet</span>
+                  <b>{activeAddress.slice(0, 6)}...{activeAddress.slice(-6)}</b>
+                </div>
+                <div className="item">
+                  <span>Status</span>
+                  <b style={{ color: 'var(--ink-green)' }}>{shortId ? 'ID Linked' : 'Create ID in dashboard'}</b>
+                </div>
+                <div className="item">
+                  <span>Upload routing</span>
+                  <b>Hospital/Doctor use wallet address</b>
+                </div>
+              </div>
+            )}
 
             <div className="hero-meta reveal d5">
               <div className="item"><span>01 / Chain</span><b>Algorand</b></div>

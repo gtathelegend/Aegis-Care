@@ -1,11 +1,157 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useWallet } from '@txnlab/use-wallet-react';
 import '../styles/dashboard.css';
+import QRModal from '../components/QRModal';
+import RecordSlider from '../components/RecordSlider';
+import {
+  auditLog,
+  consents,
+  inboundRequests,
+  medicalRecords,
+  patients,
+  getPatientById,
+  recordTypeLabel,
+  type AuditEntry,
+  type Consent,
+  type MedicalRecord,
+  type Patient,
+} from '../lib/mockdb';
+import { makeInitials, normalizeText, sortByTimeline, uniqueCount } from '../lib/dashboardHelpers';
+import { useSnackbar } from 'notistack';
+import { MedicalRecordsClient } from '../contracts/MedicalRecords';
+import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs';
+import { buildPrescriptionBoxReferences, createPrescriptionCid, fetchAllPatientRecords, findPatientByIdentifier, resolvePatient } from '../lib/medicalPortalData';
 
-export default function DoctorDashboardPage() {
+type ConsentStatus = 'active' | 'pending' | 'expired';
+type ConsentTab = 'active' | 'pending' | 'expired';
+type RequestStatus = 'pending' | 'approved' | 'rejected';
+
+interface DoctorRequest {
+  id: string;
+  patient: Patient;
+  scope: string;
+  reason: string;
+  status: RequestStatus;
+  requestedAt: string;
+}
+
+const consentStorageKey = 'aegis-doctor-consent-statuses';
+const requestStorageKey = 'aegis-doctor-request-queue';
+
+const DEFAULT_PATIENT = getPatientById('p1');
+
+const loadConsentStatuses = (fallback: Consent[]) => {
+  if (typeof window === 'undefined') {
+    return Object.fromEntries(fallback.map((consent) => [consent.id, consent.status])) as Record<string, ConsentStatus>;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(consentStorageKey);
+    if (!raw) {
+      return Object.fromEntries(fallback.map((consent) => [consent.id, consent.status])) as Record<string, ConsentStatus>;
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, ConsentStatus>;
+    return fallback.reduce<Record<string, ConsentStatus>>((accumulator, consent) => {
+      accumulator[consent.id] = parsed[consent.id] ?? consent.status;
+      return accumulator;
+    }, {});
+  } catch {
+    return Object.fromEntries(fallback.map((consent) => [consent.id, consent.status])) as Record<string, ConsentStatus>;
+  }
+};
+
+const loadRequests = (fallback: DoctorRequest[]) => {
+  if (typeof window === 'undefined') {
+    return fallback;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(requestStorageKey);
+    if (!raw) {
+      return fallback;
+    }
+
+    return JSON.parse(raw) as DoctorRequest[];
+  } catch {
+    return fallback;
+  }
+};
+
+export default function DoctorDashboard() {
+  const { activeAddress, transactionSigner } = useWallet();
+  const { enqueueSnackbar } = useSnackbar();
   const [activeNav, setActiveNav] = useState('overview');
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState<ConsentTab>('active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [consentStatuses, setConsentStatuses] = useState<Record<string, ConsentStatus>>(() => ({}) as Record<string, ConsentStatus>);
+  const [activityFeed, setActivityFeed] = useState<AuditEntry[]>(auditLog);
+  const [viewerRecords, setViewerRecords] = useState<MedicalRecord[]>([]);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [shareRecord, setShareRecord] = useState<MedicalRecord | null>(null);
+  const [requestPatient, setRequestPatient] = useState(DEFAULT_PATIENT.shortId);
+  const [requestScope, setRequestScope] = useState('LAB_RESULTS');
+  const [requestReason, setRequestReason] = useState('Requesting access for ongoing care coordination.');
+  const [requestQueue, setRequestQueue] = useState<DoctorRequest[]>([]);
+  const [liveRecords, setLiveRecords] = useState<MedicalRecord[]>(medicalRecords);
+  const [prescriptionTarget, setPrescriptionTarget] = useState(DEFAULT_PATIENT.shortId);
+  const [prescriptionMedication, setPrescriptionMedication] = useState('Amoxicillin 500mg');
+  const [prescriptionDosage, setPrescriptionDosage] = useState('1 tablet three times daily for 10 days');
+  const [prescriptionInstructions, setPrescriptionInstructions] = useState('Take after meals and complete the full course.');
+  const [prescriptionNotes, setPrescriptionNotes] = useState('');
+  const [prescriptionSubmitting, setPrescriptionSubmitting] = useState(false);
+  const [prescriptionFeedback, setPrescriptionFeedback] = useState('');
+
+  const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), []);
+  const medicalAppId = Number(import.meta.env.VITE_MEDICAL_RECORDS_APP_ID || 0);
+
+  const patient = DEFAULT_PATIENT;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncRecords = async () => {
+      try {
+        const records = await fetchAllPatientRecords();
+        if (!cancelled && records.length > 0) {
+          setLiveRecords(records);
+        }
+      } catch {
+        if (!cancelled) {
+          setLiveRecords(medicalRecords);
+        }
+      }
+    };
+
+    syncRecords();
+    const interval = setInterval(syncRecords, 45000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    setConsentStatuses(loadConsentStatuses(consents));
+    setRequestQueue(loadRequests([]));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || Object.keys(consentStatuses).length === 0) {
+      return;
+    }
+
+    window.localStorage.setItem(consentStorageKey, JSON.stringify(consentStatuses));
+  }, [consentStatuses]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(requestStorageKey, JSON.stringify(requestQueue));
+  }, [requestQueue]);
 
   const navLabels: Record<string, string> = {
     overview: 'Overview',
@@ -36,234 +182,232 @@ export default function DoctorDashboardPage() {
           },
           { threshold: 0.1 }
         );
+
     if (prefersReducedMotion) {
-      revealEls.forEach((el) => el.classList.add('in'));
+      revealEls.forEach((element) => element.classList.add('in'));
     } else {
-      revealEls.forEach((el) => io?.observe(el));
+      revealEls.forEach((element) => io?.observe(element));
     }
-    return () => { io?.disconnect(); };
+
+    return () => {
+      io?.disconnect();
+    };
   }, [activeNav]);
 
-  const renderDoctorTabContent = () => {
-    if (activeNav === 'patients') {
-      return (
-        <div className="card">
-          <div className="head">
-            <div>
-              <h3>My Patients</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>Current assigned caseload</div>
-            </div>
-            <div className="actions"><button className="chip">Sort by risk</button></div>
-          </div>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Patient</th>
-                <th>Last Visit</th>
-                <th>Primary Need</th>
-                <th>Active Consent</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { av: 'IK', c: 'lime', name: 'Ishaan Kapoor', id: '847KOR', visit: '18 Apr 2026', need: 'Post-op review', consent: 'LAB RESULTS · 48H' },
-                { av: 'PR', c: 'coral', name: 'Priya Rajan', id: '512RAJ', visit: '17 Apr 2026', need: 'Imaging follow-up', consent: 'IMAGING · 24H' },
-                { av: 'AM', c: 'sky', name: 'Arjun Mehta', id: '391MEH', visit: '16 Apr 2026', need: 'Medication adjustment', consent: 'PROFILE · 72H' },
-              ].map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <div className="avn">
-                      <div className="av" data-c={row.c}>{row.av}</div>
-                      <div>
-                        <div className="nm">{row.name}</div>
-                        <div className="rl">{row.id}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{row.visit}</td>
-                  <td>{row.need}</td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-2)' }}>{row.consent}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
+  const consentRows = useMemo(() => {
+    return consents.map((consent) => ({
+      ...consent,
+      status: consentStatuses[consent.id] ?? consent.status,
+    }));
+  }, [consentStatuses]);
 
-    if (activeNav === 'consents') {
-      return (
-        <div className="card">
-          <div className="head">
-            <div>
-              <h3>My Consents</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>Grant windows currently linked to your account</div>
-            </div>
-          </div>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Patient</th>
-                <th>Scope</th>
-                <th>Status</th>
-                <th>Remaining</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { av: 'IK', c: 'lime', name: 'Ishaan Kapoor', id: '847KOR', scope: 'LAB RESULTS · 48H', status: 'active', remain: '32h 14m', pct: '68%' },
-                { av: 'PR', c: 'coral', name: 'Priya Rajan', id: '512RAJ', scope: 'IMAGING · 2H', status: 'active', remain: '1h 04m', pct: '52%' },
-                { av: 'AM', c: 'sky', name: 'Arjun Mehta', id: '391MEH', scope: 'PROFILE · 72H', status: 'pending', remain: 'awaiting', pct: '0%' },
-              ].map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <div className="avn">
-                      <div className="av" data-c={row.c}>{row.av}</div>
-                      <div>
-                        <div className="nm">{row.name}</div>
-                        <div className="rl">{row.id}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)' }}>{row.scope}</td>
-                  <td><span className={`pill-s ${row.status}`}>{row.status}</span></td>
-                  <td>
-                    {row.status === 'active' ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>{row.remain}</span>
-                        <div className="meter"><i style={{ width: row.pct }} /></div>
-                      </div>
-                    ) : (
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{row.remain}</span>
-                    )}
-                  </td>
-                  <td className="actions-cell"><button className="ibtn">View</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    if (activeNav === 'records') {
-      return (
-        <div className="card">
-          <div className="head">
-            <div>
-              <h3>Accessible Records</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>Consent-gated documents for treatment</div>
-            </div>
-          </div>
-          <div className="recs">
-            {[
-              { c: 'lime', label: 'Lab Results', patient: 'Ishaan Kapoor', cid: 'ipfs://Qm7dF...a4b2', chip: 'active' },
-              { c: 'coral', label: 'MRI Report', patient: 'Priya Rajan', cid: 'ipfs://Qm3aK...c8d1', chip: 'active' },
-              { c: 'sky', label: 'Prescription', patient: 'Sneha Verma', cid: 'ipfs://Qm9bL...e6f3', chip: 'active' },
-              { c: 'violet', label: 'Discharge Note', patient: 'Rohan Nair', cid: 'ipfs://Qm2kY...f1d8', chip: 'pending' },
-            ].map((rec, i) => (
-              <div className="rec" data-c={rec.c} key={i}>
-                <div className="top">
-                  <div className="icn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" /></svg>
-                  </div>
-                  <span className="chip-s">{rec.chip}</span>
-                </div>
-                <h4>{rec.label}</h4>
-                <p>{rec.patient}</p>
-                <div className="cid">{rec.cid}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeNav === 'requests') {
-      return (
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-          <div className="card">
-            <div className="head"><h3>Create Access Request</h3></div>
-            <div className="requests" style={{ gap: '10px' }}>
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Target Patient</div><div className="d">Ishaan Kapoor (847KOR)</div></div></div>
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Scope</div><div className="d">IMAGING + LAB RESULTS</div></div></div>
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Duration</div><div className="d">24 hours</div></div></div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 2px' }}><button className="chip">Submit request</button></div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="head"><h3>Pending Outgoing</h3></div>
-            <div className="audit">
-              <div className="audit-item"><span className="pin" data-c="coral" /><div className="body"><div className="t">Priya Rajan · FULL CHART · 12H</div><div className="d">requested 32m ago</div></div></div>
-              <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Arjun Mehta · PROFILE · 72H</div><div className="d">requested 2h ago</div></div></div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeNav === 'schedule') {
-      return (
-        <div className="card">
-          <div className="head">
-            <div>
-              <h3>Doctor Schedule</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>Upcoming appointments and slots</div>
-            </div>
-          </div>
-          <table className="tbl">
-            <thead><tr><th>Time</th><th>Patient</th><th>Purpose</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td>09:30</td><td>Ishaan Kapoor</td><td>Post-op review</td><td><span className="pill-s active">confirmed</span></td></tr>
-              <tr><td>11:00</td><td>Priya Rajan</td><td>MRI discussion</td><td><span className="pill-s pending">waiting</span></td></tr>
-              <tr><td>14:45</td><td>Sneha Verma</td><td>Prescription adjustment</td><td><span className="pill-s active">confirmed</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    if (activeNav === 'audit') {
-      return (
-        <div className="card">
-          <div className="head"><h3>My Audit Trail</h3></div>
-          <div className="audit">
-            {[
-              { c: 'lime', t: 'READ · Ishaan Kapoor · LAB RESULTS', d: '18 Apr 2026, 14:32' },
-              { c: 'sky', t: 'REQUEST · Arjun Mehta · PROFILE', d: '18 Apr 2026, 13:10' },
-              { c: 'coral', t: 'READ · Priya Rajan · IMAGING', d: '17 Apr 2026, 11:05' },
-              { c: 'violet', t: 'REVOKE ACK · Rohan Nair', d: '16 Apr 2026, 09:40' },
-            ].map((item, i) => (
-              <div className="audit-item" key={i}>
-                <span className="pin" data-c={item.c} />
-                <div className="body"><div className="t">{item.t}</div><div className="d">{item.d}</div></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <div className="card">
-          <div className="head"><h3>Doctor Settings</h3></div>
-          <div className="requests">
-            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Clinical Alerts</div><div className="d">Enabled for urgent requests</div></div></div>
-            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Default Consent Duration</div><div className="d">24 hours</div></div></div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="head"><h3>Security</h3></div>
-          <div className="audit">
-            <div className="audit-item"><span className="pin" data-c="lime" /><div className="body"><div className="t">2FA enabled</div></div></div>
-            <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Session timeout: 15 min</div></div></div>
-          </div>
-        </div>
-      </div>
+  const accessibleRecords = useMemo(() => {
+    const activePatientIds = new Set(
+      consentRows.filter((consent) => consent.status === 'active').map((consent) => consent.patientId)
     );
-  };
+
+    return sortByTimeline(
+      liveRecords.filter((record) => activePatientIds.has(record.patientId)),
+      (record) => record.date
+    );
+  }, [consentRows, liveRecords]);
+
+  const activePatients = uniqueCount(accessibleRecords, (record) => record.patientId);
+  const activeConsents = consentRows.filter((consent) => consent.status === 'active').length;
+  const pendingConsents = consentRows.filter((consent) => consent.status === 'pending').length;
+  const expiringConsents = consentRows.filter((consent) => consent.status === 'active' && consent.remaining !== 'key dissolved').length;
+  const staffCount = uniqueCount(accessibleRecords, (record) => record.uploadedBy);
+
+  const filteredConsents = useMemo(() => {
+    const query = normalizeText(searchQuery);
+
+    return consentRows.filter((consent) => {
+      const matchesTab = consent.status === activeTab;
+      const matchesQuery = !query || [consent.grantedTo, consent.scopeLabel, consent.issuedAt, consent.expiresAt, consent.remaining]
+        .some((value) => normalizeText(value).includes(query));
+
+      return matchesTab && matchesQuery;
+    });
+  }, [activeTab, consentRows, searchQuery]);
+
+  const filteredRecords = useMemo(() => {
+    const query = normalizeText(searchQuery);
+
+    return accessibleRecords.filter((record) => {
+      if (!query) return true;
+
+      return [record.title, record.description, record.uploadedBy, record.uploadedByRole, record.hospital, recordTypeLabel[record.type]]
+        .some((value) => normalizeText(value).includes(query));
+    });
+  }, [accessibleRecords, searchQuery]);
+
+  const recentRecords = filteredRecords.slice(0, 6);
+
+  const scheduleItems = useMemo(() => {
+    const upcoming = consentRows
+      .filter((consent) => consent.status === 'active' || consent.status === 'pending')
+      .slice(0, 3)
+      .map((consent) => ({
+        label: consent.scopeLabel,
+        detail: consent.grantedTo,
+        status: consent.status,
+      }));
+
+    const recordDriven = recentRecords.slice(0, 3).map((record) => ({
+      label: record.title,
+      detail: record.hospital,
+      status: 'active' as const,
+    }));
+
+    return [...upcoming, ...recordDriven].slice(0, 4);
+  }, [consentRows, recentRecords]);
+
+  const openRecordViewer = useCallback(
+    (record: MedicalRecord) => {
+      const viewerSource = filteredRecords.length > 0 ? filteredRecords : accessibleRecords;
+      const index = viewerSource.findIndex((candidate) => candidate.id === record.id);
+      setViewerRecords(viewerSource);
+      setViewerIndex(index >= 0 ? index : 0);
+    },
+    [accessibleRecords, filteredRecords]
+  );
+
+  const mutateConsent = useCallback(
+    (consentId: string, nextStatus: ConsentStatus, reason: string) => {
+      const consent = consentRows.find((entry) => entry.id === consentId);
+      if (!consent) {
+        return;
+      }
+
+      setConsentStatuses((current) => ({ ...current, [consentId]: nextStatus }));
+      setActivityFeed((current) => [
+        {
+          id: `consent-${consentId}-${Date.now()}`,
+          action: nextStatus === 'active' ? 'CONSENT_GRANT' : 'CONSENT_REVOKE',
+          actor: patient.name,
+          actorRole: 'Patient',
+          subject: consent.grantedTo,
+          detail: `${nextStatus.toUpperCase()} · ${reason} · ${consent.scopeLabel}`,
+          timestamp: new Date().toLocaleString(),
+          txHash: consent.txHash,
+          color: nextStatus === 'active' ? 'lime' : 'coral',
+        },
+        ...current,
+      ]);
+      enqueueSnackbar(`${consent.grantedTo} consent ${nextStatus}.`, { variant: nextStatus === 'active' ? 'success' : 'warning' });
+    },
+    [consentRows, enqueueSnackbar, patient.name]
+  );
+
+  const submitRequest = useCallback(() => {
+    const target = patients.find((candidate) => candidate.shortId === requestPatient || candidate.name === requestPatient);
+    if (!target) {
+      enqueueSnackbar('Select a valid patient short ID or name.', { variant: 'error' });
+      return;
+    }
+
+    const nextRequest: DoctorRequest = {
+      id: `req-${Date.now()}`,
+      patient: target,
+      scope: requestScope,
+      reason: requestReason,
+      status: 'pending',
+      requestedAt: new Date().toLocaleString(),
+    };
+
+    setRequestQueue((current) => [nextRequest, ...current]);
+    setActivityFeed((current) => [
+      {
+        id: `request-${nextRequest.id}`,
+        action: 'REQUEST',
+        actor: 'Dr. Hanwa, K.',
+        actorRole: 'Clinician',
+        subject: target.name,
+        detail: `REQUEST · ${requestScope} · ${requestReason}`,
+        timestamp: nextRequest.requestedAt,
+        txHash: '',
+        color: 'sky',
+      },
+      ...current,
+    ]);
+
+    enqueueSnackbar(`Access request queued for ${target.name}.`, { variant: 'info' });
+  }, [enqueueSnackbar, requestPatient, requestReason, requestScope]);
+
+  const updateRequestStatus = useCallback((requestId: string, nextStatus: RequestStatus) => {
+    setRequestQueue((current) => current.map((request) => (request.id === requestId ? { ...request, status: nextStatus } : request)));
+    setActivityFeed((current) => [
+      {
+        id: `req-${requestId}-${Date.now()}`,
+        action: nextStatus === 'approved' ? 'CONSENT_GRANT' : 'CONSENT_REVOKE',
+        actor: patient.name,
+        actorRole: 'Patient',
+        subject: requestId,
+        detail: `${nextStatus.toUpperCase()} · clinician request`,
+        timestamp: new Date().toLocaleString(),
+        txHash: '',
+        color: nextStatus === 'approved' ? 'lime' : 'coral',
+      },
+      ...current,
+    ]);
+  }, [patient.name]);
+
+  const filteredRequests = requestQueue.filter((request) => {
+    const query = normalizeText(searchQuery);
+    if (!query) return true;
+
+    return [request.patient.name, request.patient.shortId, request.scope, request.reason, request.status]
+      .some((value) => normalizeText(value).includes(query));
+  });
+
+  const heroSummary = `${activeConsents} active consents, ${expiringConsents} expiring windows, and ${accessibleRecords.length} accessible records.`;
+
+  const submitPrescription = useCallback(async () => {
+    if (!activeAddress || !transactionSigner || !medicalAppId) {
+      enqueueSnackbar('Connect a wallet and ensure the MedicalRecords contract is configured.', { variant: 'error' });
+      return;
+    }
+
+    setPrescriptionSubmitting(true);
+    setPrescriptionFeedback('');
+
+    try {
+      const target = findPatientByIdentifier(prescriptionTarget);
+      const { patient: resolvedPatient, walletAddress } = await resolvePatient(prescriptionTarget);
+      const client = new MedicalRecordsClient({ appId: BigInt(medicalAppId), algorand });
+      const cid = await createPrescriptionCid({
+        patientIdentifier: walletAddress,
+        patientName: resolvedPatient.name,
+        medication: prescriptionMedication,
+        dosage: prescriptionDosage,
+        instructions: prescriptionInstructions,
+        notes: prescriptionNotes,
+        providerName: activeAddress,
+      });
+
+      const boxReferences = await buildPrescriptionBoxReferences(walletAddress);
+
+      await client.send.addPrescription({
+        args: {
+          patient: walletAddress,
+          patientName: target?.name ?? resolvedPatient.name,
+          cid,
+        },
+        sender: activeAddress,
+        signer: transactionSigner,
+        boxReferences,
+      });
+
+      setPrescriptionFeedback(`Prescription anchored for ${resolvedPatient.name}. CID ${cid}`);
+      enqueueSnackbar(`Prescription uploaded for ${resolvedPatient.name}.`, { variant: 'success' });
+      setLiveRecords(await fetchAllPatientRecords());
+    } catch (error: any) {
+      setPrescriptionFeedback(error?.message ?? 'Failed to upload prescription.');
+      enqueueSnackbar(error?.message ?? 'Failed to upload prescription.', { variant: 'error' });
+    } finally {
+      setPrescriptionSubmitting(false);
+    }
+  }, [activeAddress, algorand, enqueueSnackbar, medicalAppId, prescriptionDosage, prescriptionInstructions, prescriptionMedication, prescriptionNotes, prescriptionTarget, transactionSigner]);
 
   return (
     <div className="grain">
@@ -272,6 +416,7 @@ export default function DoctorDashboardPage() {
         <i className="b2" style={{ background: 'var(--lime)' }} />
         <i className="b3" />
       </div>
+
       <div className="app">
         <aside>
           <div className="brand">
@@ -293,11 +438,11 @@ export default function DoctorDashboardPage() {
             </div>
             <div className={`navitem ${activeNav === 'patients' ? 'active' : ''}`} onClick={() => setActiveNav('patients')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
-              My Patients<span className="badge">18</span>
+              My Patients<span className="badge">{activePatients}</span>
             </div>
             <div className={`navitem ${activeNav === 'consents' ? 'active' : ''}`} onClick={() => setActiveNav('consents')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /></svg>
-              My Consents<span className="badge">6</span>
+              My Consents<span className="badge">{activeConsents}</span>
             </div>
             <div className={`navitem ${activeNav === 'records' ? 'active' : ''}`} onClick={() => setActiveNav('records')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4" /></svg>
@@ -328,8 +473,8 @@ export default function DoctorDashboardPage() {
           <div className="asidefoot">
             <div style={{ marginBottom: '10px' }}>
               <a href="/patient" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', fontSize: '12px', color: 'var(--ink-3)', fontFamily: 'var(--mono)', letterSpacing: '.1em', textTransform: 'uppercase', textDecoration: 'none' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-3)')}>
+                onMouseEnter={(event) => (event.currentTarget.style.color = 'var(--ink)')}
+                onMouseLeave={(event) => (event.currentTarget.style.color = 'var(--ink-3)')}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
                 Patient Portal
               </a>
@@ -350,7 +495,7 @@ export default function DoctorDashboardPage() {
             </div>
             <div className="search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-              <input placeholder="Search patients, records, consents…" />
+              <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search patients, records, consents…" />
               <span className="kbd">⌘ K</span>
             </div>
             <div className="topactions">
@@ -359,7 +504,7 @@ export default function DoctorDashboardPage() {
                 DOC-4821
                 <span className="tag" style={{ background: 'var(--coral)' }}>Clinician</span>
               </span>
-              <button className="iconbtn">
+              <button className="iconbtn" onClick={() => enqueueSnackbar('Clinical notifications are attached to the record queue.', { variant: 'info' })}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" /><path d="M10 21a2 2 0 0 0 4 0" /></svg>
               </button>
               <div className="avatar" style={{ background: 'var(--coral)', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600' }}>KH</div>
@@ -367,25 +512,23 @@ export default function DoctorDashboardPage() {
           </div>
 
           <div className="content">
-            {activeNav === 'overview' ? (
-              <>
-            {/* HERO */}
             <div className="hero">
               <div className="greet reveal d1">
                 <div>
-                  <div className="k">§ Clinician Overview — 18 April 2026</div>
+                  <div className="k">§ Clinician Overview · Live Snapshot</div>
                   <h2>
-                    6 consents <em>active</em>.<br />18 patients in care.
+                    {activeConsents} consents <em>active</em>.
+                    <br />{accessibleRecords.length} records in care.
                   </h2>
-                  <p>Two consents expire within 2 hours. One new patient record accessible since your last login. All reads logged to chain.</p>
+                  <p>{heroSummary} There are {requestQueue.filter((request) => request.status === 'pending').length} clinician requests waiting in the local queue.</p>
                 </div>
                 <div className="foot">
-                  <button className="btn lime">
+                  <button className="btn lime" onClick={() => setActiveNav('requests')}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
                     Request access
                   </button>
-                  <button className="btn ghost">View records</button>
-                  <button className="btn ghost">My audit log</button>
+                  <button className="btn ghost" onClick={() => openRecordViewer(accessibleRecords[0] ?? liveRecords[0] ?? medicalRecords[0])}>View records</button>
+                  <button className="btn ghost" onClick={() => setActiveNav('audit')}>My audit log</button>
                 </div>
               </div>
               <div className="id reveal d2">
@@ -399,58 +542,56 @@ export default function DoctorDashboardPage() {
                 <div className="sid">DOC<em>–4821</em></div>
                 <div className="meta">
                   <span>Chain · <em>Algorand</em></span>
-                  <span>Since <em>Feb 2025</em></span>
+                  <span>Patients · <em>{activePatients}</em></span>
                 </div>
               </div>
             </div>
 
-            {/* KPIs */}
             <div className="kpis">
               <div className="kpi reveal d1" data-c="coral">
                 <div className="top">
                   <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></div>
-                  <span className="delta">+3 this week</span>
+                  <span className="delta">{activePatients} patients</span>
                 </div>
-                <b>18</b>
+                <b>{activePatients}</b>
                 <span className="lbl">My patients</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 22 L20 18 L40 16 L60 12 L80 10 L100 8 L120 6 L140 4" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
               </div>
               <div className="kpi reveal d2" data-c="lime">
                 <div className="top">
                   <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /></svg></div>
-                  <span className="delta">6 granted</span>
+                  <span className="delta">{activeConsents} granted</span>
                 </div>
-                <b>6</b>
+                <b>{activeConsents}</b>
                 <span className="lbl">Active consents</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 16 L20 14 L40 10 L60 12 L80 8 L100 10 L120 6 L140 4" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
               </div>
               <div className="kpi reveal d3" data-c="sky">
                 <div className="top">
                   <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" /></svg></div>
-                  <span className="delta">+2 new</span>
+                  <span className="delta">{accessibleRecords.length} visible</span>
                 </div>
-                <b>14</b>
+                <b>{accessibleRecords.length}</b>
                 <span className="lbl">Records accessible</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 20 L20 16 L40 14 L60 12 L80 10 L100 8 L120 6 L140 4" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
               </div>
               <div className="kpi reveal d4" data-c="violet">
                 <div className="top">
                   <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg></div>
-                  <span className="delta">expiring soon</span>
+                  <span className="delta">{expiringConsents} expiring</span>
                 </div>
-                <b>2</b>
+                <b>{expiringConsents}</b>
                 <span className="lbl">Expiring today</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 8 L20 10 L40 8 L60 10 L80 12 L100 14 L120 18 L140 22" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
               </div>
             </div>
 
-            {/* GRID */}
             <div className="grid">
               <div className="card reveal d1">
                 <div className="head">
                   <div>
                     <h3>My consents</h3>
-                    <div className="sub" style={{ marginTop: '4px' }}>6 active · 2 expiring</div>
+                    <div className="sub" style={{ marginTop: '4px' }}>{activeConsents} active · {pendingConsents} pending</div>
                   </div>
                   <div className="actions">
                     <div className="tabs">
@@ -471,99 +612,205 @@ export default function DoctorDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {[
-                      { av: 'IK', c: 'lime', name: 'Ishaan Kapoor', id: '847KOR', scope: 'LAB RESULTS · 48H', status: 'active', remain: '32h 14m', pct: '68%' },
-                      { av: 'PR', c: 'coral', name: 'Priya Rajan', id: '512RAJ', scope: 'IMAGING · 2H', status: 'active', remain: '1h 04m', pct: '52%' },
-                      { av: 'AM', c: 'sky', name: 'Arjun Mehta', id: '391MEH', scope: 'PROFILE · 72H', status: 'pending', remain: 'awaiting', pct: '0%' },
-                      { av: 'SV', c: 'sun', name: 'Sneha Verma', id: '204VER', scope: 'RX VIEW · 24H', status: 'active', remain: '18h 40m', pct: '78%' },
-                      { av: 'RN', c: 'violet', name: 'Rohan Nair', id: '768NAI', scope: 'FULL CHART · 7D', status: 'expired', remain: 'dissolved', pct: '0%' },
-                    ].map((row) => (
-                      <tr key={row.id}>
-                        <td>
-                          <div className="avn">
-                            <div className="av" data-c={row.c}>{row.av}</div>
-                            <div>
-                              <div className="nm">{row.name}</div>
-                              <div className="rl">{row.id}</div>
+                    {filteredConsents.map((consent) => {
+                      const patientRecord = patients.find((candidate) => candidate.id === consent.patientId) ?? patient;
+
+                      return (
+                        <tr key={consent.id}>
+                          <td>
+                            <div className="avn">
+                              <div className="av" data-c={consent.grantedToColor}>{makeInitials(patientRecord.name)}</div>
+                              <div>
+                                <div className="nm">{patientRecord.name}</div>
+                                <div className="rl">{patientRecord.shortId}</div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{row.scope}</td>
-                        <td><span className={`pill-s ${row.status}`}>{row.status}</span></td>
-                        <td>
-                          {row.status === 'active' ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                              <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>{row.remain}</span>
-                              <div className="meter"><i style={{ width: row.pct }} /></div>
-                            </div>
-                          ) : (
-                            <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{row.remain}</span>
-                          )}
-                        </td>
-                        <td className="actions-cell">
-                          {row.status !== 'expired' && (
-                            <button className="ibtn" title="View record">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                            </button>
-                          )}
-                          {row.status === 'active' && (
-                            <button className="ibtn danger" title="Revoke">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{consent.scopeLabel}</td>
+                          <td><span className={`pill-s ${consent.status}`}>{consent.status}</span></td>
+                          <td>
+                            {consent.status === 'active' ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>{consent.remaining}</span>
+                                <div className="meter"><i style={{ width: `${consent.progressPct}%` }} /></div>
+                              </div>
+                            ) : (
+                              <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{consent.remaining}</span>
+                            )}
+                          </td>
+                          <td className="actions-cell">
+                            {consent.status === 'active' && (
+                              <button className="ibtn danger" title="Revoke consent" onClick={() => mutateConsent(consent.id, 'expired', 'Revoked from clinician dashboard')}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                              </button>
+                            )}
+                            {consent.status === 'pending' && (
+                              <button className="ibtn" title="Approve consent" onClick={() => mutateConsent(consent.id, 'active', 'Approved from clinician dashboard')}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 12 2 2 4-4" /></svg>
+                              </button>
+                            )}
+                            {consent.status === 'expired' && (
+                              <button className="ibtn" title="Renew consent" onClick={() => mutateConsent(consent.id, 'active', 'Renewed from clinician dashboard')}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 0 1 15.95-5.67L21 9" /><path d="M21 3v6h-6" /><path d="M21 12a9 9 0 0 1-15.95 5.67L3 15" /><path d="M3 21v-6h6" /></svg>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
 
               <div className="card reveal d2">
-                <div className="head"><h3>Inbound requests</h3></div>
+                <div className="head">
+                  <div>
+                    <h3>Request queue</h3>
+                    <div className="sub" style={{ marginTop: '4px' }}>{requestQueue.length} local requests · {requestQueue.filter((request) => request.status === 'pending').length} pending</div>
+                  </div>
+                </div>
                 <div className="requests">
-                  {[
-                    { av: 'IK', c: 'lime', t: 'Ishaan Kapoor', d: 'LAB RESULTS · REQUEST', info: 'Helix Hospital · Emergency' },
-                    { av: 'AM', c: 'sky', t: 'Arjun Mehta', d: 'PROFILE READ · REQUEST', info: 'Meridian Labs · Routine' },
-                    { av: 'SV', c: 'sun', t: 'Sneha Verma', d: 'RX HISTORY · REQUEST', info: 'Nil Pharmacy · Dispensing' },
-                  ].map((r, i) => (
-                    <div className="req" key={i}>
-                      <div className="av" data-c={r.c} style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0 }}>{r.av}</div>
-                      <div className="body">
-                        <div className="t">{r.t}</div>
-                        <div className="d">{r.d}</div>
-                        <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--ink-3)', letterSpacing: '.1em', marginTop: '4px' }}>{r.info}</div>
-                      </div>
-                      <div className="acts">
-                        <button className="approve">Allow</button>
-                        <button className="deny">Deny</button>
+                  <div className="req" style={{ cursor: 'default' }}>
+                    <div className="av" data-c="coral" style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0 }}>DR</div>
+                    <div className="body" style={{ display: 'grid', gap: '6px' }}>
+                      <div className="t">Submit a new request</div>
+                      <div className="d">SEND ACCESS REQUEST · CARE COORDINATION</div>
+                      <div style={{ display: 'grid', gap: '8px' }}>
+                        <input value={requestPatient} onChange={(event) => setRequestPatient(event.target.value)} placeholder="Patient short ID or name" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
+                        <input value={requestScope} onChange={(event) => setRequestScope(event.target.value)} placeholder="Scope (for example LAB_RESULTS)" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
+                        <textarea value={requestReason} onChange={(event) => setRequestReason(event.target.value)} rows={3} placeholder="Reason for the request" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
                       </div>
                     </div>
-                  ))}
+                    <div className="acts">
+                      <button className="approve" onClick={submitRequest}>Submit</button>
+                    </div>
+                  </div>
+
+                  {filteredRequests.length > 0 ? filteredRequests.map((request) => (
+                    <div className="req" key={request.id}>
+                      <div className="av" data-c={request.status === 'approved' ? 'lime' : request.status === 'rejected' ? 'coral' : 'sky'} style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0 }}>{makeInitials(request.patient.name)}</div>
+                      <div className="body">
+                        <div className="t">{request.patient.name}</div>
+                        <div className="d">{request.scope}</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--ink-3)', letterSpacing: '.1em', marginTop: '4px' }}>{request.reason}</div>
+                      </div>
+                      <div className="acts">
+                        {request.status === 'pending' ? (
+                          <>
+                            <button className="approve" onClick={() => updateRequestStatus(request.id, 'approved')}>Allow</button>
+                            <button className="deny" onClick={() => updateRequestStatus(request.id, 'rejected')}>Deny</button>
+                          </>
+                        ) : (
+                          <button className={request.status === 'approved' ? 'approve' : 'deny'}>{request.status}</button>
+                        )}
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="req" style={{ cursor: 'default' }}>
+                      <div className="av" data-c="sky" style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0 }}>--</div>
+                      <div className="body">
+                        <div className="t">No pending clinician requests</div>
+                        <div className="d">QUEUE IS EMPTY</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="card reveal d3">
+                <div className="head">
+                  <div>
+                    <h3>Prescription upload</h3>
+                    <div className="sub" style={{ marginTop: '4px' }}>Encrypt a prescription, pin it to IPFS, and anchor it on-chain by patient ID.</div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  <input value={prescriptionTarget} onChange={(event) => setPrescriptionTarget(event.target.value)} placeholder="Patient short ID or wallet address" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
+                  <input value={prescriptionMedication} onChange={(event) => setPrescriptionMedication(event.target.value)} placeholder="Medication" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
+                  <input value={prescriptionDosage} onChange={(event) => setPrescriptionDosage(event.target.value)} placeholder="Dosage and frequency" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
+                  <textarea value={prescriptionInstructions} onChange={(event) => setPrescriptionInstructions(event.target.value)} rows={3} placeholder="Patient instructions" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
+                  <textarea value={prescriptionNotes} onChange={(event) => setPrescriptionNotes(event.target.value)} rows={2} placeholder="Optional notes" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
+                  <button className="btn lime" onClick={submitPrescription} disabled={prescriptionSubmitting}>
+                    {prescriptionSubmitting ? 'Uploading prescription…' : 'Upload prescription'}
+                  </button>
+                  {prescriptionFeedback && <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--ink-2)', lineHeight: 1.6 }}>{prescriptionFeedback}</div>}
                 </div>
               </div>
             </div>
 
-            {/* ACCESSIBLE RECORDS */}
-            <div className="card reveal d2">
-              <div className="head">
-                <div><h3>Accessible records</h3><div className="sub" style={{ marginTop: '4px' }}>14 records · consent-gated</div></div>
-              </div>
-              <div className="recs">
-                {[
-                  { c: 'lime', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 2v6L4 18a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 8V2" /></svg>, label: 'Lab Results', patient: 'Ishaan Kapoor', cid: 'ipfs://Qm7dF...a4b2', chip: 'active' },
-                  { c: 'coral', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 9v12" /></svg>, label: 'MRI Report', patient: 'Priya Rajan', cid: 'ipfs://Qm3aK...c8d1', chip: 'active' },
-                  { c: 'sky', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" /></svg>, label: 'Prescription', patient: 'Sneha Verma', cid: 'ipfs://Qm9bL...e6f3', chip: 'active' },
-                ].map((rec, i) => (
-                  <div className="rec" data-c={rec.c} key={i}>
-                    <div className="top">
-                      <div className="icn">{rec.icon}</div>
-                      <span className="chip-s" style={{ background: 'color-mix(in oklch, var(--lime) 30%, white)', color: 'var(--ink-green)' }}>{rec.chip}</span>
-                    </div>
-                    <h4>{rec.label}</h4>
-                    <p>{rec.patient}</p>
-                    <div className="cid">{rec.cid}</div>
+            <div className="grid">
+              <div className="card reveal d2">
+                <div className="head">
+                  <div>
+                    <h3>Accessible records</h3>
+                    <div className="sub" style={{ marginTop: '4px' }}>{accessibleRecords.length} consent-gated records</div>
                   </div>
-                ))}
+                </div>
+                <div className="recs">
+                  {recentRecords.map((record) => {
+                    const patientRecord = patients.find((candidate) => candidate.id === record.patientId) ?? patient;
+
+                    return (
+                      <div className="rec" data-c={record.color} key={record.id} onClick={() => openRecordViewer(record)}>
+                        <div className="top">
+                          <div className="icn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                              {record.type === 'lab' && <path d="M10 2v6L4 18a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 8V2" />}
+                              {record.type === 'imaging' && <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 9v12" /></>}
+                              {record.type === 'prescription' && <><path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" /></>}
+                              {record.type === 'discharge' && <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-5-5z" />}
+                              {record.type === 'vaccination' && <path d="m18 2 4 4-4 4" />}
+                              {record.type === 'vitals' && <path d="M3 12h4l3-9 4 18 3-9h4" />}
+                            </svg>
+                          </div>
+                          <span className="chip-s">{recordTypeLabel[record.type]}</span>
+                        </div>
+                        <h4>{record.title}</h4>
+                        <p>{patientRecord.name}</p>
+                        <div className="cid">{record.ipfsHash}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
+                          <button className="ibtn" title="Share record" onClick={(event) => { event.stopPropagation(); setShareRecord(record); }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="3" height="9" /><rect x="9.5" y="7" width="3" height="13" /><rect x="16" y="4" width="3" height="16" /></svg>
+                          </button>
+                          <button className="ibtn" title="Open record" onClick={(event) => { event.stopPropagation(); openRecordViewer(record); }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="card reveal d2">
+                <div className="head">
+                  <div>
+                    <h3>Schedule and audit</h3>
+                    <div className="sub" style={{ marginTop: '4px' }}>{activityFeed.length} activity events</div>
+                  </div>
+                </div>
+                <div className="audit">
+                  {scheduleItems.map((item, index) => (
+                    <div className="audit-item" key={`${item.label}-${index}`}>
+                      <div className="pin" data-c={item.status === 'pending' ? 'sun' : 'lime'} />
+                      <div className="body">
+                        <div className="t"><em>{item.label}</em></div>
+                        <div className="d">{item.detail}</div>
+                      </div>
+                      <time>{item.status}</time>
+                    </div>
+                  ))}
+                  {activityFeed.slice(0, 4).map((entry) => (
+                    <div className="audit-item" key={entry.id}>
+                      <div className="pin" data-c={entry.color} />
+                      <div className="body">
+                        <div className="t"><em>{entry.actor}</em> · {entry.subject}</div>
+                        <div className="d">{entry.detail}</div>
+                      </div>
+                      <time>{entry.timestamp}</time>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
               </>
@@ -571,6 +818,23 @@ export default function DoctorDashboardPage() {
           </div>
         </main>
       </div>
+
+      {viewerRecords.length > 0 && (
+        <RecordSlider
+          records={viewerRecords}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerRecords([])}
+          onShare={(record) => setShareRecord(record)}
+        />
+      )}
+
+      {shareRecord && (
+        <QRModal
+          record={shareRecord}
+          patient={patients.find((candidate) => candidate.id === shareRecord.patientId) ?? patient}
+          onClose={() => setShareRecord(null)}
+        />
+      )}
     </div>
   );
 }
