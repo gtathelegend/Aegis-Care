@@ -1,595 +1,317 @@
-import { useWallet } from '@txnlab/use-wallet-react'
-import { 
-  Search, 
-  User, 
-  Plus, 
-  Upload, 
-  Loader2, 
-  CheckCircle2, 
-  Activity,
-  ShieldAlert,
-  ShieldCheck,
-  SearchCode,
-  Database,
-  Lock,
-  Globe,
-  Users,
-  ExternalLink,
-  FileText,
-  Clock,
-  AlertCircle,
-  Fingerprint
-} from 'lucide-react'
-import { useState, useCallback, useEffect, useMemo } from 'react'
-import { useSnackbar } from 'notistack'
-import { fetchAuditLogs, AuditLogEntry } from '../utils/auditLog'
+import { useEffect, useState } from 'react';
+import '../styles/dashboard.css';
 
-// Contracts
-import { WalletMapperClient } from '../contracts/WalletMapperClient'
-import { ConsentManagerClient } from '../contracts/ConsentManagerClient'
-import { MedicalRecordsClient } from '../contracts/MedicalRecordsClient'
-import { DataFiduciaryRegistryClient } from '../contracts/DataFiduciaryRegistryClient'
-import { AuditLogClient } from '../contracts/AuditLogClient'
-import { QueueManagerClient } from '../contracts/QueueManagerClient'
-import { calcQueueRequestBox } from '../utils/boxUtils'
-
-import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
-import { microAlgos } from '@algorandfoundation/algokit-utils'
-import { uploadToIPFS, fetchFromIPFS } from '../utils/ipfs'
-import { encryptData, decryptData } from '../utils/crypto'
-import { resolveAddress } from '../utils/resolveAddress'
-
-const HospitalPortal = () => {
-  const { activeAddress, transactionSigner } = useWallet()
-  const { enqueueSnackbar } = useSnackbar()
-  
-  // Search state
-  const [patientSid, setPatientSid] = useState('')
-  const [searching, setSearching] = useState(false)
-  const [patientWallet, setPatientWallet] = useState<string | null>(null)
-  
-  // Data state
-  const [patientRecords, setPatientRecords] = useState<any[]>([])
-  const [hasConsent, setHasConsent] = useState(false)
-  const [isVerifiedProvider, setIsVerifiedProvider] = useState(false)
-  const [providerData, setProviderData] = useState<any>(null)
-  
-  // Upload state
-  const [uploading, setUploading] = useState(false)
-  const [recordType, setRecordType] = useState('Clinical Summary')
-  const [recordText, setRecordText] = useState('')
-  
-  const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), [])
-
-  // App IDs
-  const mapperId = Number(import.meta.env.VITE_WALLET_MAPPER_APP_ID || 0)
-  const consentAppId = Number(import.meta.env.VITE_CONSENT_MANAGER_APP_ID || 0)
-  const medicalAppId = Number(import.meta.env.VITE_MEDICAL_RECORDS_APP_ID || 0)
-  const registryId = Number(import.meta.env.VITE_DATA_FIDUCIARY_REGISTRY_APP_ID || 0)
-  const auditAppId = Number(import.meta.env.VITE_AUDIT_LOG_APP_ID || import.meta.env.VITE_AUDITLOG_APP_ID || 0)
-  const queueAppId = Number(import.meta.env.VITE_QUEUE_MANAGER_APP_ID || 0)
-  
-  const [fidName, setFidName] = useState('')
-  const [fidLicense, setFidLicense] = useState('')
-
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([])
+export default function HospitalPortal() {
+  const [activeNav, setActiveNav] = useState('overview');
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    if (activeAddress) {
-      fetchAuditLogs(activeAddress).then(setAuditLogs)
-      const interval = setInterval(() => {
-        fetchAuditLogs(activeAddress).then(setAuditLogs)
-      }, 30000)
-      return () => clearInterval(interval)
+    const revealEls = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const io = prefersReducedMotion
+      ? null
+      : new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('in');
+                io?.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+    if (prefersReducedMotion) {
+      revealEls.forEach((el) => el.classList.add('in'));
+    } else {
+      revealEls.forEach((el) => io?.observe(el));
     }
-    return undefined
-  }, [activeAddress])
-
-  // Outgoing Requests Queue
-  const [outgoingRequests, setOutgoingRequests] = useState<any[]>([])
-
-  useEffect(() => {
-     if (!activeAddress) return
-     const stored = localStorage.getItem(`hospital_requests_${activeAddress}`)
-     if (stored) {
-         setOutgoingRequests(JSON.parse(stored))
-     }
-     return undefined
-  }, [activeAddress])
-
-  // Sync Logic
-  useEffect(() => {
-     if (!activeAddress || outgoingRequests.length === 0) return undefined
-     let changed = false
-     const updated = [...outgoingRequests]
-
-     const sync = async () => {
-         const client = new ConsentManagerClient({ appId: BigInt(consentAppId), algorand })
-         for (let i = 0; i < updated.length; i++) {
-            if (updated[i].status === 'Pending') {
-               try {
-                  const pending = await client.getPendingRequests({ args: { patient: updated[i].patient } }).catch(() => [])
-                  const isStillPending = pending.some((req: any) => req[1] === activeAddress && req[2] === updated[i].purpose)
-                  
-                  if (!isStillPending) {
-                      const consents = await client.getPatientConsents({ args: { patient: updated[i].patient } }).catch(() => [])
-                      const isApproved = consents.some((c: any) => c[1] === activeAddress && c[7] === true) // c[7] is is_active
-                      
-                      if (isApproved) {
-                          updated[i].status = 'Approved'
-                          changed = true
-                      } else {
-                          updated[i].status = 'Rejected'
-                          changed = true
-                      }
-                  }
-               } catch (e) {}
-            }
-         }
-         
-         if (changed) {
-            setOutgoingRequests(updated)
-            localStorage.setItem(`hospital_requests_${activeAddress}`, JSON.stringify(updated))
-         }
-     }
-     sync()
-     const interval = setInterval(sync, 10000)
-     return () => clearInterval(interval)
-  }, [activeAddress, outgoingRequests, algorand, consentAppId])
-
-  const checkProviderVerification = useCallback(async () => {
-    if (!activeAddress) return
-    try {
-        const client = new DataFiduciaryRegistryClient({ appId: BigInt(registryId), algorand })
-        const approved = await client.isApproved({ args: { fiduciary: activeAddress } })
-        setIsVerifiedProvider(approved)
-        if (approved) {
-            const data = await client.getFiduciary({ args: { fiduciary: activeAddress } })
-            setProviderData(data)
-        }
-    } catch (e) {
-        // Fallback for unauthorized reading attempts local config
-    }
-  }, [activeAddress, registryId, algorand])
-
-  const handleRegisterFiduciary = async () => {
-    if (!activeAddress || !transactionSigner || !fidName || !fidLicense) return
-    setUploading(true)
-    try {
-        const client = new DataFiduciaryRegistryClient({ appId: BigInt(registryId), algorand })
-        await client.send.registerFiduciary({
-            args: { name: fidName, licenseId: fidLicense },
-            sender: activeAddress,
-            signer: transactionSigner,
-        })
-        enqueueSnackbar('Registration submitted. Awaiting Admin Approval.', { variant: 'success' })
-        checkProviderVerification()
-    } catch (e: any) {
-        enqueueSnackbar(`Registration failed: ${e.message}`, { variant: 'error' })
-    } finally {
-        setUploading(false)
-    }
-  }
-
-  useEffect(() => {
-    checkProviderVerification()
-  }, [checkProviderVerification])
-
-  const handleSearch = async () => {
-    if (!patientSid) return
-
-    setSearching(true)
-    setPatientWallet(null)
-    setPatientRecords([])
-    setHasConsent(false)
-
-    try {
-      // Resolve Identifier (Short ID or Wallet)
-      const targetAddress = await resolveAddress(patientSid)
-      setPatientWallet(targetAddress)
-
-      const medicalClient = new MedicalRecordsClient({ appId: BigInt(medicalAppId), algorand })
-      try {
-        const records = await medicalClient.getPatientRecords({ args: { patient: targetAddress } })
-        setPatientRecords(records || [])
-        setHasConsent(true)
-      } catch (e) {
-        // Denied access triggers this block organically by the smart contract assertion
-        setHasConsent(false)
-      }
-    } catch (e) {
-      // Identity lookup misses triggers this.
-      enqueueSnackbar('Identity constraint missed: Patient ID not mapped.', { variant: 'error' })
-    } finally {
-      setSearching(false)
-    }
-  }
-
-  const handleRequestAccess = async () => {
-    if (!patientWallet || !activeAddress || !transactionSigner) return
-    try {
-      const client = new QueueManagerClient({ appId: BigInt(queueAppId), algorand })
-      await client.send.submitRequest({
-        args: { target: patientWallet, purpose: 'General Medical Consultation', isEmergency: false },
-        sender: activeAddress,
-        signer: transactionSigner
-      })
-      
-      const newReq = {
-          patient: patientWallet,
-          purpose: 'General Medical Consultation',
-          timestamp: Date.now(),
-          status: 'Pending',
-          type: 'Normal'
-      }
-      const updatedReqs = [newReq, ...outgoingRequests]
-      setOutgoingRequests(updatedReqs)
-      localStorage.setItem(`hospital_requests_${activeAddress}`, JSON.stringify(updatedReqs))
-      
-      enqueueSnackbar('Transmission successful: Patient must approve via their secure queue.', { variant: 'success' })
-    } catch (e: any) {
-      if (e.message?.includes('APP_NOT_FOUND') || e.message?.includes('does not exist')) {
-         enqueueSnackbar(`Contract not deployed locally. Simulated Success.`, { variant: 'success' })
-      } else {
-         enqueueSnackbar(`Verification failed: ${e.message}`, { variant: 'error' })
-      }
-    }
-  }
-
-  const handleBreakGlass = async () => {
-     if (!patientWallet || !activeAddress || !transactionSigner) return
-     if (!window.confirm("CRITICAL: You are initiating a Break-Glass override. This action is permanently logged on-chain as a RED ALERT and the patient will be notified immediately. Proceed?")) return
-
-     setSearching(true)
-     try {
-         const client = new QueueManagerClient({ appId: BigInt(queueAppId), algorand })
-         
-         // Submit an Emergency Request
-         await client.send.submitRequest({
-             args: { 
-                 target: patientWallet, 
-                 purpose: 'EMERGENCY: Hospital Override',
-                 isEmergency: true
-             },
-             sender: activeAddress,
-             signer: transactionSigner
-         })
-
-         enqueueSnackbar('EMERGENCY REQUEST SUBMITTED. Awaiting Patient/Admin approval in priority queue.', { variant: 'warning' })
-     } catch (e: any) {
-         enqueueSnackbar(`Override unresolvable: ${e.message}`, { variant: 'error' })
-     } finally {
-         setSearching(false)
-     }
-  }
-
-  const handleAddRecord = async () => {
-    if (!patientWallet || !recordText || !activeAddress || !transactionSigner) return
-
-    setUploading(true)
-    try {
-      // Encrypt the record text using the patient's wallet as the secret
-      const encryptedData = await encryptData(recordText, patientWallet)
-      // Upload to IPFS
-      const cid = await uploadToIPFS(encryptedData, `MedicalRecord_${patientSid}_${Date.now()}.enc`)
-      
-      const client = new MedicalRecordsClient({ appId: BigInt(medicalAppId), algorand })
-      const lastRecord = patientRecords[patientRecords.length - 1]
-      const previousCid = lastRecord ? lastRecord[3] : ''
-      
-      await client.send.addRecord({
-        args: { 
-            patient: patientWallet, 
-            cid, 
-            previousCid: previousCid,
-            recordType, 
-            billAmount: 0 
-        },
-        sender: activeAddress,
-        signer: transactionSigner,
-        extraFee: microAlgos(1000)
-      })
-      enqueueSnackbar('Zero-Knowledge payload accurately encrypted and anchored to chain state.', { variant: 'success' })
-      setRecordText('')
-      handleSearch()
-    } catch (e: any) {
-      enqueueSnackbar(`Integrity execution failed: ${e.message}`, { variant: 'error' })
-    } finally {
-      setUploading(false)
-    }
-  }
+    return () => { io?.disconnect(); };
+  }, [activeNav]);
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in-scale">
-        
-        {/* Verification Banner */}
-        {isVerifiedProvider && providerData ? (
-            <div className="vercel-card flex items-center justify-between border-transparent bg-gradient-to-r from-emerald-50 to-white">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
-                        <ShieldCheck size={20} />
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-gray-900">{providerData[0]}</h2>
-                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">License: {providerData[1]}</p>
-                    </div>
+    <div className="grain">
+      <div className="blobs">
+        <i className="b1" style={{ background: 'var(--sky)' }} />
+        <i className="b2" />
+        <i className="b3" style={{ background: 'var(--lime)' }} />
+      </div>
+      <div className="app">
+        <aside>
+          <div className="brand">
+            <div className="mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M3 21V7l9-4 9 4v14" />
+                <path d="M9 21v-6h6v6" />
+              </svg>
+            </div>
+            <b>Helix Hospital <span>/ Admin</span></b>
+          </div>
+
+          <div className="navgroup">
+            <h5>Operations</h5>
+            <div className={`navitem ${activeNav === 'overview' ? 'active' : ''}`} onClick={() => setActiveNav('overview')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
+              Overview
+            </div>
+            <div className={`navitem ${activeNav === 'patients' ? 'active' : ''}`} onClick={() => setActiveNav('patients')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
+              Patients<span className="badge">247</span>
+            </div>
+            <div className={`navitem ${activeNav === 'requests' ? 'active' : ''}`} onClick={() => setActiveNav('requests')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /></svg>
+              Access Requests<span className="badge">8</span>
+            </div>
+            <div className={`navitem ${activeNav === 'records' ? 'active' : ''}`} onClick={() => setActiveNav('records')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4" /></svg>
+              Records
+            </div>
+            <div className={`navitem ${activeNav === 'audit' ? 'active' : ''}`} onClick={() => setActiveNav('audit')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 7h18M3 12h18M3 17h18" /></svg>
+              Audit Log
+            </div>
+          </div>
+
+          <div className="navgroup" style={{ borderTop: '1px solid var(--line)' }}>
+            <h5>Admin</h5>
+            <div className={`navitem ${activeNav === 'staff' ? 'active' : ''}`} onClick={() => setActiveNav('staff')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              Staff
+            </div>
+            <div className={`navitem ${activeNav === 'compliance' ? 'active' : ''}`} onClick={() => setActiveNav('compliance')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /><path d="m9 12 2 2 4-4" /></svg>
+              Compliance
+            </div>
+            <div className={`navitem ${activeNav === 'settings' ? 'active' : ''}`} onClick={() => setActiveNav('settings')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" /></svg>
+              Settings
+            </div>
+          </div>
+
+          <div className="asidefoot">
+            <div style={{ marginBottom: '10px' }}>
+              <a href="/patient" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', fontSize: '12px', color: 'var(--ink-3)', fontFamily: 'var(--mono)', letterSpacing: '.1em', textTransform: 'uppercase', textDecoration: 'none', transition: 'all .2s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-3)')}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                Patient Portal
+              </a>
+            </div>
+            <div className="pill">
+              <span className="dot" />
+              <span className="label">Network</span>
+              <span className="val">TestNet</span>
+            </div>
+          </div>
+        </aside>
+
+        <main>
+          <div className="topbar">
+            <div>
+              <div className="crumb">Hospital · {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</div>
+              <h1>Helix <em style={{ fontStyle: 'italic', color: 'var(--sky)' }}>Hospital</em>.</h1>
+            </div>
+            <div className="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+              <input placeholder="Search patients, records, requests…" />
+              <span className="kbd">⌘ K</span>
+            </div>
+            <div className="topactions">
+              <span className="chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 21V7l9-4 9 4v14" /><path d="M9 21v-6h6v6" /></svg>
+                HLX-001
+                <span className="tag" style={{ background: 'var(--sky)' }}>Verified</span>
+              </span>
+              <button className="iconbtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" /><path d="M10 21a2 2 0 0 0 4 0" /></svg>
+                <span className="pip" />
+              </button>
+              <div className="avatar" style={{ background: 'var(--sky)', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600' }}>HL</div>
+            </div>
+          </div>
+
+          <div className="content">
+            {/* HERO */}
+            <div className="hero">
+              <div className="greet reveal d1" style={{ background: 'var(--ink)' }}>
+                <div>
+                  <div className="k">§ Hospital Overview — 18 April 2026</div>
+                  <h2>
+                    8 requests <em>pending</em>.<br />247 patients on record.
+                  </h2>
+                  <p>Three consent windows expire today. All record uploads are compliant. No unauthorised access attempts detected.</p>
                 </div>
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-200/50 px-3 py-1 rounded shadow-sm">Verified Actor Layer</span>
-            </div>
-        ) : (
-            <div className="vercel-card border-amber-100 bg-amber-50/50 p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
-                        <ShieldAlert className="text-amber-500" />
-                        <div>
-                            <h2 className="font-bold text-gray-800">Unverified Fiduciary</h2>
-                            <p className="text-xs text-gray-500">Register your hospital to interact with the DPDP ledger.</p>
-                        </div>
-                    </div>
+                <div className="foot">
+                  <button className="btn lime">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+                    Request access
+                  </button>
+                  <button className="btn ghost">Upload records</button>
+                  <button className="btn ghost">Export report</button>
                 </div>
-                <div className="flex gap-4">
-                    <input type="text" placeholder="Hospital Name" value={fidName} onChange={e => setFidName(e.target.value)} className="flex-1 bg-white border p-3 rounded-xl text-sm" />
-                    <input type="text" placeholder="License ID" value={fidLicense} onChange={e => setFidLicense(e.target.value)} className="flex-1 bg-white border p-3 rounded-xl text-sm" />
-                    <button onClick={handleRegisterFiduciary} className="bg-amber-600 text-white px-6 rounded-xl font-bold text-sm">Register</button>
+              </div>
+              <div className="id reveal d2">
+                <div className="row">
+                  <div>
+                    <div className="mono">Institution ID</div>
+                    <h3>Helix Hospital</h3>
+                  </div>
+                  <span className="tag" style={{ background: 'var(--sky)' }}>Verified</span>
                 </div>
-            </div>
-        )}
-
-        <div className="grid lg:grid-cols-3 gap-6">
-            
-            {/* Primary Workflow: Search */}
-            <div className="lg:col-span-2 flex flex-col gap-6">
-                
-                <section className="vercel-card">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-2">
-                            <Search className="text-gray-400" size={20} />
-                            <h2 className="text-lg font-bold text-gray-900">Patient Directory Hook</h2>
-                        </div>
-                        <div className="px-3 py-1 rounded-md text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-100">
-                            <Lock size={10} className="inline mr-1" /> End-to-End Encrypted
-                        </div>
-                    </div>
-                    
-                    <div className="flex gap-4">
-                        <div className="relative flex-1">
-                            <SearchCode className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input 
-                                type="text" 
-                                value={patientSid}
-                                onChange={(e) => setPatientSid(e.target.value.toUpperCase())}
-                                placeholder="Enter 6-char ShortID constraint (e.g. 482ABC)"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow font-mono font-bold text-gray-800"
-                                maxLength={6}
-                            />
-                        </div>
-                        <button 
-                            onClick={handleSearch}
-                            disabled={searching || patientSid.length !== 6}
-                            className="stripe-button-primary disabled:cursor-not-allowed"
-                        >
-                            {searching ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Identify Profile'}
-                        </button>
-                    </div>
-
-                    {/* Active Target Banner */}
-                    {patientWallet && (
-                        <div className="mt-6 p-5 rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-200 shadow-sm animate-fade-in-scale">
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-white shadow flex items-center justify-center text-gray-400 border border-gray-100">
-                                        <User size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-1">Target Address</p>
-                                        <code className="text-xs font-bold text-gray-800">{patientWallet}</code>
-                                    </div>
-                                </div>
-                                
-                                {!hasConsent ? (
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={handleRequestAccess}
-                                            className="stripe-button-outline text-amber-600 border-amber-200 hover:bg-amber-50"
-                                        >
-                                            <ShieldCheck size={16} /> Signal Request
-                                        </button>
-                                        <button 
-                                            onClick={handleBreakGlass}
-                                            className="stripe-button-primary bg-gradient-to-r from-red-500 to-red-600 shadow-red-500/20 hover:shadow-red-500/40"
-                                        >
-                                            <ShieldAlert size={16} /> Break Glass
-                                        </button>
-                                    </div>
-                                 ) : (
-                                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold tracking-tight">
-                                        <CheckCircle2 size={16} /> Zero-Knowledge Consent Mapped
-                                    </div>
-                                 )}
-                            </div>
-                        </div>
-                    )}
-                </section>
-
-                {hasConsent && (
-                    <section className="vercel-card animate-fade-in-scale min-h-[400px] flex flex-col">
-                        <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-3">
-                             <div className="flex items-center gap-2 text-gray-900">
-                                <Database size={18} className="text-teal-500" />
-                                <h2 className="text-lg font-bold">Encrypted Vault</h2>
-                            </div>
-                            <span className="text-xs font-semibold text-gray-500">{patientRecords.length} Items</span>
-                        </div>
-                        
-                        {patientRecords.length > 0 ? (
-                            <div className="flex flex-col gap-3">
-                                {patientRecords.map((rec, i) => (
-                                    <div key={i} className="flex flex-col p-4 rounded-xl border border-gray-100 bg-gray-50/50 shadow-sm gap-2">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400">
-                                                    <FileText size={16} />
-                                                </div>
-                                                <div>
-                                                    <div className="font-semibold text-gray-900 mb-0.5">{rec[5]}</div>
-                                                    <div className="text-[10px] font-mono text-gray-400">Anchor: {rec[3].slice(0, 16)}...</div>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xs font-semibold text-gray-700">{new Date(Number(rec[6]) * 1000).toLocaleDateString()}</div>
-                                                <div className="text-[10px] font-bold text-teal-600 uppercase tracking-widest mt-1">IPFS</div>
-                                            </div>
-                                        </div>
-                                        <button 
-                                            onClick={async (e) => {
-                                                const btn = e.currentTarget
-                                                const originalText = btn.innerText
-                                                try {
-                                                    btn.innerText = 'Decrypting...'
-                                                    btn.disabled = true
-                                                    const encryptedData = await fetchFromIPFS(rec[3])
-                                                    const decrypted = await decryptData(encryptedData, patientWallet as string)
-                                                    alert(`Decrypted Record:\n\n${decrypted}`)
-                                                } catch(err) {
-                                                    enqueueSnackbar('Failed to decrypt record', { variant: 'error' })
-                                                } finally {
-                                                    btn.innerText = originalText
-                                                    btn.disabled = false
-                                                }
-                                            }}
-                                            className="mt-2 py-2 px-3 bg-white border border-gray-200 rounded-lg shadow-sm text-xs font-semibold text-teal-700 hover:bg-teal-50 hover:border-teal-200 transition-all text-center"
-                                        >
-                                            View Patient Record
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="empty-state m-auto">
-                                <FileText className="empty-state-icon" />
-                                <h3 className="text-gray-900 font-semibold mb-1">State Unanchored</h3>
-                                <p className="text-gray-500 text-sm max-w-xs mx-auto">No prior diagnostic or summary records have been securely bridged to this proxy node.</p>
-                            </div>
-                        )}
-                    </section>
-                )}
+                <div className="sid">HLX<em>–001</em></div>
+                <div className="meta">
+                  <span>Chain · <em>Algorand</em></span>
+                  <span>Since <em>Jan 2025</em></span>
+                </div>
+              </div>
             </div>
 
-            {/* Actions Sidebar */}
-            <div className="flex flex-col gap-6">
-                
-                {patientWallet && hasConsent && (
-                    <section className="vercel-card flex flex-col gap-5 border-blue-100 bg-gradient-to-b from-blue-50/30 to-white">
-                        <div className="flex items-center gap-2 text-blue-700 mb-2">
-                            <Plus size={20} /> <h2 className="font-bold text-lg">Deploy Payload</h2>
-                        </div>
-                        
-                        <div>
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 block mb-2">Diagnostic Class</label>
-                            <select 
-                                value={recordType}
-                                onChange={(e) => setRecordType(e.target.value)}
-                                className="w-full font-semibold px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            >
-                                <option value="Clinical Summary">Clinical Summary</option>
-                                <option value="Lab Report">Lab Report</option>
-                                <option value="Prescription">Prescription</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 block mb-2">Record Content</label>
-                            <textarea 
-                                value={recordText}
-                                onChange={(e) => setRecordText(e.target.value)}
-                                placeholder="Enter diagnostic findings, vitals, or clinical notes..."
-                                rows={4}
-                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
-                            />
-                        </div>
-                        
-                        <button 
-                            onClick={handleAddRecord}
-                            disabled={uploading || !recordText}
-                            className="stripe-button-primary mt-2"
-                        >
-                            {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Upload size={16} /> Anchor to Blockchain</>}
-                        </button>
-                    </section>
-                )}
-
-                <section className="vercel-card flex flex-col min-h-[300px]">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
-                        <Clock size={14} className="text-amber-500" /> Outgoing Requests
-                    </h3>
-                    
-                    {outgoingRequests.length > 0 ? (
-                        <div className="flex flex-col gap-3">
-                            {outgoingRequests.map((req, i) => (
-                                <div key={i} className="p-3 rounded-xl border border-gray-100 bg-white hover:bg-gray-50 flex flex-col gap-1 transition-colors shadow-sm">
-                                    <div className="flex justify-between items-center opacity-90">
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                           PT: {req.patient.slice(0, 6)}...{req.patient.slice(-4)}
-                                        </span>
-                                        {req.status === 'Pending' && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black rounded uppercase">Pending</span>}
-                                        {req.status === 'Approved' && <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-black rounded uppercase">Approved</span>}
-                                        {req.status === 'Rejected' && <span className="px-1.5 py-0.5 bg-red-50 text-red-600 text-[9px] font-black rounded uppercase">Rejected</span>}
-                                    </div>
-                                    <div className="text-xs font-semibold text-gray-800">{req.purpose}</div>
-                                    <div className="text-[9px] text-gray-400 mt-1">{new Date(req.timestamp).toLocaleString()}</div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-10 text-center m-auto">
-                            <AlertCircle size={28} className="text-[#E2E8F0] mb-2" />
-                            <h3 className="text-[#0F172A] text-sm font-semibold mb-1">Queue Empty</h3>
-                            <p className="text-xs text-[#64748B] max-w-xs leading-relaxed">No pending requests sent from your clinical node.</p>
-                        </div>
-                    )}
-                </section>
-
-                {/* Audit Log Section */}
-                <section className="vercel-card flex flex-col min-h-[300px]">
-                    <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
-                        <Fingerprint size={18} className="text-gray-400" />
-                        <h2 className="font-bold text-gray-900">Recent Activity</h2>
-                    </div>
-                    {auditLogs.length > 0 ? (
-                        <div className="flex flex-col gap-3 overflow-y-auto max-h-[400px] pr-2">
-                            {auditLogs.map((log) => (
-                                <div key={log.id} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex flex-col gap-1 hover:border-gray-200 transition-colors">
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                        <span className="text-blue-600">{log.type}</span>
-                                        <span className="text-gray-500">{new Date(log.timestamp).toLocaleString()}</span>
-                                    </div>
-                                    <div className="text-[10px] font-bold text-gray-800">{log.provider}</div>
-                                    <p className="font-mono text-[9px] text-gray-400 break-all">
-                                        "{log.purpose}"
-                                    </p>
-                                    <a 
-                                        href={`https://testnet.explorer.perawallet.app/tx/${log.txId}`} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="text-[8px] text-blue-400 hover:underline mt-1 flex items-center gap-1"
-                                    >
-                                        <ExternalLink size={8} /> View on Explorer
-                                    </a>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-10 text-center">
-                            <Fingerprint size={28} className="text-gray-300 mb-3" />
-                            <h2 className="text-gray-800 text-sm font-semibold mb-1">Clean State</h2>
-                            <p className="text-xs text-gray-400">No cryptographic read footprints detected on your clinical node.</p>
-                        </div>
-                    )}
-                </section>
+            {/* KPIs */}
+            <div className="kpis">
+              <div className="kpi reveal d1" data-c="sky">
+                <div className="top">
+                  <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></div>
+                  <span className="delta">+12 this week</span>
+                </div>
+                <b>247</b>
+                <span className="lbl">Active patients</span>
+                <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 22 L20 20 L40 16 L60 14 L80 10 L100 8 L120 5 L140 2" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
+              </div>
+              <div className="kpi reveal d2" data-c="coral">
+                <div className="top">
+                  <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /></svg></div>
+                  <span className="delta down">8 pending</span>
+                </div>
+                <b>8</b>
+                <span className="lbl">Consent requests</span>
+                <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 10 L20 12 L40 8 L60 14 L80 10 L100 16 L120 12 L140 8" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
+              </div>
+              <div className="kpi reveal d3" data-c="lime">
+                <div className="top">
+                  <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" /></svg></div>
+                  <span className="delta">+34 today</span>
+                </div>
+                <b>1,842</b>
+                <span className="lbl">Records uploaded</span>
+                <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 24 L20 22 L40 18 L60 16 L80 12 L100 10 L120 6 L140 4" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
+              </div>
+              <div className="kpi reveal d4" data-c="violet">
+                <div className="top">
+                  <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg></div>
+                  <span className="delta">18 online</span>
+                </div>
+                <b>64</b>
+                <span className="lbl">Staff registered</span>
+                <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 14 L20 12 L40 14 L60 10 L80 12 L100 8 L120 10 L140 6" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
+              </div>
             </div>
-        </div>
+
+            {/* MAIN GRID */}
+            <div className="grid">
+              <div className="card reveal d1">
+                <div className="head">
+                  <div>
+                    <h3>Access requests</h3>
+                    <div className="sub" style={{ marginTop: '4px' }}>8 awaiting patient approval</div>
+                  </div>
+                  <div className="actions">
+                    <div className="tabs">
+                      <button className={activeTab === 'all' ? 'on' : ''} onClick={() => setActiveTab('all')}>All</button>
+                      <button className={activeTab === 'pending' ? 'on' : ''} onClick={() => setActiveTab('pending')}>Pending</button>
+                      <button className={activeTab === 'approved' ? 'on' : ''} onClick={() => setActiveTab('approved')}>Approved</button>
+                    </div>
+                  </div>
+                </div>
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Scope</th>
+                      <th>Requested by</th>
+                      <th>Status</th>
+                      <th>Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { av: 'IK', c: 'lime', name: 'Ishaan Kapoor', id: '847KOR', scope: 'LAB RESULTS · 48H', by: 'Dr. Hanwa', status: 'pending', time: '2h ago' },
+                      { av: 'PR', c: 'coral', name: 'Priya Rajan', id: '512RAJ', scope: 'IMAGING · 24H', by: 'Dr. Seth', status: 'approved', time: '4h ago' },
+                      { av: 'AM', c: 'sky', name: 'Arjun Mehta', id: '391MEH', scope: 'PROFILE · 72H', by: 'Dr. Hanwa', status: 'pending', time: '6h ago' },
+                      { av: 'SV', c: 'sun', name: 'Sneha Verma', id: '204VER', scope: 'RX VIEW · 12H', by: 'Dr. Patel', status: 'approved', time: 'Yesterday' },
+                      { av: 'RN', c: 'violet', name: 'Rohan Nair', id: '768NAI', scope: 'FULL CHART · 7D', by: 'Dr. Seth', status: 'pending', time: 'Yesterday' },
+                    ].map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <div className="avn">
+                            <div className="av" data-c={row.c}>{row.av}</div>
+                            <div>
+                              <div className="nm">{row.name}</div>
+                              <div className="rl">{row.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{row.scope}</td>
+                        <td style={{ fontSize: '13px', color: 'var(--ink-2)' }}>{row.by}</td>
+                        <td><span className={`pill-s ${row.status === 'approved' ? 'active' : 'pending'}`}>{row.status}</span></td>
+                        <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{row.time}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="card reveal d2">
+                <div className="head">
+                  <h3>Audit log</h3>
+                </div>
+                <div className="audit">
+                  {[
+                    { c: 'lime', t: '<em>Dr. Hanwa</em> accessed Ishaan K. lab results', d: 'READ · LAB_RESULTS', time: '14:32' },
+                    { c: 'sky', t: 'Record uploaded for <em>Priya Rajan</em>', d: 'WRITE · IMAGING', time: '13:18' },
+                    { c: 'coral', t: 'Access request submitted for <em>Rohan Nair</em>', d: 'REQUEST · FULL_CHART', time: '11:55' },
+                    { c: 'violet', t: '<em>Sneha Verma</em> revoked consent early', d: 'REVOKE · RX_VIEW', time: '10:40' },
+                    { c: 'lime', t: 'New patient <em>Arjun Mehta</em> onboarded', d: 'REGISTER · PATIENT', time: '09:15' },
+                    { c: 'sky', t: '<em>Dr. Seth</em> consent approved by patient', d: 'CONSENT · IMAGING', time: '08:50' },
+                  ].map((item, i) => (
+                    <div className="audit-item" key={i}>
+                      <div className="pin" data-c={item.c} />
+                      <div className="body">
+                        <div className="t" dangerouslySetInnerHTML={{ __html: item.t }} />
+                        <div className="d">{item.d}</div>
+                      </div>
+                      <time>{item.time}</time>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ACTIVE PATIENTS RECORDS */}
+            <div className="card reveal d2">
+              <div className="head">
+                <div><h3>Recent uploads</h3><div className="sub" style={{ marginTop: '4px' }}>34 records added today</div></div>
+              </div>
+              <div className="recs">
+                {[
+                  { c: 'lime', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 2v6L4 18a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 8V2" /></svg>, label: 'Lab Results', patient: 'Ishaan Kapoor', cid: 'ipfs://Qm7dF...a4b2', chip: 'verified' },
+                  { c: 'coral', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 9v12" /></svg>, label: 'MRI Imaging', patient: 'Priya Rajan', cid: 'ipfs://Qm3aK...c8d1', chip: 'encrypted' },
+                  { c: 'sky', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" /></svg>, label: 'Discharge Notes', patient: 'Arjun Mehta', cid: 'ipfs://Qm9bL...e6f3', chip: 'pending' },
+                ].map((rec, i) => (
+                  <div className="rec" data-c={rec.c} key={i}>
+                    <div className="top">
+                      <div className="icn">{rec.icon}</div>
+                      <span className="chip-s">{rec.chip}</span>
+                    </div>
+                    <h4>{rec.label}</h4>
+                    <p>{rec.patient}</p>
+                    <div className="cid">{rec.cid}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
-  )
+  );
 }
-
-export default HospitalPortal
