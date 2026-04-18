@@ -1,0 +1,804 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 1 0 2 8
+    bytecblock 0x7265715f 0x02 0x00 0x151f7c75 "req_counter" "admin" 0x01 0x7072715f 0x0002
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/QueueManager/contract.py:25
+    // self.request_counter.value = UInt64(0)
+    bytec 4 // "req_counter"
+    intc_1 // 0
+    app_global_put
+    // smart_contracts/QueueManager/contract.py:29
+    // self.admin.value = arc4.Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM")
+    bytec 5 // "admin"
+    pushbytes base32(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPA) // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/QueueManager/contract.py:21
+    // class QueueManager(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@15
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0x95122593 0x8ec1c343 0xfb890629 0x0eddde19 0x5f412679 0x83ad3ba6 // method "submit_request(address,string,bool)uint64", method "approve_request(uint64)void", method "reject_request(uint64)void", method "check_status(uint64)uint8", method "get_patient_queue(address)(uint64,address,address,string,uint8,uint64,uint8)[]", method "get_request(uint64)(uint64,address,address,string,uint8,uint64,uint8)"
+    txna ApplicationArgs 0
+    match submit_request approve_request reject_request check_status get_patient_queue get_request
+    err
+
+main___algopy_default_create@15:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// _puya_lib.arc4.dynamic_array_concat_dynamic_element(array_items_count: uint64, array_head_and_tail: bytes, new_items_count: uint64, new_head_and_tail: bytes) -> bytes:
+dynamic_array_concat_dynamic_element:
+    proto 4 1
+    pushbytes ""
+    dup
+    frame_dig -2
+    intc_2 // 2
+    *
+    frame_dig -4
+    intc_2 // 2
+    *
+    intc_1 // 0
+
+dynamic_array_concat_dynamic_element_for_header@1:
+    frame_dig 4
+    frame_dig 3
+    <
+    bz dynamic_array_concat_dynamic_element_after_for@4
+    frame_dig -3
+    frame_dig 4
+    dup
+    cover 2
+    extract_uint16
+    frame_dig 2
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    intc_2 // 2
+    +
+    frame_bury 4
+    b dynamic_array_concat_dynamic_element_for_header@1
+
+dynamic_array_concat_dynamic_element_after_for@4:
+    frame_dig -3
+    len
+    frame_bury 0
+    intc_1 // 0
+    frame_bury 4
+
+dynamic_array_concat_dynamic_element_for_header@5:
+    frame_dig 4
+    frame_dig 2
+    <
+    bz dynamic_array_concat_dynamic_element_after_for@8
+    frame_dig -1
+    frame_dig 4
+    dup
+    cover 2
+    extract_uint16
+    frame_dig 0
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    intc_2 // 2
+    +
+    frame_bury 4
+    b dynamic_array_concat_dynamic_element_for_header@5
+
+dynamic_array_concat_dynamic_element_after_for@8:
+    frame_dig -4
+    frame_dig -2
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    concat
+    frame_dig -3
+    frame_dig 3
+    frame_dig 0
+    substring3
+    concat
+    frame_dig -1
+    len
+    frame_dig -1
+    frame_dig 2
+    uncover 2
+    substring3
+    concat
+    frame_bury 0
+    retsub
+
+
+// smart_contracts.QueueManager.contract.QueueManager.submit_request[routing]() -> void:
+submit_request:
+    // smart_contracts/QueueManager/contract.py:37
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dupn 2
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    intc_1 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 3
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.bool
+    // smart_contracts/QueueManager/contract.py:45
+    // self.request_counter.value += UInt64(1)
+    intc_1 // 0
+    bytec 4 // "req_counter"
+    app_global_get_ex
+    assert // check self.request_counter exists
+    intc_0 // 1
+    +
+    bytec 4 // "req_counter"
+    dig 1
+    app_global_put
+    // smart_contracts/QueueManager/contract.py:46
+    // req_id = arc4.UInt64(self.request_counter.value)
+    itob
+    dup
+    cover 4
+    // smart_contracts/QueueManager/contract.py:48
+    // req_type = arc4.UInt8(2) if is_emergency.native else arc4.UInt8(1)
+    swap
+    intc_1 // 0
+    getbit
+    bytec 6 // 0x01
+    bytec_1 // 0x02
+    uncover 2
+    select
+    dup
+    cover 2
+    cover 4
+    // smart_contracts/QueueManager/contract.py:53
+    // requester=arc4.Address(Txn.sender),
+    txn Sender
+    // smart_contracts/QueueManager/contract.py:49
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    // smart_contracts/QueueManager/contract.py:57
+    // timestamp=arc4.UInt64(now),
+    itob
+    // smart_contracts/QueueManager/contract.py:51-59
+    // new_req = QueueRequest(
+    //     id=req_id,
+    //     requester=arc4.Address(Txn.sender),
+    //     target=target,
+    //     purpose=purpose,
+    //     request_type=req_type,
+    //     timestamp=arc4.UInt64(now),
+    //     status=arc4.UInt8(0) # Pending
+    // )
+    dig 2
+    uncover 2
+    concat
+    dig 5
+    concat
+    pushbytes 0x0054
+    concat
+    uncover 3
+    concat
+    swap
+    concat
+    // smart_contracts/QueueManager/contract.py:58
+    // status=arc4.UInt8(0) # Pending
+    bytec_2 // 0x00
+    // smart_contracts/QueueManager/contract.py:51-59
+    // new_req = QueueRequest(
+    //     id=req_id,
+    //     requester=arc4.Address(Txn.sender),
+    //     target=target,
+    //     purpose=purpose,
+    //     request_type=req_type,
+    //     timestamp=arc4.UInt64(now),
+    //     status=arc4.UInt8(0) # Pending
+    // )
+    concat
+    uncover 2
+    concat
+    // smart_contracts/QueueManager/contract.py:61
+    // self.requests[req_id] = new_req.copy()
+    bytec_0 // 0x7265715f
+    uncover 2
+    concat
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/QueueManager/contract.py:63
+    // if target in self.patient_requests:
+    bytec 7 // 0x7072715f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz submit_request_else_body@3
+    // smart_contracts/QueueManager/contract.py:64
+    // arr = self.patient_requests[target].copy()
+    dupn 2
+    box_get
+    assert // check self.patient_requests entry exists
+    // smart_contracts/QueueManager/contract.py:65
+    // arr.append(req_id)
+    dup
+    dig 5
+    concat // on error: max array length exceeded
+    swap
+    intc_1 // 0
+    extract_uint16
+    intc_0 // 1
+    +
+    itob
+    extract 6 2
+    replace2 0
+    // smart_contracts/QueueManager/contract.py:66
+    // self.patient_requests[target] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+
+submit_request_after_if_else@4:
+    // smart_contracts/QueueManager/contract.py:71
+    // arc4.emit("RequestSubmitted(uint64,address,address,uint8)", req_id, arc4.Address(Txn.sender), target, req_type)
+    txn Sender
+    dig 3
+    dup
+    uncover 2
+    concat
+    dig 5
+    concat
+    dig 3
+    concat
+    pushbytes 0x0a6de17f // method "RequestSubmitted(uint64,address,address,uint8)"
+    swap
+    concat
+    log
+    // smart_contracts/QueueManager/contract.py:37
+    // @arc4.abimethod
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+submit_request_else_body@3:
+    // smart_contracts/QueueManager/contract.py:68
+    // arr = arc4.DynamicArray[arc4.UInt64](req_id)
+    pushbytes 0x0001
+    dig 3
+    concat
+    // smart_contracts/QueueManager/contract.py:69
+    // self.patient_requests[target] = arr.copy()
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b submit_request_after_if_else@4
+
+
+// smart_contracts.QueueManager.contract.QueueManager.approve_request[routing]() -> void:
+approve_request:
+    // smart_contracts/QueueManager/contract.py:74
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dupn 2
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/QueueManager/contract.py:77
+    // req = self.requests[request_id].copy()
+    bytec_0 // 0x7265715f
+    swap
+    concat
+    dupn 2
+    // smart_contracts/QueueManager/contract.py:77-78
+    // req = self.requests[request_id].copy()
+    // assert req.status == arc4.UInt8(0), "Request not pending"
+    pushint 83
+    intc_0 // 1
+    box_extract
+    // smart_contracts/QueueManager/contract.py:78
+    // assert req.status == arc4.UInt8(0), "Request not pending"
+    bytec_2 // 0x00
+    b==
+    assert // Request not pending
+    // smart_contracts/QueueManager/contract.py:80
+    // caller = arc4.Address(Txn.sender)
+    txn Sender
+    dup
+    cover 2
+    // smart_contracts/QueueManager/contract.py:81
+    // is_owner = caller == req.target
+    dig 1
+    pushints 40 32
+    box_extract
+    dig 1
+    ==
+    cover 2
+    // smart_contracts/QueueManager/contract.py:82
+    // is_admin = caller == self.admin.value
+    intc_1 // 0
+    bytec 5 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    cover 2
+    // smart_contracts/QueueManager/contract.py:84
+    // if req.request_type == arc4.UInt8(2): # Emergency
+    pushint 74
+    intc_0 // 1
+    box_extract
+    bytec_1 // 0x02
+    b==
+    bz approve_request_else_body@3
+    // smart_contracts/QueueManager/contract.py:85
+    // assert is_admin or is_owner, "Only admin or target can override emergency"
+    dig 1
+    ||
+    assert // Only admin or target can override emergency
+
+approve_request_after_if_else@4:
+    // smart_contracts/QueueManager/contract.py:89-90
+    // req.status = arc4.UInt8(1) # Approved
+    // self.requests[request_id] = req.copy()
+    dig 2
+    pushint 83
+    // smart_contracts/QueueManager/contract.py:89
+    // req.status = arc4.UInt8(1) # Approved
+    bytec 6 // 0x01
+    // smart_contracts/QueueManager/contract.py:89-90
+    // req.status = arc4.UInt8(1) # Approved
+    // self.requests[request_id] = req.copy()
+    box_replace
+    // smart_contracts/QueueManager/contract.py:91
+    // arc4.emit("RequestApproved(uint64,address)", request_id, caller)
+    dig 3
+    dig 2
+    concat
+    pushbytes 0xdce53a10 // method "RequestApproved(uint64,address)"
+    swap
+    concat
+    log
+    // smart_contracts/QueueManager/contract.py:74
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+approve_request_else_body@3:
+    // smart_contracts/QueueManager/contract.py:87
+    // assert is_owner, "Only target patient can approve"
+    assert // Only target patient can approve
+    b approve_request_after_if_else@4
+
+
+// smart_contracts.QueueManager.contract.QueueManager.reject_request[routing]() -> void:
+reject_request:
+    // smart_contracts/QueueManager/contract.py:93
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dupn 2
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/QueueManager/contract.py:96
+    // req = self.requests[request_id].copy()
+    bytec_0 // 0x7265715f
+    swap
+    concat
+    dupn 2
+    // smart_contracts/QueueManager/contract.py:96-97
+    // req = self.requests[request_id].copy()
+    // assert req.status == arc4.UInt8(0), "Request not pending"
+    pushint 83
+    intc_0 // 1
+    box_extract
+    // smart_contracts/QueueManager/contract.py:97
+    // assert req.status == arc4.UInt8(0), "Request not pending"
+    bytec_2 // 0x00
+    b==
+    assert // Request not pending
+    // smart_contracts/QueueManager/contract.py:99
+    // caller = arc4.Address(Txn.sender)
+    txn Sender
+    dup
+    cover 2
+    // smart_contracts/QueueManager/contract.py:100
+    // is_owner = caller == req.target
+    dig 1
+    pushints 40 32
+    box_extract
+    dig 1
+    ==
+    cover 2
+    // smart_contracts/QueueManager/contract.py:101
+    // is_admin = caller == self.admin.value
+    intc_1 // 0
+    bytec 5 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    cover 2
+    // smart_contracts/QueueManager/contract.py:103
+    // if req.request_type == arc4.UInt8(2): # Emergency
+    pushint 74
+    intc_0 // 1
+    box_extract
+    bytec_1 // 0x02
+    b==
+    bz reject_request_else_body@3
+    // smart_contracts/QueueManager/contract.py:104
+    // assert is_admin or is_owner, "Only admin or target can override emergency"
+    dig 1
+    ||
+    assert // Only admin or target can override emergency
+
+reject_request_after_if_else@4:
+    // smart_contracts/QueueManager/contract.py:108-109
+    // req.status = arc4.UInt8(2) # Rejected
+    // self.requests[request_id] = req.copy()
+    dig 2
+    pushint 83
+    // smart_contracts/QueueManager/contract.py:108
+    // req.status = arc4.UInt8(2) # Rejected
+    bytec_1 // 0x02
+    // smart_contracts/QueueManager/contract.py:108-109
+    // req.status = arc4.UInt8(2) # Rejected
+    // self.requests[request_id] = req.copy()
+    box_replace
+    // smart_contracts/QueueManager/contract.py:110
+    // arc4.emit("RequestRejected(uint64,address)", request_id, caller)
+    dig 3
+    dig 2
+    concat
+    pushbytes 0x4631d06c // method "RequestRejected(uint64,address)"
+    swap
+    concat
+    log
+    // smart_contracts/QueueManager/contract.py:93
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+reject_request_else_body@3:
+    // smart_contracts/QueueManager/contract.py:106
+    // assert is_owner, "Only target patient can reject"
+    assert // Only target patient can reject
+    b reject_request_after_if_else@4
+
+
+// smart_contracts.QueueManager.contract.QueueManager.check_status[routing]() -> void:
+check_status:
+    // smart_contracts/QueueManager/contract.py:112
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/QueueManager/contract.py:115
+    // assert request_id in self.requests, "Request not found"
+    bytec_0 // 0x7265715f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Request not found
+    // smart_contracts/QueueManager/contract.py:117-119
+    // # Basic expiration logic (e.g. 24h) can be checked lazily
+    // # Here we just return status directly.
+    // return req.status
+    pushint 83
+    intc_0 // 1
+    box_extract
+    // smart_contracts/QueueManager/contract.py:112
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.QueueManager.contract.QueueManager.get_patient_queue[routing]() -> void:
+get_patient_queue:
+    intc_1 // 0
+    dupn 2
+    pushbytes ""
+    dupn 2
+    // smart_contracts/QueueManager/contract.py:121
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/QueueManager/contract.py:124
+    // ret = arc4.DynamicArray[QueueRequest]()
+    pushbytes 0x0000
+    swap
+    // smart_contracts/QueueManager/contract.py:125
+    // if patient in self.patient_requests:
+    bytec 7 // 0x7072715f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz get_patient_queue_after_if_else@17
+    // smart_contracts/QueueManager/contract.py:127-128
+    // # Pass 1: Emergency pending
+    // for i in urange(arr.length):
+    dup
+    intc_1 // 0
+    intc_2 // 2
+    box_extract
+    btoi
+    bury 5
+    intc_1 // 0
+    bury 3
+
+get_patient_queue_for_header@3:
+    // smart_contracts/QueueManager/contract.py:127-128
+    // # Pass 1: Emergency pending
+    // for i in urange(arr.length):
+    dig 2
+    dig 5
+    <
+    bz get_patient_queue_after_for@9
+    // smart_contracts/QueueManager/contract.py:129
+    // req_id = arr[i]
+    dig 2
+    intc_3 // 8
+    *
+    intc_2 // 2
+    +
+    dig 1
+    swap
+    intc_3 // 8
+    box_extract
+    // smart_contracts/QueueManager/contract.py:130
+    // req = self.requests[req_id].copy()
+    bytec_0 // 0x7265715f
+    swap
+    concat
+    dup
+    bury 9
+    dup
+    box_get
+    swap
+    bury 8
+    assert // check self.requests entry exists
+    // smart_contracts/QueueManager/contract.py:130-131
+    // req = self.requests[req_id].copy()
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(2):
+    pushint 83
+    intc_0 // 1
+    box_extract
+    // smart_contracts/QueueManager/contract.py:131
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(2):
+    bytec_2 // 0x00
+    b==
+    bz get_patient_queue_after_if_else@7
+    // smart_contracts/QueueManager/contract.py:130-131
+    // req = self.requests[req_id].copy()
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(2):
+    dig 7
+    pushint 74
+    intc_0 // 1
+    box_extract
+    // smart_contracts/QueueManager/contract.py:131
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(2):
+    bytec_1 // 0x02
+    b==
+    bz get_patient_queue_after_if_else@7
+    // smart_contracts/QueueManager/contract.py:132
+    // ret.append(req.copy())
+    dig 1
+    dup
+    intc_1 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 8 // 0x0002
+    dig 8
+    concat
+    cover 2
+    intc_0 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    bury 2
+
+get_patient_queue_after_if_else@7:
+    // smart_contracts/QueueManager/contract.py:127-128
+    // # Pass 1: Emergency pending
+    // for i in urange(arr.length):
+    dig 2
+    intc_0 // 1
+    +
+    bury 3
+    b get_patient_queue_for_header@3
+
+get_patient_queue_after_for@9:
+    // smart_contracts/QueueManager/contract.py:133-134
+    // # Pass 2: Normal pending
+    // for i in urange(arr.length):
+    dup
+    intc_1 // 0
+    intc_2 // 2
+    box_extract
+    btoi
+    bury 4
+    intc_1 // 0
+    bury 3
+
+get_patient_queue_for_header@10:
+    // smart_contracts/QueueManager/contract.py:133-134
+    // # Pass 2: Normal pending
+    // for i in urange(arr.length):
+    dig 2
+    dig 4
+    <
+    bz get_patient_queue_after_if_else@17
+    // smart_contracts/QueueManager/contract.py:135
+    // req_id = arr[i]
+    dig 2
+    intc_3 // 8
+    *
+    intc_2 // 2
+    +
+    dig 1
+    swap
+    intc_3 // 8
+    box_extract
+    // smart_contracts/QueueManager/contract.py:136
+    // req = self.requests[req_id].copy()
+    bytec_0 // 0x7265715f
+    swap
+    concat
+    dup
+    bury 8
+    dup
+    box_get
+    swap
+    bury 8
+    assert // check self.requests entry exists
+    // smart_contracts/QueueManager/contract.py:136-137
+    // req = self.requests[req_id].copy()
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(1):
+    pushint 83
+    intc_0 // 1
+    box_extract
+    // smart_contracts/QueueManager/contract.py:137
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(1):
+    bytec_2 // 0x00
+    b==
+    bz get_patient_queue_after_if_else@14
+    // smart_contracts/QueueManager/contract.py:136-137
+    // req = self.requests[req_id].copy()
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(1):
+    dig 6
+    pushint 74
+    intc_0 // 1
+    box_extract
+    // smart_contracts/QueueManager/contract.py:137
+    // if req.status == arc4.UInt8(0) and req.request_type == arc4.UInt8(1):
+    bytec 6 // 0x01
+    b==
+    bz get_patient_queue_after_if_else@14
+    // smart_contracts/QueueManager/contract.py:138
+    // ret.append(req.copy())
+    dig 1
+    dup
+    intc_1 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 8 // 0x0002
+    dig 8
+    concat
+    cover 2
+    intc_0 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    bury 2
+
+get_patient_queue_after_if_else@14:
+    // smart_contracts/QueueManager/contract.py:133-134
+    // # Pass 2: Normal pending
+    // for i in urange(arr.length):
+    dig 2
+    intc_0 // 1
+    +
+    bury 3
+    b get_patient_queue_for_header@10
+
+get_patient_queue_after_if_else@17:
+    // smart_contracts/QueueManager/contract.py:121
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    dig 2
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.QueueManager.contract.QueueManager.get_request[routing]() -> void:
+get_request:
+    // smart_contracts/QueueManager/contract.py:141
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/QueueManager/contract.py:143
+    // assert request_id in self.requests, "Not found"
+    bytec_0 // 0x7265715f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Not found
+    // smart_contracts/QueueManager/contract.py:144
+    // return self.requests[request_id].copy()
+    box_get
+    pop
+    // smart_contracts/QueueManager/contract.py:141
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return

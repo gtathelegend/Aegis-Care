@@ -134,3 +134,21 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Aegis Care workspace artifacts
+.claude/
+*.code-workspace
+
+# Local credentials and helper outputs
+account.txt
+deployer.txt
+
+# Contract/frontend local diagnostic files
+projects/**/build_err*.txt
+projects/**/deploy_err*.txt
+projects/**/deploy_output*.txt
+projects/**/build_log.txt
+projects/**/build_check.txt
+projects/**/ts_check*.txt
+projects/**/ts_errors.txt
+projects/**/vite_errors.txt

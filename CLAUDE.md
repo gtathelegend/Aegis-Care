@@ -1,8 +1,8 @@
-# Aegis-Care: Healthcare Data Management on Algorand
+# Aegis Care: Healthcare Data Management on Algorand
 
 ## Project Overview
 
-**Aegis-Care** is a blockchain-based healthcare data management system built on the **Algorand** network. It provides a decentralized, privacy-preserving platform for managing medical records, prescriptions, volunteer data, and healthcare access control. The project uses Algorand smart contracts (Python via Puya/AlgoKit) and IPFS (via CID - Content Identifier) for data storage.
+**Aegis Care** is a blockchain-based healthcare data management system built on the **Algorand** network. It provides a decentralized, privacy-preserving platform for managing medical records, prescriptions, volunteer data, and healthcare access control. The project uses Algorand smart contracts (Python via Puya/AlgoKit) and IPFS (via CID - Content Identifier) for data storage.
 
 **Primary Goals:**
 - Enable secure medical record management on-chain
@@ -37,7 +37,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     AEGIS-CARE ECOSYSTEM                     │
+│                     AEGIS CARE ECOSYSTEM                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
@@ -721,7 +721,7 @@ algokit project bootstrap all
 
 ## Team & Contacts
 
-**Project:** Aegis-Care v1.0  
+**Project:** Aegis Care v1.0  
 **Status:** Initial Release (Healthcare RBAC + Medical Records + Audit)  
 **Git:** Main branch (ba711f1 V1.0, 34d47ca Initial commit)
 
