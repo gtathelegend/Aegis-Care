@@ -22,6 +22,9 @@ let supportedWallets: SupportedWallet[]
 if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
   const kmdConfig = getKmdConfigFromViteEnvironment()
   supportedWallets = [
+    { id: WalletId.DEFLY },
+    { id: WalletId.PERA },
+    { id: WalletId.EXODUS },
     {
       id: WalletId.KMD,
       options: {

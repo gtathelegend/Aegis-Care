@@ -24,6 +24,17 @@ const ConnectWallet = ({ openModal, closeModal }: ConnectWalletInterface) => {
           </button>
         </div>
 
+        {!activeAddress && (
+          <a
+            href="https://perawallet.app/"
+            target="_blank"
+            rel="noreferrer"
+            className="w-full flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-semibold py-3 px-4 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-colors mb-4"
+          >
+            Add Pera Wallet
+          </a>
+        )}
+
         <div className="flex flex-col gap-4">
           {activeAddress ? (
             <>
@@ -62,6 +73,8 @@ const ConnectWallet = ({ openModal, closeModal }: ConnectWalletInterface) => {
                   wallet.connect().catch((e) => {
                       if (e?.message?.includes('currently connected')) {
                           console.warn('Handling concurrent wallet connection request')
+                    } else if (wallet.id === WalletId.PERA) {
+                      window.open('https://perawallet.app/', '_blank', 'noopener,noreferrer')
                       } else {
                            console.error(e)
                       }
@@ -89,7 +102,7 @@ const ConnectWallet = ({ openModal, closeModal }: ConnectWalletInterface) => {
 
         {!activeAddress && (
           <p className="mt-8 text-xs font-semibold text-gray-400 text-center px-4 leading-relaxed tracking-wider">
-            By connecting, you securely verify interactions on the Algorand blockchain.
+            New users: install Pera Wallet first, create your account in the app, then connect it here.
           </p>
         )}
       </div>

@@ -1,18 +1,89 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import '../styles/dashboard.css';
 import QRModal from '../components/QRModal';
 import RecordSlider from '../components/RecordSlider';
-import { medicalRecords, consents, auditLog, inboundRequests, getPatientById, recordTypeLabel } from '../lib/mockdb';
+import { medicalRecords, consents, auditLog, inboundRequests, getPatientById, patients, recordTypeLabel } from '../lib/mockdb';
 import type { MedicalRecord } from '../lib/mockdb';
+import { useWallet } from '@txnlab/use-wallet-react';
+import { useRole } from '../hooks/useRole';
+import { fetchPatientRecords } from '../lib/medicalPortalData';
 
-const patient = getPatientById('p1');
+const DEFAULT_PATIENT = getPatientById('p1');
 
 export default function PatientPortal() {
+  const { activeAddress } = useWallet();
+  const { shortId, isProxyActive, proxyAddress, proxyShortId } = useRole();
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('all');
   const [qrRecord, setQrRecord] = useState<MedicalRecord | null>(null);
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
+  const [liveRecords, setLiveRecords] = useState<MedicalRecord[]>(medicalRecords.filter((record) => record.patientId === DEFAULT_PATIENT.id));
+
+  const effectiveAddress = isProxyActive && proxyAddress ? proxyAddress : activeAddress;
+
+  const patient = useMemo(() => {
+    if (!effectiveAddress) {
+      return DEFAULT_PATIENT;
+    }
+
+    const directMatch = patients.find((entry) => entry.walletAddress === effectiveAddress);
+    if (directMatch) {
+      return directMatch;
+    }
+
+    const hashSeed = Array.from(effectiveAddress).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    const mappedPatient = patients[hashSeed % patients.length] ?? DEFAULT_PATIENT;
+    const syntheticShortId = (proxyShortId || shortId || `${(hashSeed % 900) + 100}${effectiveAddress.slice(-3).toUpperCase()}`).slice(0, 6);
+
+    return {
+      ...mappedPatient,
+      name: isProxyActive ? `${mappedPatient.name} (Proxy)` : mappedPatient.name,
+      shortId: syntheticShortId,
+      walletAddress: effectiveAddress,
+      avatar: syntheticShortId.slice(0, 1) || mappedPatient.avatar,
+    };
+  }, [effectiveAddress, isProxyActive, proxyShortId, shortId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncRecords = async () => {
+      if (!effectiveAddress) {
+        if (!cancelled) {
+          setLiveRecords(medicalRecords.filter((record) => record.patientId === DEFAULT_PATIENT.id));
+        }
+        return;
+      }
+
+      try {
+        const result = await fetchPatientRecords(effectiveAddress);
+        if (!cancelled) {
+          setLiveRecords(result.records.length > 0 ? result.records : medicalRecords.filter((record) => record.patientId === result.patient.id));
+        }
+      } catch {
+        if (!cancelled) {
+          setLiveRecords(medicalRecords.filter((record) => record.patientId === patient.id));
+        }
+      }
+    };
+
+    syncRecords();
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveAddress, patient.id]);
+
+  const patientRecords = useMemo(() => {
+    return liveRecords.length > 0 ? liveRecords : medicalRecords.filter((record) => record.patientId === patient.id);
+  }, [liveRecords, patient.id]);
+
+  const patientConsents = useMemo(() => {
+    return consents.filter((consent) => consent.patientId === patient.id);
+  }, [patient.id]);
+
+  const activeConsentCount = patientConsents.filter((consent) => consent.status === 'active').length;
+  const pendingConsentCount = patientConsents.filter((consent) => consent.status === 'pending').length;
 
   const openSlider = useCallback((index: number) => {
     setSliderIndex(index);
@@ -116,13 +187,13 @@ export default function PatientPortal() {
                 <path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
                 <path d="M14 3v4h4" />
               </svg>
-              Records<span className="badge">12</span>
+              Records<span className="badge">{patientRecords.length}</span>
             </div>
             <div className={`navitem ${activeNav === 'consents' ? 'active' : ''}`} onClick={() => setActiveNav('consents')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
                 <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" />
               </svg>
-              Consents<span className="badge">5</span>
+              Consents<span className="badge">{activeConsentCount + pendingConsentCount}</span>
             </div>
             <div className={`navitem ${activeNav === 'audit' ? 'active' : ''}`} onClick={() => setActiveNav('audit')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -193,7 +264,7 @@ export default function PatientPortal() {
             <div>
               <div className="crumb">Patient · Overview</div>
               <h1>
-                Good evening, <em style={{ fontStyle: 'italic', color: 'var(--ink-green)' }}>Ishaan</em>.
+                Good evening, <em style={{ fontStyle: 'italic', color: 'var(--ink-green)' }}>{patient.name.split(' ')[0]}</em>.
               </h1>
             </div>
             <div className="search">
@@ -209,7 +280,7 @@ export default function PatientPortal() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" />
                 </svg>
-                847KOR
+                {patient.shortId}
                 <span className="tag">Verified</span>
               </span>
               <button className="iconbtn">
@@ -234,7 +305,7 @@ export default function PatientPortal() {
                 <div>
                   <div className="k">§ Overview — 18 April 2026</div>
                   <h2>
-                    Your consent mesh is <em>calm</em>.<br />5 keys held, 0 silent reads.
+                    Your consent mesh is <em>calm</em>.<br />{activeConsentCount} keys held, 0 silent reads.
                   </h2>
                   <p>One provider is waiting for your signature. Everything else is behaving exactly as you've instructed.</p>
                 </div>
@@ -277,7 +348,7 @@ export default function PatientPortal() {
                   </div>
                   <span className="delta">+2 this week</span>
                 </div>
-                <b>5</b>
+                <b>{activeConsentCount}</b>
                 <span className="lbl">Active consents</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none">
                   <path d="M0 20 L20 16 L40 18 L60 10 L80 14 L100 6 L120 9 L140 2" stroke="var(--ink-green)" strokeWidth="1.5" />
@@ -293,7 +364,7 @@ export default function PatientPortal() {
                   </div>
                   <span className="delta">+1 new</span>
                 </div>
-                <b>12</b>
+                <b>{patientRecords.length}</b>
                 <span className="lbl">Records on chain</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none">
                   <path d="M0 22 L20 20 L40 18 L60 16 L80 14 L100 12 L120 8 L140 6" stroke="var(--ink-green)" strokeWidth="1.5" />
@@ -634,7 +705,7 @@ export default function PatientPortal() {
                   <div className="audit-item">
                     <span className="pin" data-c="sky" />
                     <div className="body">
-                      <div className="t"><em>Identity verified</em> · 847KOR</div>
+                      <div className="t"><em>Identity verified</em> · {patient.shortId}</div>
                       <div className="d">Algorand mainnet</div>
                     </div>
                     <time>Mar 21</time>
@@ -647,7 +718,7 @@ export default function PatientPortal() {
               <div className="head">
                 <div>
                   <h3>Recent records</h3>
-                  <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · encrypted · IPFS-pinned</div>
+                  <div className="sub" style={{ marginTop: '4px' }}>{patientRecords.length} records · encrypted · IPFS-pinned</div>
                 </div>
                 <div className="actions">
                   <button className="chip">
@@ -660,7 +731,7 @@ export default function PatientPortal() {
                 </div>
               </div>
               <div className="recs">
-                {medicalRecords.map((rec, i) => (
+                {patientRecords.map((rec, i) => (
                   <div
                     key={rec.id}
                     className="rec"
@@ -701,7 +772,7 @@ export default function PatientPortal() {
 
       {sliderOpen && (
         <RecordSlider
-          records={medicalRecords}
+          records={patientRecords}
           initialIndex={sliderIndex}
           onClose={() => setSliderOpen(false)}
           onShare={(rec) => { setSliderOpen(false); openQR(rec); }}
