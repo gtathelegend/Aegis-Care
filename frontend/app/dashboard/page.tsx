@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import '../../styles/dashboard.css';
 import QRModal from '../../components/QRModal';
 import RecordSlider from '../../components/RecordSlider';
+import { QRCodeSVG } from 'qrcode.react';
 import { medicalRecords, consents, auditLog, inboundRequests, getPatientById, recordTypeLabel } from '../../lib/mockdb';
 import type { MedicalRecord } from '../../lib/mockdb';
 
@@ -15,6 +16,19 @@ export default function DashboardPage() {
   const [qrRecord, setQrRecord] = useState<MedicalRecord | null>(null);
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
+
+  const navLabels: Record<string, string> = {
+    overview: 'Overview',
+    records: 'Records',
+    consents: 'Consents',
+    audit: 'Audit Trail',
+    vault: 'Vault',
+    hospitals: 'Hospitals',
+    research: 'Research',
+    settings: 'Settings',
+  };
+
+  const currentNavLabel = navLabels[activeNav] ?? 'Overview';
 
   const openSlider = useCallback((index: number) => {
     setSliderIndex(index);
@@ -80,6 +94,320 @@ export default function DashboardPage() {
       io?.disconnect();
     };
   }, []);
+
+  const renderPatientTabContent = () => {
+    if (activeNav === 'records') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>All Records</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · click to open slider</div>
+            </div>
+            <div className="actions">
+              <button className="chip">Recent first</button>
+              <button className="chip">Encrypted only</button>
+            </div>
+          </div>
+          <div className="recs">
+            {medicalRecords.map((rec, i) => (
+              <div
+                key={rec.id}
+                className="rec"
+                data-c={rec.color}
+                style={{ position: 'relative', cursor: 'pointer' }}
+                onClick={() => openSlider(i)}
+              >
+                <div className="top">
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M6 3h9l4 4v14H5V4Z" />
+                      <path d="M14 3v4h4" />
+                    </svg>
+                  </div>
+                  <span className="chip-s">{recordTypeLabel[rec.type]}</span>
+                </div>
+                <h4>{rec.title}</h4>
+                <p>{rec.hospital} · {rec.date}</p>
+                <div className="cid">ipfs://Qm…{rec.ipfsHash.slice(-8)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'consents') {
+      const filteredConsents = consents.filter((item) => activeTab === 'all' || item.status === activeTab);
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Consent Manager</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Review and manage all consent windows</div>
+            </div>
+            <div className="actions">
+              <div className="tabs">
+                <button className={activeTab === 'all' ? 'on' : ''} onClick={() => setActiveTab('all')}>All</button>
+                <button className={activeTab === 'active' ? 'on' : ''} onClick={() => setActiveTab('active')}>Active</button>
+                <button className={activeTab === 'pending' ? 'on' : ''} onClick={() => setActiveTab('pending')}>Pending</button>
+                <button className={activeTab === 'expired' ? 'on' : ''} onClick={() => setActiveTab('expired')}>Expired</button>
+              </div>
+            </div>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Requester</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Expires</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredConsents.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <div className="avn">
+                      <div className="av" data-c={item.grantedToColor}>{item.grantedToAvatar}</div>
+                      <div>
+                        <div className="nm">{item.grantedTo}</div>
+                        <div className="rl">{item.grantedToRole}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{item.scopeLabel}</td>
+                  <td><span className={`pill-s ${item.status}`}>{item.status}</span></td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{item.expiresAt}</td>
+                  <td className="actions-cell">
+                    <button className="ibtn" title="View">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                    </button>
+                    {item.status === 'active' && (
+                      <button className="ibtn danger" title="Revoke">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'audit') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Full Audit Trail</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>All access and consent actions are immutable</div>
+            </div>
+            <div className="actions">
+              <button className="chip">Export CSV</button>
+            </div>
+          </div>
+          <div className="audit" style={{ paddingBottom: '20px' }}>
+            {auditLog.map((entry) => (
+              <div className="audit-item" key={entry.id}>
+                <span className="pin" data-c={entry.color} />
+                <div className="body">
+                  <div className="t"><em>{entry.action}</em> · {entry.actor}</div>
+                  <div className="d">{entry.detail} · {entry.subject}</div>
+                </div>
+                <time>{entry.timestamp}</time>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'vault') {
+      const encryptedCount = medicalRecords.filter((rec) => rec.encrypted).length;
+      return (
+        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Vault Health</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>Encryption and storage status</div>
+              </div>
+            </div>
+            <div className="requests" style={{ gap: '12px' }}>
+              <div className="req" style={{ cursor: 'default' }}>
+                <div className="body">
+                  <div className="t">Encrypted Records</div>
+                  <div className="d">{encryptedCount} / {medicalRecords.length} files</div>
+                </div>
+              </div>
+              <div className="req" style={{ cursor: 'default' }}>
+                <div className="body">
+                  <div className="t">IPFS Pin Health</div>
+                  <div className="d">100% online replication</div>
+                </div>
+              </div>
+              <div className="req" style={{ cursor: 'default' }}>
+                <div className="body">
+                  <div className="t">Last Key Rotation</div>
+                  <div className="d">17 Apr 2026, 08:10 UTC</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Inbound Queue</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>Requests waiting for patient decision</div>
+              </div>
+            </div>
+            <div className="requests">
+              {inboundRequests.map((item) => (
+                <div className="req" key={item.id}>
+                  <div className="av" data-c={item.fromColor}>{item.fromAvatar}</div>
+                  <div className="body">
+                    <div className="t">{item.from}</div>
+                    <div className="d">{item.scope} · {item.urgency}</div>
+                  </div>
+                  <div className="acts">
+                    <button className="approve">Approve</button>
+                    <button className="deny">Deny</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'hospitals') {
+      const hospitalMap = medicalRecords.reduce<Record<string, number>>((acc, rec) => {
+        acc[rec.hospital] = (acc[rec.hospital] ?? 0) + 1;
+        return acc;
+      }, {});
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Hospital Registry</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Connected institutions and record activity</div>
+            </div>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Institution</th>
+                <th>Records</th>
+                <th>Last Sync</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(hospitalMap).map(([name, count]) => (
+                <tr key={name}>
+                  <td>{name}</td>
+                  <td>{count}</td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>18 Apr 2026, 14:20</td>
+                  <td><span className="pill-s active">active</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'research') {
+      return (
+        <div className="grid" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Research Sandbox</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>De-identified dataset requests</div>
+              </div>
+            </div>
+            <div className="requests">
+              <div className="req">
+                <div className="av" data-c="sky">RU</div>
+                <div className="body">
+                  <div className="t">Riverside University</div>
+                  <div className="d">Cardio cohort · 180 days · 2,400 records</div>
+                </div>
+                <div className="acts"><button className="approve">Review</button></div>
+              </div>
+              <div className="req">
+                <div className="av" data-c="violet">NH</div>
+                <div className="body">
+                  <div className="t">National Health Lab</div>
+                  <div className="d">Diabetes outcomes · 90 days · 1,180 records</div>
+                </div>
+                <div className="acts"><button className="approve">Review</button></div>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Policy Guardrails</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>Automatic enforcement</div>
+              </div>
+            </div>
+            <div className="audit">
+              <div className="audit-item">
+                <span className="pin" data-c="lime" />
+                <div className="body"><div className="t">PII fields stripped before export</div></div>
+              </div>
+              <div className="audit-item">
+                <span className="pin" data-c="sky" />
+                <div className="body"><div className="t">Consent scope validated at query time</div></div>
+              </div>
+              <div className="audit-item">
+                <span className="pin" data-c="coral" />
+                <div className="body"><div className="t">Expiry window auto-enforced</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Profile Settings</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Identity and notification controls</div>
+            </div>
+          </div>
+          <div className="requests" style={{ gap: '10px' }}>
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Wallet Verified</div><div className="d">0xA1B2...A1B2</div></div></div>
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Alerts</div><div className="d">Push + email enabled</div></div></div>
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Auto-revoke</div><div className="d">Enabled for emergency grants</div></div></div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Security Center</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Session and key protections</div>
+            </div>
+          </div>
+          <div className="audit">
+            <div className="audit-item"><span className="pin" data-c="lime" /><div className="body"><div className="t">2FA for critical approvals</div></div></div>
+            <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Device trust list: 3 active</div></div></div>
+            <div className="audit-item"><span className="pin" data-c="violet" /><div className="body"><div className="t">Last login: 18 Apr 2026, 19:24</div></div></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="grain">
@@ -193,7 +521,7 @@ export default function DashboardPage() {
         <main>
           <div className="topbar">
             <div>
-              <div className="crumb">Patient · Overview</div>
+              <div className="crumb">Patient · {currentNavLabel}</div>
               <h1>
                 Good evening, <em style={{ fontStyle: 'italic', color: 'var(--ink-green)' }}>Ishaan</em>.
               </h1>
@@ -231,6 +559,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="content">
+            {activeNav === 'overview' ? (
+              <>
             <div className="hero">
               <div className="greet reveal d1">
                 <div>
@@ -259,11 +589,20 @@ export default function DashboardPage() {
                   </div>
                   <span className="tag">Verified</span>
                 </div>
-                <div className="sid">
-                  847<em>KOR</em>
+                <div className="sid" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: '#fff', borderRadius: '16px', padding: '12px', border: '1px solid var(--line)' }}>
+                    <QRCodeSVG
+                      value={`aegis://patient/${patient.shortId}`}
+                      size={148}
+                      bgColor="#ffffff"
+                      fgColor="#0a1514"
+                      level="M"
+                      includeMargin={false}
+                    />
+                  </div>
                 </div>
                 <div className="meta">
-                  <span>Chain · <em>Algorand</em></span>
+                  <span>ID · <em>{patient.shortId}</em></span>
                   <span>Since <em>Mar 2026</em></span>
                 </div>
               </div>
@@ -697,6 +1036,8 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
+              </>
+            ) : renderPatientTabContent()}
           </div>
         </main>
       </div>

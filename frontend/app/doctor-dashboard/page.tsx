@@ -7,6 +7,19 @@ export default function DoctorDashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('active');
 
+  const navLabels: Record<string, string> = {
+    overview: 'Overview',
+    patients: 'My Patients',
+    consents: 'My Consents',
+    records: 'Accessible Records',
+    requests: 'New Request',
+    schedule: 'Schedule',
+    audit: 'My Audit Trail',
+    settings: 'Settings',
+  };
+
+  const currentNavLabel = navLabels[activeNav] ?? 'Overview';
+
   useEffect(() => {
     const revealEls = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -30,6 +43,227 @@ export default function DoctorDashboardPage() {
     }
     return () => { io?.disconnect(); };
   }, [activeNav]);
+
+  const renderDoctorTabContent = () => {
+    if (activeNav === 'patients') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>My Patients</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Current assigned caseload</div>
+            </div>
+            <div className="actions"><button className="chip">Sort by risk</button></div>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Last Visit</th>
+                <th>Primary Need</th>
+                <th>Active Consent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { av: 'IK', c: 'lime', name: 'Ishaan Kapoor', id: '847KOR', visit: '18 Apr 2026', need: 'Post-op review', consent: 'LAB RESULTS · 48H' },
+                { av: 'PR', c: 'coral', name: 'Priya Rajan', id: '512RAJ', visit: '17 Apr 2026', need: 'Imaging follow-up', consent: 'IMAGING · 24H' },
+                { av: 'AM', c: 'sky', name: 'Arjun Mehta', id: '391MEH', visit: '16 Apr 2026', need: 'Medication adjustment', consent: 'PROFILE · 72H' },
+              ].map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <div className="avn">
+                      <div className="av" data-c={row.c}>{row.av}</div>
+                      <div>
+                        <div className="nm">{row.name}</div>
+                        <div className="rl">{row.id}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{row.visit}</td>
+                  <td>{row.need}</td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-2)' }}>{row.consent}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'consents') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>My Consents</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Grant windows currently linked to your account</div>
+            </div>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Remaining</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { av: 'IK', c: 'lime', name: 'Ishaan Kapoor', id: '847KOR', scope: 'LAB RESULTS · 48H', status: 'active', remain: '32h 14m', pct: '68%' },
+                { av: 'PR', c: 'coral', name: 'Priya Rajan', id: '512RAJ', scope: 'IMAGING · 2H', status: 'active', remain: '1h 04m', pct: '52%' },
+                { av: 'AM', c: 'sky', name: 'Arjun Mehta', id: '391MEH', scope: 'PROFILE · 72H', status: 'pending', remain: 'awaiting', pct: '0%' },
+              ].map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <div className="avn">
+                      <div className="av" data-c={row.c}>{row.av}</div>
+                      <div>
+                        <div className="nm">{row.name}</div>
+                        <div className="rl">{row.id}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)' }}>{row.scope}</td>
+                  <td><span className={`pill-s ${row.status}`}>{row.status}</span></td>
+                  <td>
+                    {row.status === 'active' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>{row.remain}</span>
+                        <div className="meter"><i style={{ width: row.pct }} /></div>
+                      </div>
+                    ) : (
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{row.remain}</span>
+                    )}
+                  </td>
+                  <td className="actions-cell"><button className="ibtn">View</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'records') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Accessible Records</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Consent-gated documents for treatment</div>
+            </div>
+          </div>
+          <div className="recs">
+            {[
+              { c: 'lime', label: 'Lab Results', patient: 'Ishaan Kapoor', cid: 'ipfs://Qm7dF...a4b2', chip: 'active' },
+              { c: 'coral', label: 'MRI Report', patient: 'Priya Rajan', cid: 'ipfs://Qm3aK...c8d1', chip: 'active' },
+              { c: 'sky', label: 'Prescription', patient: 'Sneha Verma', cid: 'ipfs://Qm9bL...e6f3', chip: 'active' },
+              { c: 'violet', label: 'Discharge Note', patient: 'Rohan Nair', cid: 'ipfs://Qm2kY...f1d8', chip: 'pending' },
+            ].map((rec, i) => (
+              <div className="rec" data-c={rec.c} key={i}>
+                <div className="top">
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" /></svg>
+                  </div>
+                  <span className="chip-s">{rec.chip}</span>
+                </div>
+                <h4>{rec.label}</h4>
+                <p>{rec.patient}</p>
+                <div className="cid">{rec.cid}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'requests') {
+      return (
+        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <div className="card">
+            <div className="head"><h3>Create Access Request</h3></div>
+            <div className="requests" style={{ gap: '10px' }}>
+              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Target Patient</div><div className="d">Ishaan Kapoor (847KOR)</div></div></div>
+              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Scope</div><div className="d">IMAGING + LAB RESULTS</div></div></div>
+              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Duration</div><div className="d">24 hours</div></div></div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 2px' }}><button className="chip">Submit request</button></div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="head"><h3>Pending Outgoing</h3></div>
+            <div className="audit">
+              <div className="audit-item"><span className="pin" data-c="coral" /><div className="body"><div className="t">Priya Rajan · FULL CHART · 12H</div><div className="d">requested 32m ago</div></div></div>
+              <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Arjun Mehta · PROFILE · 72H</div><div className="d">requested 2h ago</div></div></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'schedule') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Doctor Schedule</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Upcoming appointments and slots</div>
+            </div>
+          </div>
+          <table className="tbl">
+            <thead><tr><th>Time</th><th>Patient</th><th>Purpose</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>09:30</td><td>Ishaan Kapoor</td><td>Post-op review</td><td><span className="pill-s active">confirmed</span></td></tr>
+              <tr><td>11:00</td><td>Priya Rajan</td><td>MRI discussion</td><td><span className="pill-s pending">waiting</span></td></tr>
+              <tr><td>14:45</td><td>Sneha Verma</td><td>Prescription adjustment</td><td><span className="pill-s active">confirmed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'audit') {
+      return (
+        <div className="card">
+          <div className="head"><h3>My Audit Trail</h3></div>
+          <div className="audit">
+            {[
+              { c: 'lime', t: 'READ · Ishaan Kapoor · LAB RESULTS', d: '18 Apr 2026, 14:32' },
+              { c: 'sky', t: 'REQUEST · Arjun Mehta · PROFILE', d: '18 Apr 2026, 13:10' },
+              { c: 'coral', t: 'READ · Priya Rajan · IMAGING', d: '17 Apr 2026, 11:05' },
+              { c: 'violet', t: 'REVOKE ACK · Rohan Nair', d: '16 Apr 2026, 09:40' },
+            ].map((item, i) => (
+              <div className="audit-item" key={i}>
+                <span className="pin" data-c={item.c} />
+                <div className="body"><div className="t">{item.t}</div><div className="d">{item.d}</div></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <div className="card">
+          <div className="head"><h3>Doctor Settings</h3></div>
+          <div className="requests">
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Clinical Alerts</div><div className="d">Enabled for urgent requests</div></div></div>
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Default Consent Duration</div><div className="d">24 hours</div></div></div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="head"><h3>Security</h3></div>
+          <div className="audit">
+            <div className="audit-item"><span className="pin" data-c="lime" /><div className="body"><div className="t">2FA enabled</div></div></div>
+            <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Session timeout: 15 min</div></div></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="grain">
@@ -111,7 +345,7 @@ export default function DoctorDashboardPage() {
         <main>
           <div className="topbar">
             <div>
-              <div className="crumb">Doctor · {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</div>
+              <div className="crumb">Doctor · {currentNavLabel}</div>
               <h1>Dr. <em style={{ fontStyle: 'italic', color: 'var(--coral)' }}>Hanwa, K.</em></h1>
             </div>
             <div className="search">
@@ -133,6 +367,8 @@ export default function DoctorDashboardPage() {
           </div>
 
           <div className="content">
+            {activeNav === 'overview' ? (
+              <>
             {/* HERO */}
             <div className="hero">
               <div className="greet reveal d1">
@@ -330,6 +566,8 @@ export default function DoctorDashboardPage() {
                 ))}
               </div>
             </div>
+              </>
+            ) : renderDoctorTabContent()}
           </div>
         </main>
       </div>
