@@ -1,0 +1,337 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 1 32 0
+    bytecblock 0x726f6c655f "init_admin" 0x61646d5f 0x80 0x151f7c75
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/HealthcareRBAC/contract.py:26
+    // self.initial_admin.value = admin_addr
+    bytec_1 // "init_admin"
+    // smart_contracts/HealthcareRBAC/contract.py:22-23
+    // # Hardcoded Admin: ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
+    // admin_addr = arc4.Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM")
+    pushbytes base32(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPA) // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
+    // smart_contracts/HealthcareRBAC/contract.py:26
+    // self.initial_admin.value = admin_addr
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/HealthcareRBAC/contract.py:19
+    // class HealthcareRBAC(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@14
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0x05468436 0x8173f5fc 0x43f52771 0xde766b90 0x17dd5fdf // method "add_admin(address)void", method "is_admin(address)bool", method "register_role(address,uint8)void", method "update_role(address,uint8)void", method "get_role(address)uint8"
+    txna ApplicationArgs 0
+    match add_admin is_admin register_role update_role get_role
+    err
+
+main___algopy_default_create@14:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.add_admin[routing]() -> void:
+add_admin:
+    // smart_contracts/HealthcareRBAC/contract.py:34
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/HealthcareRBAC/contract.py:37
+    // self._only_admin()
+    callsub _only_admin
+    // smart_contracts/HealthcareRBAC/contract.py:38
+    // self.admins[new_admin] = arc4.Bool(True)
+    bytec_2 // 0x61646d5f
+    swap
+    concat
+    bytec_3 // 0x80
+    box_put
+    // smart_contracts/HealthcareRBAC/contract.py:34
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin[routing]() -> void:
+is_admin:
+    // smart_contracts/HealthcareRBAC/contract.py:40
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin
+    bytec 4 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.register_role[routing]() -> void:
+register_role:
+    pushbytes ""
+    // smart_contracts/HealthcareRBAC/contract.py:49
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    // smart_contracts/HealthcareRBAC/contract.py:52
+    // caller_role = self.get_role(arc4.Address(Txn.sender))
+    txn Sender
+    callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role
+    // smart_contracts/HealthcareRBAC/contract.py:53
+    // caller_is_admin = self.is_admin(arc4.Address(Txn.sender))
+    txn Sender
+    callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin
+    // smart_contracts/HealthcareRBAC/contract.py:55
+    // valid_caller = caller_is_admin.native or (
+    intc_2 // 0
+    getbit
+    // smart_contracts/HealthcareRBAC/contract.py:55-57
+    // valid_caller = caller_is_admin.native or (
+    //     (caller_role.native & 1) != 0 and (role.native == 2 or role.native == 4)
+    // )
+    bnz register_role_bool_true@5
+    // smart_contracts/HealthcareRBAC/contract.py:56
+    // (caller_role.native & 1) != 0 and (role.native == 2 or role.native == 4)
+    dup
+    btoi
+    intc_0 // 1
+    &
+    bz register_role_bool_false@6
+    dig 1
+    btoi
+    dup
+    bury 5
+    pushint 2
+    ==
+    bnz register_role_bool_true@5
+    dig 3
+    pushint 4
+    ==
+    bz register_role_bool_false@6
+
+register_role_bool_true@5:
+    intc_0 // 1
+
+register_role_bool_merge@7:
+    // smart_contracts/HealthcareRBAC/contract.py:58
+    // assert valid_caller, "Unauthorized to assign this role"
+    assert // Unauthorized to assign this role
+    // smart_contracts/HealthcareRBAC/contract.py:60
+    // assert role.native > 0, "Invalid role"
+    dig 1
+    dup
+    btoi
+    assert // Invalid role
+    // smart_contracts/HealthcareRBAC/contract.py:62
+    // self.roles[user] = role
+    bytec_0 // 0x726f6c655f
+    dig 4
+    dup
+    cover 2
+    concat
+    dig 2
+    box_put
+    // smart_contracts/HealthcareRBAC/contract.py:63
+    // arc4.emit("RoleAssigned(address,uint8)", user, role)
+    swap
+    concat
+    pushbytes 0x919bcf1c // method "RoleAssigned(address,uint8)"
+    swap
+    concat
+    log
+    // smart_contracts/HealthcareRBAC/contract.py:49
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+register_role_bool_false@6:
+    intc_2 // 0
+    b register_role_bool_merge@7
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.update_role[routing]() -> void:
+update_role:
+    // smart_contracts/HealthcareRBAC/contract.py:65
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    // smart_contracts/HealthcareRBAC/contract.py:68
+    // self._only_admin()
+    callsub _only_admin
+    // smart_contracts/HealthcareRBAC/contract.py:69
+    // assert role.native > 0, "Invalid role"
+    dup
+    btoi
+    assert // Invalid role
+    // smart_contracts/HealthcareRBAC/contract.py:70
+    // self.roles[user] = role
+    bytec_0 // 0x726f6c655f
+    dig 2
+    concat
+    dig 1
+    box_put
+    // smart_contracts/HealthcareRBAC/contract.py:71
+    // arc4.emit("RoleUpdated(address,uint8)", user, role)
+    concat
+    pushbytes 0x9fad2cd2 // method "RoleUpdated(address,uint8)"
+    swap
+    concat
+    log
+    // smart_contracts/HealthcareRBAC/contract.py:65
+    // @arc4.abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role[routing]() -> void:
+get_role:
+    // smart_contracts/HealthcareRBAC/contract.py:73
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_1 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role
+    bytec 4 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin(wallet: bytes) -> bytes:
+smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin:
+    // smart_contracts/HealthcareRBAC/contract.py:40-41
+    // @arc4.abimethod(readonly=True)
+    // def is_admin(self, wallet: arc4.Address) -> arc4.Bool:
+    proto 1 1
+    intc_2 // 0
+    // smart_contracts/HealthcareRBAC/contract.py:43
+    // if wallet == self.initial_admin.value:
+    dup
+    bytec_1 // "init_admin"
+    app_global_get_ex
+    assert // check self.initial_admin exists
+    frame_dig -1
+    ==
+    bz smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@2
+    // smart_contracts/HealthcareRBAC/contract.py:44
+    // return arc4.Bool(True)
+    bytec_3 // 0x80
+    swap
+    retsub
+
+smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@2:
+    // smart_contracts/HealthcareRBAC/contract.py:45
+    // if wallet in self.admins:
+    bytec_2 // 0x61646d5f
+    frame_dig -1
+    concat
+    dup
+    frame_bury 0
+    box_len
+    bury 1
+    bz smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@4
+    // smart_contracts/HealthcareRBAC/contract.py:46
+    // return self.admins[wallet]
+    frame_dig 0
+    box_get
+    assert // check self.admins entry exists
+    swap
+    retsub
+
+smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@4:
+    // smart_contracts/HealthcareRBAC/contract.py:47
+    // return arc4.Bool(False)
+    pushbytes 0x00
+    swap
+    retsub
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role(wallet: bytes) -> bytes:
+smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role:
+    // smart_contracts/HealthcareRBAC/contract.py:73-74
+    // @arc4.abimethod(readonly=True)
+    // def get_role(self, wallet: arc4.Address) -> arc4.UInt8:
+    proto 1 1
+    // smart_contracts/HealthcareRBAC/contract.py:76
+    // if wallet in self.roles:
+    bytec_0 // 0x726f6c655f
+    frame_dig -1
+    concat
+    dup
+    box_len
+    bury 1
+    bz smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role_after_if_else@2
+    // smart_contracts/HealthcareRBAC/contract.py:77
+    // return self.roles[wallet]
+    frame_dig 0
+    box_get
+    assert // check self.roles entry exists
+    swap
+    retsub
+
+smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role_after_if_else@2:
+    // smart_contracts/HealthcareRBAC/contract.py:78
+    // return arc4.UInt8(0)
+    pushbytes 0x00
+    swap
+    retsub
+
+
+// smart_contracts.HealthcareRBAC.contract.HealthcareRBAC._only_admin() -> void:
+_only_admin:
+    // smart_contracts/HealthcareRBAC/contract.py:83
+    // caller = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/HealthcareRBAC/contract.py:84
+    // assert self.is_admin(caller).native, "Only admin allowed"
+    callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin
+    intc_2 // 0
+    getbit
+    assert // Only admin allowed
+    retsub

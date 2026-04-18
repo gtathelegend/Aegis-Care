@@ -1,0 +1,101 @@
+﻿[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : ../../../../../
+../node_modules/@walletcon
+nect/utils/node_modules/ox
+/_esm/core/Address.js 
+(6:21): A comment
+At C:\Program 
+Files\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (.  
+  ./../../../../...:21)   
+ : A comment:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+
+"/*#__PURE__*/"
+
+in "../../../../../../node
+_modules/@walletconnect/ut
+ils/node_modules/ox/_esm/c
+ore/Address.js" contains 
+an annotation that Rollup 
+cannot interpret due to 
+the position of the 
+comment. The comment will 
+be removed to avoid 
+issues.
+../../../../../../node_mod
+ules/@walletconnect/utils/
+node_modules/ox/_esm/core/
+internal/cursor.js 
+(2:21): A comment
+
+"/*#__PURE__*/"
+
+in "../../../../../../node
+_modules/@walletconnect/ut
+ils/node_modules/ox/_esm/c
+ore/internal/cursor.js" 
+contains an annotation 
+that Rollup cannot 
+interpret due to the 
+position of the comment. 
+The comment will be 
+removed to avoid issues.
+[32mΓ£ô[39m 2758 modules transformed.
+node_modules/lottie-web/bu
+ild/player/lottie.js 
+(13749:32): Use of eval 
+in "node_modules/lottie-we
+b/build/player/lottie.js" 
+is strongly discouraged 
+as it poses security 
+risks and may cause 
+issues with minification.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                       [39m[1m[2m    0.83 kB[22m[1m[22m[2m Γöé gzip:   0.46 kB[22m
+[2mdist/[22m[35massets/index-CFM2DRek.css        [39m[1m[2m   45.08 kB[22m[1m[22m[2m Γöé gzip:   8.18 kB[22m
+[2mdist/[22m[36massets/use-wallet-BIHI7g3E.js    [39m[1m[2m    0.03 kB[22m[1m[22m[2m Γöé gzip:   0.05 kB[22m
+[2mdist/[22m[36massets/use-wallet-Df6KNeSA.js    [39m[1m[2m    0.03 kB[22m[1m[22m[2m Γöé gzip:   0.05 kB[22m
+[2mdist/[22m[36massets/use-wallet-CoSEDE74.js    [39m[1m[2m    0.03 kB[22m[1m[22m[2m Γöé gzip:   0.05 kB[22m
+[2mdist/[22m[36massets/use-wallet-CKPqBeRP.js    [39m[1m[2m    0.03 kB[22m[1m[22m[2m Γöé gzip:   0.05 kB[22m
+[2mdist/[22m[36massets/use-wallet-BxmSTC4j.js    [39m[1m[2m    0.03 kB[22m[1m[22m[2m Γöé gzip:   0.05 kB[22m
+[2mdist/[22m[36massets/use-wallet-Bvy5ZSlQ.js    [39m[1m[2m    0.03 kB[22m[1m[22m[2m Γöé gzip:   0.05 kB[22m
+[2mdist/[22m[36massets/index-vxZHVFmK.js         [39m[1m[2m    6.17 kB[22m[1m[22m[2m Γöé gzip:   2.42 kB[22m
+[2mdist/[22m[36massets/index-oRRaLrUN.js         [39m[1m[2m    7.28 kB[22m[1m[22m[2m Γöé gzip:   2.90 kB[22m
+[2mdist/[22m[36massets/secp256k1-Da0-ZXep.js     [39m[1m[2m   31.40 kB[22m[1m[22m[2m Γöé gzip:  12.55 kB[22m
+[2mdist/[22m[36massets/index-CEGuG8jX.js         [39m[1m[2m   58.90 kB[22m[1m[22m[2m Γöé gzip:  19.94 kB[22m
+[2mdist/[22m[36massets/bowser-jmmTd3RC.js        [39m[1m[2m  121.77 kB[22m[1m[22m[2m Γöé gzip:  35.53 kB[22m
+[2mdist/[22m[36massets/App-c13c039a-Cx6oV8IR.js  [39m[1m[2m  316.31 kB[22m[1m[22m[2m Γöé gzip:  84.99 kB[22m
+[2mdist/[22m[36massets/App-58ab7d48-B8jRdsWH.js  [39m[1m[2m  455.14 kB[22m[1m[22m[2m Γöé gzip: 110.98 kB[22m
+[2mdist/[22m[36massets/index.es-Cn1IfKGn.js      [39m[1m[2m  461.26 kB[22m[1m[22m[2m Γöé gzip: 146.08 kB[22m
+[2mdist/[22m[36massets/index-DAvsvGZF.js         [39m[1m[33m1,693.78 kB[39m[22m[2m Γöé gzip: 431.57 kB[22m
+[33m
+(!) Some chunks are 
+larger than 500 kB after 
+minification. Consider:
+- Using dynamic import() 
+to code-split the 
+application
+- Use build.rollupOptions.
+output.manualChunks to 
+improve chunking: https://
+rollupjs.org/configuration
+-options/#output-manualchu
+nks
+- Adjust chunk size limit 
+for this warning via build
+.chunkSizeWarningLimit.[3
+9m
+[32mΓ£ô built in 17.53s[39m

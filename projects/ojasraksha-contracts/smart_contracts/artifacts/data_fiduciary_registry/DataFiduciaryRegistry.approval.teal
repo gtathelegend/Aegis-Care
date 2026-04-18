@@ -1,0 +1,456 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 4 32
+    bytecblock 0x00 0x6669645f "admin" 0x151f7c75
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/DataFiduciaryRegistry/contract.py:26
+    // self.admin.value = arc4.Address(Txn.sender)
+    bytec_2 // "admin"
+    txn Sender
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:21
+    // class DataFiduciaryRegistry(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@15
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0x5c686b13 0xd5567582 0xc934c9c7 0x5d8e406f 0x1b8efc59 0x8c2a1134 // method "register_fiduciary(string,string)void", method "approve_fiduciary(address)void", method "suspend_fiduciary(address)void", method "revoke_fiduciary(address)void", method "is_approved(address)bool", method "get_fiduciary(address)(string,string,bool,bool,bool)"
+    txna ApplicationArgs 0
+    match register_fiduciary approve_fiduciary suspend_fiduciary revoke_fiduciary is_approved get_fiduciary
+    err
+
+main___algopy_default_create@15:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.register_fiduciary[routing]() -> void:
+register_fiduciary:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:31
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // smart_contracts/DataFiduciaryRegistry/contract.py:38
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/DataFiduciaryRegistry/contract.py:39-45
+    // self.fiduciaries[sender_addr] = Fiduciary(
+    //     name=name,
+    //     license_id=license_id,
+    //     approved=arc4.Bool(False),
+    //     suspended=arc4.Bool(False),
+    //     revoked=arc4.Bool(False),
+    // ).copy()
+    pushint 5
+    uncover 3
+    +
+    itob
+    extract 6 2
+    pushbytes 0x0005
+    swap
+    concat
+    bytec_0 // 0x00
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    // smart_contracts/DataFiduciaryRegistry/contract.py:39
+    // self.fiduciaries[sender_addr] = Fiduciary(
+    bytec_1 // 0x6669645f
+    dig 2
+    concat
+    // smart_contracts/DataFiduciaryRegistry/contract.py:39-45
+    // self.fiduciaries[sender_addr] = Fiduciary(
+    //     name=name,
+    //     license_id=license_id,
+    //     approved=arc4.Bool(False),
+    //     suspended=arc4.Bool(False),
+    //     revoked=arc4.Bool(False),
+    // ).copy()
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/DataFiduciaryRegistry/contract.py:47-48
+    // # Emit ARC-28 event
+    // arc4.emit("FiduciaryRegistered", sender_addr)
+    pushbytes 0x3dadca1d // method "FiduciaryRegistered(address)"
+    swap
+    concat
+    log
+    // smart_contracts/DataFiduciaryRegistry/contract.py:31
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.approve_fiduciary[routing]() -> void:
+approve_fiduciary:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:50
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/DataFiduciaryRegistry/contract.py:53
+    // assert arc4.Address(Txn.sender) == self.admin.value, "Only admin"
+    txn Sender
+    intc_0 // 0
+    bytec_2 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    assert // Only admin
+    // smart_contracts/DataFiduciaryRegistry/contract.py:55
+    // entry = self.fiduciaries[fiduciary].copy()
+    bytec_1 // 0x6669645f
+    dig 1
+    concat
+    // smart_contracts/DataFiduciaryRegistry/contract.py:55-56
+    // entry = self.fiduciaries[fiduciary].copy()
+    // assert not entry.revoked.native, "Cannot approve revoked fiduciary"
+    dup
+    intc_2 // 4
+    intc_1 // 1
+    box_extract
+    dup
+    pushint 2
+    getbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:56
+    // assert not entry.revoked.native, "Cannot approve revoked fiduciary"
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Cannot approve revoked fiduciary
+    // smart_contracts/DataFiduciaryRegistry/contract.py:57-58
+    // entry.approved = arc4.Bool(True)
+    // self.fiduciaries[fiduciary] = entry.copy()
+    intc_0 // 0
+    // smart_contracts/DataFiduciaryRegistry/contract.py:57
+    // entry.approved = arc4.Bool(True)
+    intc_1 // 1
+    // smart_contracts/DataFiduciaryRegistry/contract.py:57-58
+    // entry.approved = arc4.Bool(True)
+    // self.fiduciaries[fiduciary] = entry.copy()
+    setbit
+    intc_2 // 4
+    swap
+    box_replace
+    // smart_contracts/DataFiduciaryRegistry/contract.py:60
+    // arc4.emit("FiduciaryApproved", fiduciary)
+    pushbytes 0xff437685 // method "FiduciaryApproved(address)"
+    swap
+    concat
+    log
+    // smart_contracts/DataFiduciaryRegistry/contract.py:50
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.suspend_fiduciary[routing]() -> void:
+suspend_fiduciary:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:62
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/DataFiduciaryRegistry/contract.py:65
+    // assert arc4.Address(Txn.sender) == self.admin.value, "Only admin"
+    txn Sender
+    intc_0 // 0
+    bytec_2 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    assert // Only admin
+    // smart_contracts/DataFiduciaryRegistry/contract.py:67
+    // entry = self.fiduciaries[fiduciary].copy()
+    bytec_1 // 0x6669645f
+    dig 1
+    concat
+    // smart_contracts/DataFiduciaryRegistry/contract.py:67-68
+    // entry = self.fiduciaries[fiduciary].copy()
+    // assert not entry.revoked.native, "Cannot suspend revoked fiduciary"
+    dup
+    intc_2 // 4
+    intc_1 // 1
+    box_extract
+    dup
+    pushint 2
+    getbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:68
+    // assert not entry.revoked.native, "Cannot suspend revoked fiduciary"
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // Cannot suspend revoked fiduciary
+    // smart_contracts/DataFiduciaryRegistry/contract.py:69-70
+    // entry.suspended = arc4.Bool(True)
+    // self.fiduciaries[fiduciary] = entry.copy()
+    intc_1 // 1
+    // smart_contracts/DataFiduciaryRegistry/contract.py:69
+    // entry.suspended = arc4.Bool(True)
+    dup
+    // smart_contracts/DataFiduciaryRegistry/contract.py:69-70
+    // entry.suspended = arc4.Bool(True)
+    // self.fiduciaries[fiduciary] = entry.copy()
+    setbit
+    intc_2 // 4
+    swap
+    box_replace
+    // smart_contracts/DataFiduciaryRegistry/contract.py:72
+    // arc4.emit("FiduciarySuspended", fiduciary)
+    pushbytes 0xf1800bc2 // method "FiduciarySuspended(address)"
+    swap
+    concat
+    log
+    // smart_contracts/DataFiduciaryRegistry/contract.py:62
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.revoke_fiduciary[routing]() -> void:
+revoke_fiduciary:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:74
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/DataFiduciaryRegistry/contract.py:77
+    // assert arc4.Address(Txn.sender) == self.admin.value, "Only admin"
+    txn Sender
+    intc_0 // 0
+    bytec_2 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    assert // Only admin
+    // smart_contracts/DataFiduciaryRegistry/contract.py:79
+    // entry = self.fiduciaries[fiduciary].copy()
+    bytec_1 // 0x6669645f
+    dig 1
+    concat
+    dup
+    box_get
+    assert // check self.fiduciaries entry exists
+    // smart_contracts/DataFiduciaryRegistry/contract.py:80
+    // entry.revoked = arc4.Bool(True)
+    pushint 34
+    intc_1 // 1
+    setbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:81
+    // entry.approved = arc4.Bool(False)
+    intc_3 // 32
+    intc_0 // 0
+    setbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:82
+    // entry.suspended = arc4.Bool(True)
+    pushint 33
+    // smart_contracts/DataFiduciaryRegistry/contract.py:80
+    // entry.revoked = arc4.Bool(True)
+    intc_1 // 1
+    // smart_contracts/DataFiduciaryRegistry/contract.py:82
+    // entry.suspended = arc4.Bool(True)
+    setbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:83
+    // self.fiduciaries[fiduciary] = entry.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+    // smart_contracts/DataFiduciaryRegistry/contract.py:85
+    // arc4.emit("FiduciaryRevoked", fiduciary)
+    pushbytes 0x0dfa80ff // method "FiduciaryRevoked(address)"
+    swap
+    concat
+    log
+    // smart_contracts/DataFiduciaryRegistry/contract.py:74
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.is_approved[routing]() -> void:
+is_approved:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:88
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/DataFiduciaryRegistry/contract.py:91
+    // if fiduciary in self.fiduciaries:
+    bytec_1 // 0x6669645f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz is_approved_after_if_else@8
+    // smart_contracts/DataFiduciaryRegistry/contract.py:92-93
+    // entry = self.fiduciaries[fiduciary].copy()
+    // return arc4.Bool(entry.approved.native and not entry.suspended.native and not entry.revoked.native)
+    dup
+    intc_2 // 4
+    intc_1 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:93
+    // return arc4.Bool(entry.approved.native and not entry.suspended.native and not entry.revoked.native)
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bz is_approved_bool_false@6
+    // smart_contracts/DataFiduciaryRegistry/contract.py:92-93
+    // entry = self.fiduciaries[fiduciary].copy()
+    // return arc4.Bool(entry.approved.native and not entry.suspended.native and not entry.revoked.native)
+    dup
+    intc_2 // 4
+    intc_1 // 1
+    box_extract
+    intc_1 // 1
+    getbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:93
+    // return arc4.Bool(entry.approved.native and not entry.suspended.native and not entry.revoked.native)
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bnz is_approved_bool_false@6
+    // smart_contracts/DataFiduciaryRegistry/contract.py:92-93
+    // entry = self.fiduciaries[fiduciary].copy()
+    // return arc4.Bool(entry.approved.native and not entry.suspended.native and not entry.revoked.native)
+    dup
+    intc_2 // 4
+    intc_1 // 1
+    box_extract
+    pushint 2
+    getbit
+    // smart_contracts/DataFiduciaryRegistry/contract.py:93
+    // return arc4.Bool(entry.approved.native and not entry.suspended.native and not entry.revoked.native)
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bnz is_approved_bool_false@6
+    intc_1 // 1
+
+is_approved_bool_merge@7:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:93
+    // return arc4.Bool(entry.approved.native and not entry.suspended.native and not entry.revoked.native)
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+
+is_approved_after_inlined_smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.is_approved@9:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:88
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+is_approved_bool_false@6:
+    intc_0 // 0
+    b is_approved_bool_merge@7
+
+is_approved_after_if_else@8:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:94
+    // return arc4.Bool(False)
+    bytec_0 // 0x00
+    // smart_contracts/DataFiduciaryRegistry/contract.py:88
+    // @arc4.abimethod(readonly=True)
+    b is_approved_after_inlined_smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.is_approved@9
+
+
+// smart_contracts.DataFiduciaryRegistry.contract.DataFiduciaryRegistry.get_fiduciary[routing]() -> void:
+get_fiduciary:
+    // smart_contracts/DataFiduciaryRegistry/contract.py:96
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/DataFiduciaryRegistry/contract.py:99
+    // return self.fiduciaries[fiduciary].copy()
+    bytec_1 // 0x6669645f
+    swap
+    concat
+    box_get
+    assert // check self.fiduciaries entry exists
+    // smart_contracts/DataFiduciaryRegistry/contract.py:96
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return

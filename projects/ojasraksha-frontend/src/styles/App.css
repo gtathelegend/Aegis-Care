@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme {
+  --color-blue-50: #f0f4f2;
+  --color-blue-100: #dce3de;
+  --color-blue-200: #b8ccbf;
+  --color-blue-300: #8eb59d;
+  --color-blue-400: #7ca390;
+  --color-blue-500: #5c7a6e;
+  --color-blue-600: #2d463d;
+  --color-blue-700: #1f332c;
+  --color-blue-800: #15241f;
+  --color-blue-900: #0e1714;
+
+  --color-teal-50: #f9fbe9;
+  --color-teal-100: #f2f7d3;
+  --color-teal-200: #e1eeb0;
+  --color-teal-300: #bfd68c;
+  --color-teal-400: #9dbf67;
+  --color-teal-500: #8eb563;
+  --color-teal-600: #648f3b;
+  --color-teal-700: #4d692f;
+  --color-teal-800: #3e5228;
+  --color-teal-900: #344524;
+}
+
+@layer base {
+  :root {
+    --bg-main: #FAFAFA;
+    --bg-card: #FFFFFF;
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+    --border-light: #E5E7EB;
+    
+    --brand-blue: #2d463d; /* primary button color */
+    --brand-teal: #bfd68c; /* accent light green */
+    --brand-accent: #8eb563; /* gradient green */
+
+    --shadow-soft: 0px 4px 12px rgba(0, 0, 0, 0.04), 0px 1px 3px rgba(0, 0, 0, 0.02);
+    --shadow-hover: 0px 12px 24px rgba(0, 0, 0, 0.08), 0px 4px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  body {
+    @apply antialiased tracking-tight;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+@layer components {
+  /* Vercel/Stripe style Card */
+  .vercel-card, .premium-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 1.5rem; /* xl/2xl rounded */
+    box-shadow: var(--shadow-soft);
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .vercel-card:hover, .premium-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  /* Vercel styled empty state */
+  .empty-state {
+    @apply flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50/50;
+  }
+
+  .empty-state-icon {
+    @apply w-12 h-12 text-gray-400 mb-4;
+  }
+
+  /* Button Overhauls */
+  .stripe-button-primary {
+    @apply text-white font-semibold flex items-center justify-center gap-2 transition-all duration-300;
+    background: linear-gradient(135deg, var(--brand-blue), var(--brand-teal));
+    border-radius: 9999px; /* Pill */
+    padding: 0.75rem 1.5rem;
+    box-shadow: 0px 4px 14px 0px rgba(13, 148, 136, 0.25);
+  }
+
+  .stripe-button-primary:hover {
+    box-shadow: 0px 6px 20px 0px rgba(13, 148, 136, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .stripe-button-primary:disabled {
+    opacity: 0.6;
+    transform: none;
+    cursor:not-allowed;
+    box-shadow: none;
+  }
+
+  .stripe-button-outline {
+    @apply bg-white border font-semibold flex items-center justify-center gap-2 transition-all duration-300;
+    border-color: var(--border-light);
+    color: var(--text-primary);
+    border-radius: 9999px;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .stripe-button-outline:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+  }
+}
+
+/* Animations */
+@keyframes fadeInScale {
+  0% { opacity: 0; transform: scale(0.96) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulseGradient {
+  0% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(2, 132, 199, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); }
+}
+
+.pulse-primary {
+  animation: pulseGradient 2s infinite;
+}
+
+/* Base layouts for the Shell */
+.app-layout-grid {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-main);
+}
+
+.layout-sidebar {
+  width: 260px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.layout-main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.layout-navbar {
+  height: 70px;
+  background: var(--bg-main); /* Merges slightly into the content area visually */
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  z-index: 5;
+}
+
+.layout-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}

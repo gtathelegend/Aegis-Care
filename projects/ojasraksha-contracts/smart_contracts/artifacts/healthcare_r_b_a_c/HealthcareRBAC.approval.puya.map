@@ -1,0 +1,2037 @@
+{
+  "version": 3,
+  "sources": [
+    "../../HealthcareRBAC/contract.py"
+  ],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAyBQ;AAHa;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAGb;AAPR;;AAAA;;;AAAA;;AAAA;AAAA;AAAA;;AAAA;AAAA;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA;;;AAAA;;;;;;;;;;;;AAAA;;;;;;;;;AAeK;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGG;;;AACA;AAAA;AAAA;AAAyB;AAAzB;AAJH;AAAA;AAMA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;;;AASA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAG4C;;AAA3B;;;AAC+B;;AAA3B;;;AAEH;AAAA;AAAA;;;AACV;AAAA;AAAqB;AAArB;AAAD;;;AAAmC;;AAAA;AAAA;AAAA;;AAAe;;AAAf;AAAA;;;AAAoB;;AAAe;;AAAf;AAApB;;;;AAEvC;AAEO;;AAAA;AAAA;AAAP;AAEA;AAAA;;AAAA;AAAA;;AAAA;AAAA;;AAAA;AACA;AAAA;AAAA;;;;;;AAAA;AAAA;AAAA;AAdH;AAAA;;;;;AAgBA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGG;;;AACO;AAAA;AAAP;AACA;AAAA;;AAAA;AAAA;;AAAA;AACA;AAAA;;;;;;AAAA;AAAA;AAAA;AANH;AAAA;AAQA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;AAjCA;;;;AAGgB;AAAA;AAAA;AAAA;AAAV;;AAAA;AAAX;;;AACmB;AAAP;AAAA;AACS;AAAV;;AAAA;AAAA;AAAA;;AAAA;AAAA;;AAAX;;;AACmB;;AAAA;AAAA;AAAP;AAAA;AACG;;;AAAP;AAAA;AA0BH;;;AAGgB;AAAV;;AAAA;AAAA;AAAA;AAAA;;AAAX;;;AACmB;;AAAA;AAAA;AAAP;AAAA;AACG;;;AAAP;AAAA;AAKsB;;AACf;;;AAAA;AAAA;AAAP;",
+  "op_pc_offset": 0,
+  "pc_events": {
+    "1": {
+      "subroutine": "algopy.arc4.ARC4Contract.approval_program",
+      "params": {},
+      "block": "main",
+      "stack_in": [],
+      "op": "intcblock 1 32 0"
+    },
+    "6": {
+      "op": "bytecblock 0x726f6c655f \"init_admin\" 0x61646d5f 0x80 0x151f7c75"
+    },
+    "37": {
+      "op": "txn ApplicationID",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "39": {
+      "op": "bnz main_after_if_else@2",
+      "stack_out": []
+    },
+    "42": {
+      "op": "bytec_1 // \"init_admin\"",
+      "defined_out": [
+        "\"init_admin\""
+      ],
+      "stack_out": [
+        "\"init_admin\""
+      ]
+    },
+    "43": {
+      "op": "pushbytes base32(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPA) // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM",
+      "defined_out": [
+        "\"init_admin\"",
+        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+      ],
+      "stack_out": [
+        "\"init_admin\"",
+        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+      ]
+    },
+    "77": {
+      "op": "app_global_put",
+      "stack_out": []
+    },
+    "78": {
+      "block": "main_after_if_else@2",
+      "stack_in": [],
+      "op": "txn NumAppArgs",
+      "defined_out": [
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "tmp%0#1"
+      ]
+    },
+    "80": {
+      "op": "bz main___algopy_default_create@14",
+      "stack_out": []
+    },
+    "83": {
+      "op": "txn OnCompletion",
+      "defined_out": [
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "tmp%2#0"
+      ]
+    },
+    "85": {
+      "op": "!",
+      "defined_out": [
+        "tmp%3#0"
+      ],
+      "stack_out": [
+        "tmp%3#0"
+      ]
+    },
+    "86": {
+      "op": "assert",
+      "stack_out": []
+    },
+    "87": {
+      "op": "txn ApplicationID",
+      "defined_out": [
+        "tmp%4#0"
+      ],
+      "stack_out": [
+        "tmp%4#0"
+      ]
+    },
+    "89": {
+      "op": "assert",
+      "stack_out": []
+    },
+    "90": {
+      "op": "pushbytess 0x05468436 0x8173f5fc 0x43f52771 0xde766b90 0x17dd5fdf // method \"add_admin(address)void\", method \"is_admin(address)bool\", method \"register_role(address,uint8)void\", method \"update_role(address,uint8)void\", method \"get_role(address)uint8\"",
+      "defined_out": [
+        "Method(add_admin(address)void)",
+        "Method(get_role(address)uint8)",
+        "Method(is_admin(address)bool)",
+        "Method(register_role(address,uint8)void)",
+        "Method(update_role(address,uint8)void)"
+      ],
+      "stack_out": [
+        "Method(add_admin(address)void)",
+        "Method(is_admin(address)bool)",
+        "Method(register_role(address,uint8)void)",
+        "Method(update_role(address,uint8)void)",
+        "Method(get_role(address)uint8)"
+      ]
+    },
+    "117": {
+      "op": "txna ApplicationArgs 0",
+      "defined_out": [
+        "Method(add_admin(address)void)",
+        "Method(get_role(address)uint8)",
+        "Method(is_admin(address)bool)",
+        "Method(register_role(address,uint8)void)",
+        "Method(update_role(address,uint8)void)",
+        "tmp%6#0"
+      ],
+      "stack_out": [
+        "Method(add_admin(address)void)",
+        "Method(is_admin(address)bool)",
+        "Method(register_role(address,uint8)void)",
+        "Method(update_role(address,uint8)void)",
+        "Method(get_role(address)uint8)",
+        "tmp%6#0"
+      ]
+    },
+    "120": {
+      "op": "match add_admin is_admin register_role update_role get_role",
+      "stack_out": []
+    },
+    "132": {
+      "op": "err"
+    },
+    "133": {
+      "block": "main___algopy_default_create@14",
+      "stack_in": [],
+      "op": "txn OnCompletion",
+      "defined_out": [
+        "tmp%7#0"
+      ],
+      "stack_out": [
+        "tmp%7#0"
+      ]
+    },
+    "135": {
+      "op": "!",
+      "defined_out": [
+        "tmp%8#0"
+      ],
+      "stack_out": [
+        "tmp%8#0"
+      ]
+    },
+    "136": {
+      "op": "txn ApplicationID",
+      "defined_out": [
+        "tmp%8#0",
+        "tmp%9#0"
+      ],
+      "stack_out": [
+        "tmp%8#0",
+        "tmp%9#0"
+      ]
+    },
+    "138": {
+      "op": "!",
+      "defined_out": [
+        "tmp%10#0",
+        "tmp%8#0"
+      ],
+      "stack_out": [
+        "tmp%8#0",
+        "tmp%10#0"
+      ]
+    },
+    "139": {
+      "op": "&&",
+      "defined_out": [
+        "tmp%11#0"
+      ],
+      "stack_out": [
+        "tmp%11#0"
+      ]
+    },
+    "140": {
+      "op": "return",
+      "defined_out": [],
+      "stack_out": []
+    },
+    "141": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.add_admin[routing]",
+      "params": {},
+      "block": "add_admin",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1",
+      "defined_out": [
+        "new_admin#0"
+      ],
+      "stack_out": [
+        "new_admin#0"
+      ]
+    },
+    "144": {
+      "op": "dup",
+      "defined_out": [
+        "new_admin#0",
+        "new_admin#0 (copy)"
+      ],
+      "stack_out": [
+        "new_admin#0",
+        "new_admin#0 (copy)"
+      ]
+    },
+    "145": {
+      "op": "len",
+      "defined_out": [
+        "len%0#0",
+        "new_admin#0"
+      ],
+      "stack_out": [
+        "new_admin#0",
+        "len%0#0"
+      ]
+    },
+    "146": {
+      "op": "intc_1 // 32",
+      "defined_out": [
+        "32",
+        "len%0#0",
+        "new_admin#0"
+      ],
+      "stack_out": [
+        "new_admin#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "147": {
+      "op": "==",
+      "defined_out": [
+        "eq%0#0",
+        "new_admin#0"
+      ],
+      "stack_out": [
+        "new_admin#0",
+        "eq%0#0"
+      ]
+    },
+    "148": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "new_admin#0"
+      ]
+    },
+    "149": {
+      "callsub": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC._only_admin",
+      "op": "callsub _only_admin"
+    },
+    "152": {
+      "op": "bytec_2 // 0x61646d5f",
+      "defined_out": [
+        "0x61646d5f",
+        "new_admin#0"
+      ],
+      "stack_out": [
+        "new_admin#0",
+        "0x61646d5f"
+      ]
+    },
+    "153": {
+      "op": "swap",
+      "stack_out": [
+        "0x61646d5f",
+        "new_admin#0"
+      ]
+    },
+    "154": {
+      "op": "concat",
+      "defined_out": [
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "155": {
+      "op": "bytec_3 // 0x80",
+      "defined_out": [
+        "0x80",
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0x80"
+      ]
+    },
+    "156": {
+      "op": "box_put",
+      "stack_out": []
+    },
+    "157": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "158": {
+      "op": "return",
+      "stack_out": []
+    },
+    "159": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin[routing]",
+      "params": {},
+      "block": "is_admin",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "162": {
+      "op": "dup",
+      "defined_out": [
+        "tmp%0#0",
+        "tmp%0#0 (copy)"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "tmp%0#0 (copy)"
+      ]
+    },
+    "163": {
+      "op": "len",
+      "defined_out": [
+        "len%0#0",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "len%0#0"
+      ]
+    },
+    "164": {
+      "op": "intc_1 // 32",
+      "defined_out": [
+        "32",
+        "len%0#0",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "165": {
+      "op": "==",
+      "defined_out": [
+        "eq%0#0",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "eq%0#0"
+      ]
+    },
+    "166": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "167": {
+      "callsub": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "op": "callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "defined_out": [
+        "tmp%1#0"
+      ],
+      "stack_out": [
+        "tmp%1#0"
+      ]
+    },
+    "170": {
+      "op": "bytec 4 // 0x151f7c75",
+      "defined_out": [
+        "0x151f7c75",
+        "tmp%1#0"
+      ],
+      "stack_out": [
+        "tmp%1#0",
+        "0x151f7c75"
+      ]
+    },
+    "172": {
+      "op": "swap",
+      "stack_out": [
+        "0x151f7c75",
+        "tmp%1#0"
+      ]
+    },
+    "173": {
+      "op": "concat",
+      "defined_out": [
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "tmp%2#0"
+      ]
+    },
+    "174": {
+      "op": "log",
+      "stack_out": []
+    },
+    "175": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "176": {
+      "op": "return",
+      "stack_out": []
+    },
+    "177": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.register_role[routing]",
+      "params": {},
+      "block": "register_role",
+      "stack_in": [],
+      "op": "pushbytes \"\"",
+      "stack_out": [
+        "tmp%6#0"
+      ]
+    },
+    "179": {
+      "op": "txna ApplicationArgs 1"
+    },
+    "182": {
+      "op": "dup",
+      "defined_out": [
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "user#0"
+      ]
+    },
+    "183": {
+      "op": "len",
+      "defined_out": [
+        "len%0#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "len%0#0"
+      ]
+    },
+    "184": {
+      "op": "intc_1 // 32",
+      "defined_out": [
+        "32",
+        "len%0#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "185": {
+      "op": "==",
+      "defined_out": [
+        "eq%0#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "eq%0#0"
+      ]
+    },
+    "186": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0"
+      ]
+    },
+    "187": {
+      "op": "txna ApplicationArgs 2"
+    },
+    "190": {
+      "op": "dup",
+      "defined_out": [
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "role#0"
+      ]
+    },
+    "191": {
+      "op": "len",
+      "defined_out": [
+        "len%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "len%1#0"
+      ]
+    },
+    "192": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1",
+        "len%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "len%1#0",
+        "1"
+      ]
+    },
+    "193": {
+      "op": "==",
+      "defined_out": [
+        "eq%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "eq%1#0"
+      ]
+    },
+    "194": {
+      "error": "invalid number of bytes for arc4.uint8",
+      "op": "assert // invalid number of bytes for arc4.uint8",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0"
+      ]
+    },
+    "195": {
+      "op": "txn Sender",
+      "defined_out": [
+        "reinterpret_Encoded(uint8[32])%0#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "reinterpret_Encoded(uint8[32])%0#0"
+      ]
+    },
+    "197": {
+      "callsub": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role",
+      "op": "callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role",
+      "defined_out": [
+        "caller_role#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "200": {
+      "op": "txn Sender",
+      "defined_out": [
+        "caller_role#0",
+        "reinterpret_Encoded(uint8[32])%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "reinterpret_Encoded(uint8[32])%1#0"
+      ]
+    },
+    "202": {
+      "callsub": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "op": "callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "defined_out": [
+        "caller_is_admin#0",
+        "caller_role#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "caller_is_admin#0"
+      ]
+    },
+    "205": {
+      "op": "intc_2 // 0",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "caller_is_admin#0",
+        "0"
+      ]
+    },
+    "206": {
+      "op": "getbit",
+      "defined_out": [
+        "aggregate%get_bit%0#0",
+        "caller_role#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "aggregate%get_bit%0#0"
+      ]
+    },
+    "207": {
+      "op": "bnz register_role_bool_true@5",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "210": {
+      "op": "dup",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "caller_role#0"
+      ]
+    },
+    "211": {
+      "op": "btoi",
+      "defined_out": [
+        "caller_role#0",
+        "role#0",
+        "tmp%3#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%3#0"
+      ]
+    },
+    "212": {
+      "op": "intc_0 // 1",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%3#0",
+        "1"
+      ]
+    },
+    "213": {
+      "op": "&",
+      "defined_out": [
+        "caller_role#0",
+        "role#0",
+        "tmp%4#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%4#0"
+      ]
+    },
+    "214": {
+      "op": "bz register_role_bool_false@6",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "217": {
+      "op": "dig 1",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0"
+      ]
+    },
+    "219": {
+      "op": "btoi",
+      "defined_out": [
+        "caller_role#0",
+        "role#0",
+        "tmp%6#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%6#0"
+      ]
+    },
+    "220": {
+      "op": "dup",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%6#0",
+        "tmp%6#0"
+      ]
+    },
+    "221": {
+      "op": "bury 5",
+      "defined_out": [
+        "caller_role#0",
+        "role#0",
+        "tmp%6#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%6#0"
+      ]
+    },
+    "223": {
+      "op": "pushint 2",
+      "defined_out": [
+        "2",
+        "caller_role#0",
+        "role#0",
+        "tmp%6#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%6#0",
+        "2"
+      ]
+    },
+    "225": {
+      "op": "==",
+      "defined_out": [
+        "caller_role#0",
+        "role#0",
+        "tmp%6#0",
+        "tmp%7#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%7#0"
+      ]
+    },
+    "226": {
+      "op": "bnz register_role_bool_true@5",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "229": {
+      "op": "dig 3",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%6#0"
+      ]
+    },
+    "231": {
+      "op": "pushint 4",
+      "defined_out": [
+        "4",
+        "caller_role#0",
+        "role#0",
+        "tmp%6#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%6#0",
+        "4"
+      ]
+    },
+    "233": {
+      "op": "==",
+      "defined_out": [
+        "caller_role#0",
+        "role#0",
+        "tmp%6#0",
+        "tmp%9#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "tmp%9#0"
+      ]
+    },
+    "234": {
+      "op": "bz register_role_bool_false@6",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "237": {
+      "block": "register_role_bool_true@5",
+      "stack_in": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ],
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "valid_caller#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "valid_caller#0"
+      ]
+    },
+    "238": {
+      "error": "Unauthorized to assign this role",
+      "block": "register_role_bool_merge@7",
+      "stack_in": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "valid_caller#0"
+      ],
+      "op": "assert // Unauthorized to assign this role",
+      "defined_out": [],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "239": {
+      "op": "dig 1",
+      "defined_out": [
+        "role#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0"
+      ]
+    },
+    "241": {
+      "op": "dup",
+      "defined_out": [
+        "role#0",
+        "role#0 (copy)"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "role#0 (copy)"
+      ]
+    },
+    "242": {
+      "op": "btoi",
+      "defined_out": [
+        "role#0",
+        "tmp%10#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "tmp%10#0"
+      ]
+    },
+    "243": {
+      "error": "Invalid role",
+      "op": "assert // Invalid role",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0"
+      ]
+    },
+    "244": {
+      "op": "bytec_0 // 0x726f6c655f",
+      "defined_out": [
+        "0x726f6c655f",
+        "role#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "0x726f6c655f"
+      ]
+    },
+    "245": {
+      "op": "dig 4",
+      "defined_out": [
+        "0x726f6c655f",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "0x726f6c655f",
+        "user#0"
+      ]
+    },
+    "247": {
+      "op": "dup",
+      "defined_out": [
+        "0x726f6c655f",
+        "role#0",
+        "user#0",
+        "user#0 (copy)"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "0x726f6c655f",
+        "user#0 (copy)",
+        "user#0 (copy)"
+      ]
+    },
+    "248": {
+      "op": "cover 2",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "user#0",
+        "0x726f6c655f",
+        "user#0 (copy)"
+      ]
+    },
+    "250": {
+      "op": "concat",
+      "defined_out": [
+        "box_prefixed_key%0#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "user#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "251": {
+      "op": "dig 2",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "user#0",
+        "box_prefixed_key%0#0",
+        "role#0 (copy)"
+      ]
+    },
+    "253": {
+      "op": "box_put",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "role#0",
+        "user#0"
+      ]
+    },
+    "254": {
+      "op": "swap",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "user#0",
+        "role#0"
+      ]
+    },
+    "255": {
+      "op": "concat",
+      "defined_out": [
+        "aggregate%head%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "aggregate%head%1#0"
+      ]
+    },
+    "256": {
+      "op": "pushbytes 0x919bcf1c // method \"RoleAssigned(address,uint8)\"",
+      "defined_out": [
+        "Method(RoleAssigned(address,uint8))",
+        "aggregate%head%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "aggregate%head%1#0",
+        "Method(RoleAssigned(address,uint8))"
+      ]
+    },
+    "262": {
+      "op": "swap",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "Method(RoleAssigned(address,uint8))",
+        "aggregate%head%1#0"
+      ]
+    },
+    "263": {
+      "op": "concat",
+      "defined_out": [
+        "event%0#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "event%0#0"
+      ]
+    },
+    "264": {
+      "op": "log",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "265": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "1"
+      ]
+    },
+    "266": {
+      "op": "return",
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ]
+    },
+    "267": {
+      "block": "register_role_bool_false@6",
+      "stack_in": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0"
+      ],
+      "op": "intc_2 // 0",
+      "defined_out": [
+        "valid_caller#0"
+      ],
+      "stack_out": [
+        "tmp%6#0",
+        "user#0",
+        "role#0",
+        "caller_role#0",
+        "valid_caller#0"
+      ]
+    },
+    "268": {
+      "op": "b register_role_bool_merge@7"
+    },
+    "271": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.update_role[routing]",
+      "params": {},
+      "block": "update_role",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1",
+      "defined_out": [
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0"
+      ]
+    },
+    "274": {
+      "op": "dup",
+      "defined_out": [
+        "user#0",
+        "user#0 (copy)"
+      ],
+      "stack_out": [
+        "user#0",
+        "user#0 (copy)"
+      ]
+    },
+    "275": {
+      "op": "len",
+      "defined_out": [
+        "len%0#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "len%0#0"
+      ]
+    },
+    "276": {
+      "op": "intc_1 // 32",
+      "defined_out": [
+        "32",
+        "len%0#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "277": {
+      "op": "==",
+      "defined_out": [
+        "eq%0#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "eq%0#0"
+      ]
+    },
+    "278": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "user#0"
+      ]
+    },
+    "279": {
+      "op": "txna ApplicationArgs 2",
+      "defined_out": [
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0"
+      ]
+    },
+    "282": {
+      "op": "dup",
+      "defined_out": [
+        "role#0",
+        "role#0 (copy)",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "role#0 (copy)"
+      ]
+    },
+    "283": {
+      "op": "len",
+      "defined_out": [
+        "len%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "len%1#0"
+      ]
+    },
+    "284": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1",
+        "len%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "len%1#0",
+        "1"
+      ]
+    },
+    "285": {
+      "op": "==",
+      "defined_out": [
+        "eq%1#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "eq%1#0"
+      ]
+    },
+    "286": {
+      "error": "invalid number of bytes for arc4.uint8",
+      "op": "assert // invalid number of bytes for arc4.uint8",
+      "stack_out": [
+        "user#0",
+        "role#0"
+      ]
+    },
+    "287": {
+      "callsub": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC._only_admin",
+      "op": "callsub _only_admin"
+    },
+    "290": {
+      "op": "dup",
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "role#0 (copy)"
+      ]
+    },
+    "291": {
+      "op": "btoi",
+      "defined_out": [
+        "role#0",
+        "tmp%0#1",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "tmp%0#1"
+      ]
+    },
+    "292": {
+      "error": "Invalid role",
+      "op": "assert // Invalid role",
+      "stack_out": [
+        "user#0",
+        "role#0"
+      ]
+    },
+    "293": {
+      "op": "bytec_0 // 0x726f6c655f",
+      "defined_out": [
+        "0x726f6c655f",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "0x726f6c655f"
+      ]
+    },
+    "294": {
+      "op": "dig 2",
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "0x726f6c655f",
+        "user#0 (copy)"
+      ]
+    },
+    "296": {
+      "op": "concat",
+      "defined_out": [
+        "box_prefixed_key%0#0",
+        "role#0",
+        "user#0"
+      ],
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "297": {
+      "op": "dig 1",
+      "stack_out": [
+        "user#0",
+        "role#0",
+        "box_prefixed_key%0#0",
+        "role#0 (copy)"
+      ]
+    },
+    "299": {
+      "op": "box_put",
+      "stack_out": [
+        "user#0",
+        "role#0"
+      ]
+    },
+    "300": {
+      "op": "concat",
+      "defined_out": [
+        "aggregate%head%1#0"
+      ],
+      "stack_out": [
+        "aggregate%head%1#0"
+      ]
+    },
+    "301": {
+      "op": "pushbytes 0x9fad2cd2 // method \"RoleUpdated(address,uint8)\"",
+      "defined_out": [
+        "Method(RoleUpdated(address,uint8))",
+        "aggregate%head%1#0"
+      ],
+      "stack_out": [
+        "aggregate%head%1#0",
+        "Method(RoleUpdated(address,uint8))"
+      ]
+    },
+    "307": {
+      "op": "swap",
+      "stack_out": [
+        "Method(RoleUpdated(address,uint8))",
+        "aggregate%head%1#0"
+      ]
+    },
+    "308": {
+      "op": "concat",
+      "defined_out": [
+        "event%0#0"
+      ],
+      "stack_out": [
+        "event%0#0"
+      ]
+    },
+    "309": {
+      "op": "log",
+      "stack_out": []
+    },
+    "310": {
+      "op": "intc_0 // 1",
+      "stack_out": [
+        "1"
+      ]
+    },
+    "311": {
+      "op": "return",
+      "stack_out": []
+    },
+    "312": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role[routing]",
+      "params": {},
+      "block": "get_role",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "315": {
+      "op": "dup",
+      "defined_out": [
+        "tmp%0#0",
+        "tmp%0#0 (copy)"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "tmp%0#0 (copy)"
+      ]
+    },
+    "316": {
+      "op": "len",
+      "defined_out": [
+        "len%0#0",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "len%0#0"
+      ]
+    },
+    "317": {
+      "op": "intc_1 // 32",
+      "defined_out": [
+        "32",
+        "len%0#0",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "318": {
+      "op": "==",
+      "defined_out": [
+        "eq%0#0",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "eq%0#0"
+      ]
+    },
+    "319": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "320": {
+      "callsub": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role",
+      "op": "callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role",
+      "defined_out": [
+        "tmp%1#0"
+      ],
+      "stack_out": [
+        "tmp%1#0"
+      ]
+    },
+    "323": {
+      "op": "bytec 4 // 0x151f7c75",
+      "defined_out": [
+        "0x151f7c75",
+        "tmp%1#0"
+      ],
+      "stack_out": [
+        "tmp%1#0",
+        "0x151f7c75"
+      ]
+    },
+    "325": {
+      "op": "swap",
+      "stack_out": [
+        "0x151f7c75",
+        "tmp%1#0"
+      ]
+    },
+    "326": {
+      "op": "concat",
+      "defined_out": [
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "tmp%2#0"
+      ]
+    },
+    "327": {
+      "op": "log",
+      "stack_out": []
+    },
+    "328": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "329": {
+      "op": "return",
+      "stack_out": []
+    },
+    "330": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "params": {
+        "wallet#0": "bytes"
+      },
+      "block": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "stack_in": [],
+      "op": "proto 1 1"
+    },
+    "333": {
+      "op": "intc_2 // 0",
+      "stack_out": [
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "334": {
+      "op": "dup",
+      "defined_out": [
+        "0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0"
+      ]
+    },
+    "335": {
+      "op": "bytec_1 // \"init_admin\"",
+      "defined_out": [
+        "\"init_admin\"",
+        "0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0",
+        "\"init_admin\""
+      ]
+    },
+    "336": {
+      "op": "app_global_get_ex",
+      "defined_out": [
+        "maybe_exists%0#0",
+        "maybe_value%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "maybe_value%0#0",
+        "maybe_exists%0#0"
+      ]
+    },
+    "337": {
+      "error": "check self.initial_admin exists",
+      "op": "assert // check self.initial_admin exists",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "maybe_value%0#0"
+      ]
+    },
+    "338": {
+      "op": "frame_dig -1",
+      "defined_out": [
+        "maybe_value%0#0",
+        "wallet#0 (copy)"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "maybe_value%0#0",
+        "wallet#0 (copy)"
+      ]
+    },
+    "340": {
+      "op": "==",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "tmp%0#0"
+      ]
+    },
+    "341": {
+      "op": "bz smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@2",
+      "stack_out": [
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "344": {
+      "op": "bytec_3 // 0x80",
+      "defined_out": [
+        "0x80"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0x80"
+      ]
+    },
+    "345": {
+      "op": "swap"
+    },
+    "346": {
+      "retsub": true,
+      "op": "retsub"
+    },
+    "347": {
+      "block": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@2",
+      "stack_in": [
+        "box_prefixed_key%0#0"
+      ],
+      "op": "bytec_2 // 0x61646d5f",
+      "defined_out": [
+        "0x61646d5f"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0x61646d5f"
+      ]
+    },
+    "348": {
+      "op": "frame_dig -1",
+      "defined_out": [
+        "0x61646d5f",
+        "wallet#0 (copy)"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0x61646d5f",
+        "wallet#0 (copy)"
+      ]
+    },
+    "350": {
+      "op": "concat",
+      "defined_out": [
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "351": {
+      "op": "dup",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "box_prefixed_key%0#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "352": {
+      "op": "frame_bury 0",
+      "defined_out": [
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "354": {
+      "op": "box_len",
+      "defined_out": [
+        "_%0#0",
+        "box_prefixed_key%0#0",
+        "maybe_exists%1#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "_%0#0",
+        "maybe_exists%1#0"
+      ]
+    },
+    "355": {
+      "op": "bury 1",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "maybe_exists%1#0"
+      ]
+    },
+    "357": {
+      "op": "bz smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@4",
+      "stack_out": [
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "360": {
+      "op": "frame_dig 0",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "362": {
+      "op": "box_get",
+      "defined_out": [
+        "aggregate%box_get%0#0",
+        "aggregate%box_get%1#0",
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "aggregate%box_get%0#0",
+        "aggregate%box_get%1#0"
+      ]
+    },
+    "363": {
+      "error": "check self.admins entry exists",
+      "op": "assert // check self.admins entry exists",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "aggregate%box_get%0#0"
+      ]
+    },
+    "364": {
+      "op": "swap"
+    },
+    "365": {
+      "retsub": true,
+      "op": "retsub"
+    },
+    "366": {
+      "block": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin_after_if_else@4",
+      "stack_in": [
+        "box_prefixed_key%0#0"
+      ],
+      "op": "pushbytes 0x00",
+      "defined_out": [
+        "0x00"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0x00"
+      ]
+    },
+    "369": {
+      "op": "swap"
+    },
+    "370": {
+      "retsub": true,
+      "op": "retsub"
+    },
+    "371": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role",
+      "params": {
+        "wallet#0": "bytes"
+      },
+      "block": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role",
+      "stack_in": [],
+      "op": "proto 1 1"
+    },
+    "374": {
+      "op": "bytec_0 // 0x726f6c655f",
+      "defined_out": [
+        "0x726f6c655f"
+      ],
+      "stack_out": [
+        "0x726f6c655f"
+      ]
+    },
+    "375": {
+      "op": "frame_dig -1",
+      "defined_out": [
+        "0x726f6c655f",
+        "wallet#0 (copy)"
+      ],
+      "stack_out": [
+        "0x726f6c655f",
+        "wallet#0 (copy)"
+      ]
+    },
+    "377": {
+      "op": "concat",
+      "defined_out": [
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "378": {
+      "op": "dup",
+      "defined_out": [
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "379": {
+      "op": "box_len",
+      "defined_out": [
+        "_%0#0",
+        "box_prefixed_key%0#0",
+        "maybe_exists%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "_%0#0",
+        "maybe_exists%0#0"
+      ]
+    },
+    "380": {
+      "op": "bury 1",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "maybe_exists%0#0"
+      ]
+    },
+    "382": {
+      "op": "bz smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role_after_if_else@2",
+      "stack_out": [
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "385": {
+      "op": "frame_dig 0",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "box_prefixed_key%0#0"
+      ]
+    },
+    "387": {
+      "op": "box_get",
+      "defined_out": [
+        "aggregate%box_get%0#0",
+        "aggregate%box_get%1#0",
+        "box_prefixed_key%0#0"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "aggregate%box_get%0#0",
+        "aggregate%box_get%1#0"
+      ]
+    },
+    "388": {
+      "error": "check self.roles entry exists",
+      "op": "assert // check self.roles entry exists",
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "aggregate%box_get%0#0"
+      ]
+    },
+    "389": {
+      "op": "swap"
+    },
+    "390": {
+      "retsub": true,
+      "op": "retsub"
+    },
+    "391": {
+      "block": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.get_role_after_if_else@2",
+      "stack_in": [
+        "box_prefixed_key%0#0"
+      ],
+      "op": "pushbytes 0x00",
+      "defined_out": [
+        "0x00"
+      ],
+      "stack_out": [
+        "box_prefixed_key%0#0",
+        "0x00"
+      ]
+    },
+    "394": {
+      "op": "swap"
+    },
+    "395": {
+      "retsub": true,
+      "op": "retsub"
+    },
+    "396": {
+      "subroutine": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC._only_admin",
+      "params": {},
+      "block": "_only_admin",
+      "stack_in": [],
+      "op": "txn Sender",
+      "defined_out": [
+        "caller#0"
+      ],
+      "stack_out": [
+        "caller#0"
+      ]
+    },
+    "398": {
+      "callsub": "smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "op": "callsub smart_contracts.HealthcareRBAC.contract.HealthcareRBAC.is_admin",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "401": {
+      "op": "intc_2 // 0",
+      "defined_out": [
+        "0",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "0"
+      ]
+    },
+    "402": {
+      "op": "getbit",
+      "defined_out": [
+        "aggregate%get_bit%0#0"
+      ],
+      "stack_out": [
+        "aggregate%get_bit%0#0"
+      ]
+    },
+    "403": {
+      "error": "Only admin allowed",
+      "op": "assert // Only admin allowed",
+      "stack_out": []
+    },
+    "404": {
+      "retsub": true,
+      "op": "retsub"
+    }
+  }
+}

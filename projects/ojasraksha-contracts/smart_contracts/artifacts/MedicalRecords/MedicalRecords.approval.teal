@@ -1,0 +1,1205 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 2 8
+    bytecblock "rec_counter" "q_len" 0x70725f "audit_app" 0x0002 0x70715f 0x005c 0xc7bdb470 0x00010002 0x0000 0x151f7c75
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/MedicalRecords/contract.py:41
+    // self.record_counter.value = UInt64(0)
+    bytec_0 // "rec_counter"
+    intc_0 // 0
+    app_global_put
+    // smart_contracts/MedicalRecords/contract.py:58
+    // self.queue_length.value = UInt64(0)
+    bytec_1 // "q_len"
+    intc_0 // 0
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/MedicalRecords/contract.py:37
+    // class MedicalRecords(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@15
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0xa0cadf8a 0xa5fabe9e 0xf00cf28b 0x03966beb 0xc735f128 0x7d49bcf4 // method "bootstrap(uint64)void", method "add_record(address,string,string,uint64)void", method "add_prescription(address,string,string)void", method "get_pending_prescriptions()(uint64,address,string,string,bool,uint64)[]", method "mark_prescription_dispensed(uint64,uint64)void", method "get_patient_records(address)(uint64,address,address,string,string,uint64,uint64)[]"
+    txna ApplicationArgs 0
+    match bootstrap add_record add_prescription get_pending_prescriptions mark_prescription_dispensed get_patient_records
+    err
+
+main___algopy_default_create@15:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// _puya_lib.arc4.dynamic_array_concat_dynamic_element(array_items_count: uint64, array_head_and_tail: bytes, new_items_count: uint64, new_head_and_tail: bytes) -> bytes:
+dynamic_array_concat_dynamic_element:
+    proto 4 1
+    pushbytes ""
+    dup
+    frame_dig -2
+    intc_2 // 2
+    *
+    frame_dig -4
+    intc_2 // 2
+    *
+    intc_0 // 0
+
+dynamic_array_concat_dynamic_element_for_header@1:
+    frame_dig 4
+    frame_dig 3
+    <
+    bz dynamic_array_concat_dynamic_element_after_for@4
+    frame_dig -3
+    frame_dig 4
+    dup
+    cover 2
+    extract_uint16
+    frame_dig 2
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    intc_2 // 2
+    +
+    frame_bury 4
+    b dynamic_array_concat_dynamic_element_for_header@1
+
+dynamic_array_concat_dynamic_element_after_for@4:
+    frame_dig -3
+    len
+    frame_bury 0
+    intc_0 // 0
+    frame_bury 4
+
+dynamic_array_concat_dynamic_element_for_header@5:
+    frame_dig 4
+    frame_dig 2
+    <
+    bz dynamic_array_concat_dynamic_element_after_for@8
+    frame_dig -1
+    frame_dig 4
+    dup
+    cover 2
+    extract_uint16
+    frame_dig 0
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    intc_2 // 2
+    +
+    frame_bury 4
+    b dynamic_array_concat_dynamic_element_for_header@5
+
+dynamic_array_concat_dynamic_element_after_for@8:
+    frame_dig -4
+    frame_dig -2
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    concat
+    frame_dig -3
+    frame_dig 3
+    frame_dig 0
+    substring3
+    concat
+    frame_dig -1
+    len
+    frame_dig -1
+    frame_dig 2
+    uncover 2
+    substring3
+    concat
+    frame_bury 0
+    retsub
+
+
+// smart_contracts.MedicalRecords.contract.MedicalRecords.bootstrap[routing]() -> void:
+bootstrap:
+    // smart_contracts/MedicalRecords/contract.py:60
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/MedicalRecords/contract.py:63
+    // self.audit_app.value = audit_app_id.native
+    btoi
+    bytec_3 // "audit_app"
+    swap
+    app_global_put
+    // smart_contracts/MedicalRecords/contract.py:60
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.MedicalRecords.contract.MedicalRecords.add_record[routing]() -> void:
+add_record:
+    // smart_contracts/MedicalRecords/contract.py:65
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dupn 2
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    dup
+    cover 4
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 3
+    dup
+    cover 4
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/MedicalRecords/contract.py:74
+    // self.record_counter.value += UInt64(1)
+    intc_0 // 0
+    bytec_0 // "rec_counter"
+    app_global_get_ex
+    assert // check self.record_counter exists
+    intc_1 // 1
+    +
+    bytec_0 // "rec_counter"
+    dig 1
+    app_global_put
+    // smart_contracts/MedicalRecords/contract.py:75
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    // smart_contracts/MedicalRecords/contract.py:78
+    // id=arc4.UInt64(self.record_counter.value),
+    swap
+    itob
+    // smart_contracts/MedicalRecords/contract.py:80
+    // provider=arc4.Address(Txn.sender),
+    txn Sender
+    // smart_contracts/MedicalRecords/contract.py:83
+    // timestamp=arc4.UInt64(now),
+    uncover 2
+    itob
+    dup
+    cover 3
+    cover 8
+    // smart_contracts/MedicalRecords/contract.py:77-85
+    // new_record = Record(
+    //     id=arc4.UInt64(self.record_counter.value),
+    //     patient=patient,
+    //     provider=arc4.Address(Txn.sender),
+    //     cid=cid,
+    //     record_type=record_type,
+    //     timestamp=arc4.UInt64(now),
+    //     bill_amount=bill_amount,
+    // )
+    swap
+    dig 7
+    concat
+    swap
+    concat
+    bytec 6 // 0x005c
+    concat
+    pushint 92
+    uncover 5
+    +
+    itob
+    extract 6 2
+    concat
+    swap
+    concat
+    swap
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    swap
+    // smart_contracts/MedicalRecords/contract.py:87
+    // if patient in self.patient_records:
+    bytec_2 // 0x70725f
+    swap
+    concat
+    dup
+    cover 2
+    box_len
+    bury 1
+    bz add_record_else_body@3
+    // smart_contracts/MedicalRecords/contract.py:88
+    // arr = self.patient_records[patient].copy()
+    dig 1
+    dup
+    box_get
+    assert // check self.patient_records entry exists
+    // smart_contracts/MedicalRecords/contract.py:89
+    // arr.append(new_record.copy())
+    dup
+    intc_0 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 4 // 0x0002
+    uncover 4
+    concat
+    cover 2
+    intc_1 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    // smart_contracts/MedicalRecords/contract.py:90
+    // self.patient_records[patient] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+
+add_record_after_if_else@4:
+    // smart_contracts/MedicalRecords/contract.py:95-103
+    // # Log to AuditLog contract via inner transaction
+    // arc4.abi_call(
+    //     "log_data_accessed(address,address,string,uint64)void",
+    //     patient,
+    //     arc4.Address(Txn.sender),
+    //     arc4.String("Uploaded new record"),
+    //     arc4.UInt64(now),
+    //     app_id=Application(self.audit_app.value),
+    // )
+    itxn_begin
+    // smart_contracts/MedicalRecords/contract.py:99
+    // arc4.Address(Txn.sender),
+    txn Sender
+    // smart_contracts/MedicalRecords/contract.py:102
+    // app_id=Application(self.audit_app.value),
+    intc_0 // 0
+    bytec_3 // "audit_app"
+    app_global_get_ex
+    assert // check self.audit_app exists
+    itxn_field ApplicationID
+    // smart_contracts/MedicalRecords/contract.py:95-103
+    // # Log to AuditLog contract via inner transaction
+    // arc4.abi_call(
+    //     "log_data_accessed(address,address,string,uint64)void",
+    //     patient,
+    //     arc4.Address(Txn.sender),
+    //     arc4.String("Uploaded new record"),
+    //     arc4.UInt64(now),
+    //     app_id=Application(self.audit_app.value),
+    // )
+    bytec 7 // method "log_data_accessed(address,address,string,uint64)void"
+    itxn_field ApplicationArgs
+    dig 6
+    dup
+    cover 2
+    itxn_field ApplicationArgs
+    itxn_field ApplicationArgs
+    // smart_contracts/MedicalRecords/contract.py:100
+    // arc4.String("Uploaded new record"),
+    pushbytes 0x001355706c6f61646564206e6577207265636f7264
+    itxn_field ApplicationArgs
+    dig 2
+    dup
+    cover 2
+    itxn_field ApplicationArgs
+    // smart_contracts/MedicalRecords/contract.py:95-103
+    // # Log to AuditLog contract via inner transaction
+    // arc4.abi_call(
+    //     "log_data_accessed(address,address,string,uint64)void",
+    //     patient,
+    //     arc4.Address(Txn.sender),
+    //     arc4.String("Uploaded new record"),
+    //     arc4.UInt64(now),
+    //     app_id=Application(self.audit_app.value),
+    // )
+    pushint 6 // appl
+    itxn_field TypeEnum
+    intc_0 // 0
+    itxn_field Fee
+    itxn_submit
+    // smart_contracts/MedicalRecords/contract.py:108
+    // arc4.UInt64(self.record_counter.value),
+    intc_0 // 0
+    bytec_0 // "rec_counter"
+    app_global_get_ex
+    assert // check self.record_counter exists
+    itob
+    // smart_contracts/MedicalRecords/contract.py:110
+    // arc4.Address(Txn.sender),
+    txn Sender
+    // smart_contracts/MedicalRecords/contract.py:105-114
+    // # Emit ARC-28 event
+    // arc4.emit(
+    //     "RecordAdded(uint64,address,address,string,string,uint64)",
+    //     arc4.UInt64(self.record_counter.value),
+    //     patient,
+    //     arc4.Address(Txn.sender),
+    //     cid,
+    //     record_type,
+    //     arc4.UInt64(now),
+    // )
+    swap
+    uncover 2
+    concat
+    swap
+    concat
+    pushbytes 0x0054
+    concat
+    pushint 84
+    dig 6
+    +
+    itob
+    extract 6 2
+    concat
+    swap
+    concat
+    dig 5
+    concat
+    dig 3
+    concat
+    pushbytes 0x12e00d1d // method "RecordAdded(uint64,address,address,string,string,uint64)"
+    swap
+    concat
+    log
+    // smart_contracts/MedicalRecords/contract.py:65
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+add_record_else_body@3:
+    // smart_contracts/MedicalRecords/contract.py:92
+    // arr = arc4.DynamicArray[Record](new_record.copy())
+    bytec 8 // 0x00010002
+    swap
+    concat
+    // smart_contracts/MedicalRecords/contract.py:93
+    // self.patient_records[patient] = arr.copy()
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b add_record_after_if_else@4
+
+
+// smart_contracts.MedicalRecords.contract.MedicalRecords.add_prescription[routing]() -> void:
+add_prescription:
+    // smart_contracts/MedicalRecords/contract.py:116
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dupn 2
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 3
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // smart_contracts/MedicalRecords/contract.py:124
+    // self.record_counter.value += UInt64(1)
+    intc_0 // 0
+    bytec_0 // "rec_counter"
+    app_global_get_ex
+    assert // check self.record_counter exists
+    intc_1 // 1
+    +
+    bytec_0 // "rec_counter"
+    dig 1
+    app_global_put
+    // smart_contracts/MedicalRecords/contract.py:125
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    // smart_contracts/MedicalRecords/contract.py:126
+    // rec_id = arc4.UInt64(self.record_counter.value)
+    swap
+    itob
+    // smart_contracts/MedicalRecords/contract.py:128-129
+    // # Add to prescription queue (keyed by queue index)
+    // queue_idx = arc4.UInt64(self.queue_length.value)
+    intc_0 // 0
+    bytec_1 // "q_len"
+    app_global_get_ex
+    assert // check self.queue_length exists
+    dup
+    itob
+    // smart_contracts/MedicalRecords/contract.py:130-137
+    // self.prescription_queue[queue_idx] = PrescriptionQueueItem(
+    //     record_id=rec_id,
+    //     patient=patient,
+    //     patient_name=patient_name,
+    //     cid=cid,
+    //     is_dispensed=arc4.Bool(False),
+    //     bill_amount=arc4.UInt64(0),
+    // ).copy()
+    uncover 2
+    dig 8
+    concat
+    dup
+    cover 9
+    dup
+    pushbytes 0x0035
+    concat
+    pushint 53
+    uncover 8
+    +
+    itob
+    extract 6 2
+    concat
+    pushbytes 0x000000000000000000
+    concat
+    uncover 7
+    concat
+    dig 6
+    concat
+    // smart_contracts/MedicalRecords/contract.py:130
+    // self.prescription_queue[queue_idx] = PrescriptionQueueItem(
+    bytec 5 // 0x70715f
+    uncover 3
+    concat
+    // smart_contracts/MedicalRecords/contract.py:130-137
+    // self.prescription_queue[queue_idx] = PrescriptionQueueItem(
+    //     record_id=rec_id,
+    //     patient=patient,
+    //     patient_name=patient_name,
+    //     cid=cid,
+    //     is_dispensed=arc4.Bool(False),
+    //     bill_amount=arc4.UInt64(0),
+    // ).copy()
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/MedicalRecords/contract.py:138
+    // self.queue_length.value += UInt64(1)
+    swap
+    intc_1 // 1
+    +
+    bytec_1 // "q_len"
+    swap
+    app_global_put
+    // smart_contracts/MedicalRecords/contract.py:144
+    // provider=arc4.Address(Txn.sender),
+    txn Sender
+    // smart_contracts/MedicalRecords/contract.py:147
+    // timestamp=arc4.UInt64(now),
+    uncover 2
+    itob
+    dup
+    cover 2
+    cover 6
+    // smart_contracts/MedicalRecords/contract.py:140-149
+    // # Also add to patient's record history
+    // new_record = Record(
+    //     id=rec_id,
+    //     patient=patient,
+    //     provider=arc4.Address(Txn.sender),
+    //     cid=cid,
+    //     record_type=arc4.String("Prescription"),
+    //     timestamp=arc4.UInt64(now),
+    //     bill_amount=arc4.UInt64(0),
+    // )
+    uncover 2
+    swap
+    concat
+    bytec 6 // 0x005c
+    concat
+    pushint 92
+    uncover 3
+    +
+    itob
+    extract 6 2
+    concat
+    swap
+    concat
+    // smart_contracts/MedicalRecords/contract.py:148
+    // bill_amount=arc4.UInt64(0),
+    pushbytes 0x0000000000000000
+    // smart_contracts/MedicalRecords/contract.py:140-149
+    // # Also add to patient's record history
+    // new_record = Record(
+    //     id=rec_id,
+    //     patient=patient,
+    //     provider=arc4.Address(Txn.sender),
+    //     cid=cid,
+    //     record_type=arc4.String("Prescription"),
+    //     timestamp=arc4.UInt64(now),
+    //     bill_amount=arc4.UInt64(0),
+    // )
+    concat
+    swap
+    concat
+    // smart_contracts/MedicalRecords/contract.py:146
+    // record_type=arc4.String("Prescription"),
+    pushbytes 0x000c507265736372697074696f6e
+    // smart_contracts/MedicalRecords/contract.py:140-149
+    // # Also add to patient's record history
+    // new_record = Record(
+    //     id=rec_id,
+    //     patient=patient,
+    //     provider=arc4.Address(Txn.sender),
+    //     cid=cid,
+    //     record_type=arc4.String("Prescription"),
+    //     timestamp=arc4.UInt64(now),
+    //     bill_amount=arc4.UInt64(0),
+    // )
+    concat
+    swap
+    // smart_contracts/MedicalRecords/contract.py:151
+    // if patient in self.patient_records:
+    bytec_2 // 0x70725f
+    swap
+    concat
+    dup
+    cover 2
+    box_len
+    bury 1
+    bz add_prescription_else_body@3
+    // smart_contracts/MedicalRecords/contract.py:152
+    // arr = self.patient_records[patient].copy()
+    dig 1
+    dup
+    box_get
+    assert // check self.patient_records entry exists
+    // smart_contracts/MedicalRecords/contract.py:153
+    // arr.append(new_record.copy())
+    dup
+    intc_0 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 4 // 0x0002
+    uncover 4
+    concat
+    cover 2
+    intc_1 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    // smart_contracts/MedicalRecords/contract.py:154
+    // self.patient_records[patient] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+
+add_prescription_after_if_else@4:
+    // smart_contracts/MedicalRecords/contract.py:159-166
+    // arc4.abi_call(
+    //     "log_data_accessed(address,address,string,uint64)void",
+    //     patient,
+    //     arc4.Address(Txn.sender),
+    //     arc4.String("Uploaded new Prescription to Global Queue"),
+    //     arc4.UInt64(now),
+    //     app_id=Application(self.audit_app.value),
+    // )
+    itxn_begin
+    // smart_contracts/MedicalRecords/contract.py:162
+    // arc4.Address(Txn.sender),
+    txn Sender
+    // smart_contracts/MedicalRecords/contract.py:165
+    // app_id=Application(self.audit_app.value),
+    intc_0 // 0
+    bytec_3 // "audit_app"
+    app_global_get_ex
+    assert // check self.audit_app exists
+    itxn_field ApplicationID
+    // smart_contracts/MedicalRecords/contract.py:159-166
+    // arc4.abi_call(
+    //     "log_data_accessed(address,address,string,uint64)void",
+    //     patient,
+    //     arc4.Address(Txn.sender),
+    //     arc4.String("Uploaded new Prescription to Global Queue"),
+    //     arc4.UInt64(now),
+    //     app_id=Application(self.audit_app.value),
+    // )
+    bytec 7 // method "log_data_accessed(address,address,string,uint64)void"
+    itxn_field ApplicationArgs
+    dig 5
+    itxn_field ApplicationArgs
+    itxn_field ApplicationArgs
+    // smart_contracts/MedicalRecords/contract.py:163
+    // arc4.String("Uploaded new Prescription to Global Queue"),
+    pushbytes 0x002955706c6f61646564206e657720507265736372697074696f6e20746f20476c6f62616c205175657565
+    itxn_field ApplicationArgs
+    dig 1
+    itxn_field ApplicationArgs
+    // smart_contracts/MedicalRecords/contract.py:159-166
+    // arc4.abi_call(
+    //     "log_data_accessed(address,address,string,uint64)void",
+    //     patient,
+    //     arc4.Address(Txn.sender),
+    //     arc4.String("Uploaded new Prescription to Global Queue"),
+    //     arc4.UInt64(now),
+    //     app_id=Application(self.audit_app.value),
+    // )
+    pushint 6 // appl
+    itxn_field TypeEnum
+    intc_0 // 0
+    itxn_field Fee
+    itxn_submit
+    // smart_contracts/MedicalRecords/contract.py:168-173
+    // arc4.emit(
+    //     "PrescriptionAddedToQueue(uint64,address,string)",
+    //     rec_id,
+    //     patient,
+    //     patient_name,
+    // )
+    dig 2
+    pushbytes 0x002a
+    concat
+    dig 4
+    concat
+    pushbytes 0x6253a476 // method "PrescriptionAddedToQueue(uint64,address,string)"
+    swap
+    concat
+    log
+    // smart_contracts/MedicalRecords/contract.py:116
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+add_prescription_else_body@3:
+    // smart_contracts/MedicalRecords/contract.py:156
+    // arr = arc4.DynamicArray[Record](new_record.copy())
+    bytec 8 // 0x00010002
+    swap
+    concat
+    // smart_contracts/MedicalRecords/contract.py:157
+    // self.patient_records[patient] = arr.copy()
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b add_prescription_after_if_else@4
+
+
+// smart_contracts.MedicalRecords.contract.MedicalRecords.get_pending_prescriptions[routing]() -> void:
+get_pending_prescriptions:
+    intc_0 // 0
+    // smart_contracts/MedicalRecords/contract.py:180
+    // pending = arc4.DynamicArray[PrescriptionQueueItem]()
+    bytec 9 // 0x0000
+    // smart_contracts/MedicalRecords/contract.py:181
+    // total = self.queue_length.value
+    intc_0 // 0
+    bytec_1 // "q_len"
+    app_global_get_ex
+    assert // check self.queue_length exists
+    // smart_contracts/MedicalRecords/contract.py:182
+    // for i in urange(total):
+    intc_0 // 0
+
+get_pending_prescriptions_for_header@2:
+    // smart_contracts/MedicalRecords/contract.py:182
+    // for i in urange(total):
+    dup
+    dig 2
+    <
+    bz get_pending_prescriptions_after_for@7
+    // smart_contracts/MedicalRecords/contract.py:183
+    // item = self.prescription_queue[arc4.UInt64(i)].copy()
+    dup
+    itob
+    bytec 5 // 0x70715f
+    swap
+    concat
+    dup
+    box_get
+    swap
+    bury 6
+    assert // check self.prescription_queue entry exists
+    // smart_contracts/MedicalRecords/contract.py:183-184
+    // item = self.prescription_queue[arc4.UInt64(i)].copy()
+    // if not item.is_dispensed.native:
+    pushint 44
+    intc_1 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    // smart_contracts/MedicalRecords/contract.py:184
+    // if not item.is_dispensed.native:
+    pushbytes 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bnz get_pending_prescriptions_after_if_else@5
+    // smart_contracts/MedicalRecords/contract.py:185
+    // pending.append(item.copy())
+    dig 2
+    dup
+    intc_0 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 4 // 0x0002
+    dig 6
+    concat
+    cover 2
+    intc_1 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    bury 3
+
+get_pending_prescriptions_after_if_else@5:
+    // smart_contracts/MedicalRecords/contract.py:182
+    // for i in urange(total):
+    dup
+    intc_1 // 1
+    +
+    bury 1
+    b get_pending_prescriptions_for_header@2
+
+get_pending_prescriptions_after_for@7:
+    // smart_contracts/MedicalRecords/contract.py:175
+    // @arc4.abimethod(readonly=True)
+    bytec 10 // 0x151f7c75
+    dig 3
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.MedicalRecords.contract.MedicalRecords.mark_prescription_dispensed[routing]() -> void:
+mark_prescription_dispensed:
+    intc_0 // 0
+    dupn 7
+    pushbytes ""
+    dupn 11
+    // smart_contracts/MedicalRecords/contract.py:188
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/MedicalRecords/contract.py:195
+    // total = self.queue_length.value
+    intc_0 // 0
+    bytec_1 // "q_len"
+    app_global_get_ex
+    assert // check self.queue_length exists
+    // smart_contracts/MedicalRecords/contract.py:196
+    // for i in urange(total):
+    intc_0 // 0
+
+mark_prescription_dispensed_for_header@2:
+    // smart_contracts/MedicalRecords/contract.py:196
+    // for i in urange(total):
+    dup
+    dig 2
+    <
+    bz mark_prescription_dispensed_after_for@15
+    // smart_contracts/MedicalRecords/contract.py:197
+    // idx = arc4.UInt64(i)
+    dup
+    itob
+    // smart_contracts/MedicalRecords/contract.py:198
+    // item = self.prescription_queue[idx].copy()
+    bytec 5 // 0x70715f
+    swap
+    concat
+    dup
+    bury 23
+    dup
+    box_get
+    swap
+    bury 22
+    assert // check self.prescription_queue entry exists
+    // smart_contracts/MedicalRecords/contract.py:198-199
+    // item = self.prescription_queue[idx].copy()
+    // if item.record_id == record_id:
+    intc_0 // 0
+    intc_3 // 8
+    box_extract
+    // smart_contracts/MedicalRecords/contract.py:199
+    // if item.record_id == record_id:
+    dig 4
+    b==
+    bz mark_prescription_dispensed_after_if_else@13
+    // smart_contracts/MedicalRecords/contract.py:200
+    // item.is_dispensed = arc4.Bool(True)
+    dig 19
+    pushint 352
+    intc_1 // 1
+    setbit
+    // smart_contracts/MedicalRecords/contract.py:201
+    // item.bill_amount = bill_amount
+    dig 3
+    replace2 45
+    // smart_contracts/MedicalRecords/contract.py:202
+    // self.prescription_queue[idx] = item.copy()
+    dig 22
+    dup
+    box_del
+    pop
+    dig 1
+    box_put
+    // smart_contracts/MedicalRecords/contract.py:204-205
+    // # Update the patient's record history with the bill amount
+    // patient = item.patient
+    extract 8 32
+    // smart_contracts/MedicalRecords/contract.py:206
+    // if patient in self.patient_records:
+    bytec_2 // 0x70725f
+    swap
+    concat
+    dup
+    bury 22
+    box_len
+    bury 1
+    bz mark_prescription_dispensed_after_if_else@12
+    // smart_contracts/MedicalRecords/contract.py:207
+    // arr = self.patient_records[patient].copy()
+    dig 20
+    dup
+    box_get
+    swap
+    bury 26
+    assert // check self.patient_records entry exists
+    // smart_contracts/MedicalRecords/contract.py:207-208
+    // arr = self.patient_records[patient].copy()
+    // for j in urange(arr.length):
+    intc_0 // 0
+    intc_2 // 2
+    box_extract
+    btoi
+    bury 13
+    // smart_contracts/MedicalRecords/contract.py:208
+    // for j in urange(arr.length):
+    intc_0 // 0
+    bury 10
+
+mark_prescription_dispensed_for_header@6:
+    // smart_contracts/MedicalRecords/contract.py:208
+    // for j in urange(arr.length):
+    dig 9
+    dig 13
+    <
+    bz mark_prescription_dispensed_after_for@11
+    // smart_contracts/MedicalRecords/contract.py:209
+    // rec = arr[j].copy()
+    dig 23
+    dup
+    extract 2 0
+    dup
+    cover 2
+    bury 25
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dup
+    cover 2
+    bury 18
+    dig 11
+    dup
+    intc_2 // 2
+    *
+    dig 2
+    swap
+    extract_uint16
+    dup
+    cover 4
+    bury 10
+    dup
+    intc_1 // 1
+    +
+    dup
+    bury 20
+    uncover 3
+    dig 1
+    - // on error: index access is out of bounds
+    dig 3
+    len
+    dup
+    cover 3
+    bury 18
+    swap
+    intc_2 // 2
+    *
+    dup
+    bury 20
+    dig 4
+    swap
+    extract_uint16
+    dup
+    bury 14
+    swap
+    select
+    uncover 2
+    uncover 3
+    uncover 2
+    substring3
+    bury 19
+    // smart_contracts/MedicalRecords/contract.py:209-210
+    // rec = arr[j].copy()
+    // if rec.id == record_id:
+    intc_2 // 2
+    *
+    intc_2 // 2
+    +
+    dig 21
+    dup
+    uncover 2
+    intc_2 // 2
+    box_extract
+    btoi
+    intc_2 // 2
+    +
+    intc_3 // 8
+    box_extract
+    // smart_contracts/MedicalRecords/contract.py:210
+    // if rec.id == record_id:
+    dig 4
+    b==
+    bz mark_prescription_dispensed_after_if_else@9
+    // smart_contracts/MedicalRecords/contract.py:211
+    // rec.bill_amount = bill_amount
+    dig 17
+    dig 3
+    replace2 84
+    // smart_contracts/MedicalRecords/contract.py:212
+    // arr[j] = rec.copy()
+    dig 10
+    dup
+    dig 18
+    <
+    assert // index access is out of bounds
+    dig 25
+    substring 0 2
+    dup
+    bury 20
+    btoi
+    dup
+    uncover 2
+    -
+    intc_1 // 1
+    -
+    dig 14
+    dup
+    cover 2
+    dig 12
+    uncover 2
+    select
+    dup
+    dig 10
+    dup
+    cover 2
+    -
+    bury 12
+    dig 4
+    len
+    bury 14
+    dig 27
+    dup
+    cover 3
+    intc_0 // 0
+    uncover 2
+    substring3
+    uncover 5
+    concat
+    cover 2
+    uncover 3
+    substring3
+    concat
+    bury 20
+    intc_2 // 2
+    *
+    bury 5
+    dig 13
+    bury 11
+
+mark_prescription_dispensed_for_header@17:
+    dig 10
+    dig 5
+    <
+    bz mark_prescription_dispensed_after_for@19
+    dig 18
+    dup
+    dig 12
+    dup
+    cover 3
+    extract_uint16
+    dig 11
+    +
+    dig 9
+    -
+    itob
+    extract 6 2
+    dig 2
+    swap
+    replace3
+    bury 20
+    intc_2 // 2
+    +
+    bury 11
+    b mark_prescription_dispensed_for_header@17
+
+mark_prescription_dispensed_after_for@19:
+    dig 16
+    dig 19
+    concat
+    bury 24
+
+mark_prescription_dispensed_after_for@11:
+    // smart_contracts/MedicalRecords/contract.py:214
+    // self.patient_records[patient] = arr.copy()
+    dig 20
+    dup
+    box_del
+    pop
+    dig 24
+    box_put
+
+mark_prescription_dispensed_after_if_else@12:
+    // smart_contracts/MedicalRecords/contract.py:216-220
+    // arc4.emit(
+    //     "PrescriptionDispensed(uint64,uint64)",
+    //     record_id,
+    //     bill_amount,
+    // )
+    dig 3
+    dig 3
+    concat
+    pushbytes 0xe00f0afb // method "PrescriptionDispensed(uint64,uint64)"
+    swap
+    concat
+    log
+
+mark_prescription_dispensed_after_for@15:
+    // smart_contracts/MedicalRecords/contract.py:188
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+mark_prescription_dispensed_after_if_else@9:
+    dig 14
+    bury 10
+    b mark_prescription_dispensed_for_header@6
+
+mark_prescription_dispensed_after_if_else@13:
+    // smart_contracts/MedicalRecords/contract.py:196
+    // for i in urange(total):
+    dup
+    intc_1 // 1
+    +
+    bury 1
+    b mark_prescription_dispensed_for_header@2
+
+
+// smart_contracts.MedicalRecords.contract.MedicalRecords.get_patient_records[routing]() -> void:
+get_patient_records:
+    // smart_contracts/MedicalRecords/contract.py:223
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/MedicalRecords/contract.py:228
+    // if patient in self.patient_records:
+    bytec_2 // 0x70725f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz get_patient_records_after_if_else@3
+    // smart_contracts/MedicalRecords/contract.py:229
+    // return self.patient_records[patient].copy()
+    dup
+    box_get
+    assert // check self.patient_records entry exists
+
+get_patient_records_after_inlined_smart_contracts.MedicalRecords.contract.MedicalRecords.get_patient_records@4:
+    // smart_contracts/MedicalRecords/contract.py:223
+    // @arc4.abimethod(readonly=True)
+    bytec 10 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+get_patient_records_after_if_else@3:
+    // smart_contracts/MedicalRecords/contract.py:230
+    // return arc4.DynamicArray[Record]()
+    bytec 9 // 0x0000
+    // smart_contracts/MedicalRecords/contract.py:223
+    // @arc4.abimethod(readonly=True)
+    b get_patient_records_after_inlined_smart_contracts.MedicalRecords.contract.MedicalRecords.get_patient_records@4

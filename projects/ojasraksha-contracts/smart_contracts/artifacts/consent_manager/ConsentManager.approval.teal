@@ -1,0 +1,1845 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 2 1 8
+    bytecblock 0x00 0x635f 0x80 "" 0x0002 0x61725f "req_counter" 0x00010002 0x0006455241534544 0x151f7c75 0x0057
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/consent_manager/contract.py:50
+    // self.request_counter.value = UInt64(0)
+    bytec 6 // "req_counter"
+    intc_0 // 0
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/consent_manager/contract.py:42
+    // class ConsentManager(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@19
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0xfbd76054 0xbefd636f 0x6f4faad2 0xa47dbc0f 0x4c28a5ac 0x434627e9 0xd84debd0 0x6029aada 0xe4a4bd9b 0xfb890629 // method "grant_consent(address,string,string,string,uint64)void", method "revoke_consent(uint64)void", method "request_erasure(uint64)void", method "get_patient_consents(address)(address,address,string,string,string,uint64,uint64,bool,bool)[]", method "validate_consent(address,uint64,string)bool", method "update_consent_duration(uint64,uint64)void", method "request_access(address,string)void", method "get_pending_requests(address)(uint64,address,string,uint64,bool)[]", method "approve_request(uint64,string,string,uint64)void", method "reject_request(uint64)void"
+    txna ApplicationArgs 0
+    match grant_consent revoke_consent request_erasure get_patient_consents validate_consent update_consent_duration request_access get_pending_requests approve_request reject_request
+    err
+
+main___algopy_default_create@19:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// _puya_lib.arc4.dynamic_array_concat_dynamic_element(array_items_count: uint64, array_head_and_tail: bytes, new_items_count: uint64, new_head_and_tail: bytes) -> bytes:
+dynamic_array_concat_dynamic_element:
+    proto 4 1
+    bytec_3 // ""
+    dup
+    frame_dig -2
+    intc_1 // 2
+    *
+    frame_dig -4
+    intc_1 // 2
+    *
+    intc_0 // 0
+
+dynamic_array_concat_dynamic_element_for_header@1:
+    frame_dig 4
+    frame_dig 3
+    <
+    bz dynamic_array_concat_dynamic_element_after_for@4
+    frame_dig -3
+    frame_dig 4
+    dup
+    cover 2
+    extract_uint16
+    frame_dig 2
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    intc_1 // 2
+    +
+    frame_bury 4
+    b dynamic_array_concat_dynamic_element_for_header@1
+
+dynamic_array_concat_dynamic_element_after_for@4:
+    frame_dig -3
+    len
+    frame_bury 0
+    intc_0 // 0
+    frame_bury 4
+
+dynamic_array_concat_dynamic_element_for_header@5:
+    frame_dig 4
+    frame_dig 2
+    <
+    bz dynamic_array_concat_dynamic_element_after_for@8
+    frame_dig -1
+    frame_dig 4
+    dup
+    cover 2
+    extract_uint16
+    frame_dig 0
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    intc_1 // 2
+    +
+    frame_bury 4
+    b dynamic_array_concat_dynamic_element_for_header@5
+
+dynamic_array_concat_dynamic_element_after_for@8:
+    frame_dig -4
+    frame_dig -2
+    +
+    itob
+    extract 6 2
+    frame_dig 1
+    concat
+    frame_dig -3
+    frame_dig 3
+    frame_dig 0
+    substring3
+    concat
+    frame_dig -1
+    len
+    frame_dig -1
+    frame_dig 2
+    uncover 2
+    substring3
+    concat
+    frame_bury 0
+    retsub
+
+
+// _puya_lib.arc4.dynamic_array_replace_dynamic_element(source: bytes, new_item: bytes, index: uint64) -> bytes:
+dynamic_array_replace_dynamic_element:
+    proto 3 1
+    frame_dig -3
+    substring 0 2
+    dup
+    btoi
+    frame_dig -3
+    extract 2 0
+    frame_dig -1
+    intc_1 // 2
+    *
+    dig 1
+    swap
+    extract_uint16
+    frame_dig -1
+    intc_2 // 1
+    +
+    intc_1 // 2
+    *
+    dig 2
+    dig 1
+    extract_uint16
+    dig 3
+    len
+    dig 5
+    frame_dig -1
+    -
+    intc_2 // 1
+    -
+    dig 1
+    uncover 3
+    uncover 2
+    select
+    dup
+    dig 4
+    -
+    cover 6
+    frame_dig -2
+    len
+    cover 6
+    dig 4
+    intc_0 // 0
+    uncover 5
+    substring3
+    frame_dig -2
+    concat
+    uncover 4
+    uncover 2
+    uncover 3
+    substring3
+    concat
+    cover 2
+    swap
+    intc_1 // 2
+    *
+    swap
+
+dynamic_array_replace_dynamic_element_for_header@2:
+    frame_dig 5
+    frame_dig 4
+    <
+    bz dynamic_array_replace_dynamic_element_after_for@5
+    frame_dig 3
+    dup
+    frame_dig 5
+    dup
+    cover 3
+    extract_uint16
+    frame_dig 2
+    +
+    frame_dig 1
+    -
+    itob
+    extract 6 2
+    dig 2
+    swap
+    replace3
+    frame_bury 3
+    intc_1 // 2
+    +
+    frame_bury 5
+    b dynamic_array_replace_dynamic_element_for_header@2
+
+dynamic_array_replace_dynamic_element_after_for@5:
+    frame_dig 0
+    frame_dig 3
+    concat
+    frame_bury 0
+    retsub
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.grant_consent[routing]() -> void:
+grant_consent:
+    // smart_contracts/consent_manager/contract.py:52
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_1 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 3
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_1 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_1 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 5
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/consent_manager/contract.py:63
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:64
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    // smart_contracts/consent_manager/contract.py:65
+    // expiry = now + duration_in_seconds.native
+    uncover 2
+    btoi
+    dig 1
+    +
+    // smart_contracts/consent_manager/contract.py:73
+    // granted_at=arc4.UInt64(now),
+    swap
+    itob
+    // smart_contracts/consent_manager/contract.py:74
+    // expiry=arc4.UInt64(expiry),
+    swap
+    itob
+    // smart_contracts/consent_manager/contract.py:67-77
+    // new_consent = Consent(
+    //     data_principal=sender_addr,
+    //     data_fiduciary=fiduciary,
+    //     purpose=purpose,
+    //     data_hash=data_hash,
+    //     data_scope=data_scope,
+    //     granted_at=arc4.UInt64(now),
+    //     expiry=arc4.UInt64(expiry),
+    //     is_active=arc4.Bool(True),
+    //     erased=arc4.Bool(False),
+    // )
+    dig 2
+    uncover 9
+    concat
+    bytec 10 // 0x0057
+    concat
+    pushint 87
+    uncover 8
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    swap
+    uncover 6
+    +
+    itob
+    extract 6 2
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    bytec_2 // 0x80
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    // smart_contracts/consent_manager/contract.py:79
+    // if sender_addr in self.consents:
+    bytec_1 // 0x635f
+    swap
+    concat
+    dup
+    cover 2
+    box_len
+    bury 1
+    bz grant_consent_else_body@3
+    // smart_contracts/consent_manager/contract.py:80
+    // arr = self.consents[sender_addr].copy()
+    dig 1
+    dup
+    box_get
+    assert // check self.consents entry exists
+    // smart_contracts/consent_manager/contract.py:81
+    // arr.append(new_consent.copy())
+    dup
+    intc_0 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 4 // 0x0002
+    uncover 4
+    concat
+    cover 2
+    intc_2 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    // smart_contracts/consent_manager/contract.py:82
+    // self.consents[sender_addr] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+
+grant_consent_after_if_else@4:
+    // smart_contracts/consent_manager/contract.py:52
+    // @arc4.abimethod
+    intc_2 // 1
+    return
+
+grant_consent_else_body@3:
+    // smart_contracts/consent_manager/contract.py:84
+    // arr = arc4.DynamicArray[Consent](new_consent.copy())
+    bytec 7 // 0x00010002
+    swap
+    concat
+    // smart_contracts/consent_manager/contract.py:85
+    // self.consents[sender_addr] = arr.copy()
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b grant_consent_after_if_else@4
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.revoke_consent[routing]() -> void:
+revoke_consent:
+    // smart_contracts/consent_manager/contract.py:87
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/consent_manager/contract.py:90
+    // arr = self.consents[sender_addr].copy()
+    bytec_1 // 0x635f
+    // smart_contracts/consent_manager/contract.py:89
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:90
+    // arr = self.consents[sender_addr].copy()
+    concat
+    dup
+    box_get
+    assert // check self.consents entry exists
+    // smart_contracts/consent_manager/contract.py:91
+    // consent = arr[index.native].copy()
+    uncover 2
+    btoi
+    dig 1
+    extract 2 0
+    dig 2
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dig 2
+    intc_1 // 2
+    *
+    dig 2
+    swap
+    extract_uint16
+    dig 3
+    intc_2 // 1
+    +
+    dig 2
+    dig 1
+    - // on error: index access is out of bounds
+    dig 4
+    len
+    uncover 2
+    intc_1 // 2
+    *
+    dig 5
+    swap
+    extract_uint16
+    uncover 2
+    select
+    uncover 3
+    cover 2
+    substring3
+    // smart_contracts/consent_manager/contract.py:90-92
+    // arr = self.consents[sender_addr].copy()
+    // consent = arr[index.native].copy()
+    // assert consent.is_active.native, "Already revoked"
+    intc_1 // 2
+    dig 3
+    *
+    intc_1 // 2
+    +
+    dig 5
+    swap
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 88
+    +
+    dig 5
+    swap
+    intc_2 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    // smart_contracts/consent_manager/contract.py:92
+    // assert consent.is_active.native, "Already revoked"
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    assert // Already revoked
+    // smart_contracts/consent_manager/contract.py:93
+    // consent.is_active = arc4.Bool(False)
+    pushint 688
+    intc_0 // 0
+    setbit
+    // smart_contracts/consent_manager/contract.py:94
+    // arr[index.native] = consent.copy()
+    dig 2
+    uncover 2
+    <
+    assert // index access is out of bounds
+    swap
+    callsub dynamic_array_replace_dynamic_element
+    // smart_contracts/consent_manager/contract.py:95
+    // self.consents[sender_addr] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+    // smart_contracts/consent_manager/contract.py:87
+    // @arc4.abimethod
+    intc_2 // 1
+    return
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.request_erasure[routing]() -> void:
+request_erasure:
+    // smart_contracts/consent_manager/contract.py:97
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/consent_manager/contract.py:100
+    // arr = self.consents[sender_addr].copy()
+    bytec_1 // 0x635f
+    // smart_contracts/consent_manager/contract.py:99
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:100
+    // arr = self.consents[sender_addr].copy()
+    concat
+    dup
+    box_get
+    assert // check self.consents entry exists
+    // smart_contracts/consent_manager/contract.py:101
+    // consent = arr[index.native].copy()
+    uncover 2
+    btoi
+    dig 1
+    extract 2 0
+    dig 2
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dig 2
+    intc_1 // 2
+    *
+    dig 2
+    swap
+    extract_uint16
+    dig 3
+    intc_2 // 1
+    +
+    dig 2
+    dig 1
+    - // on error: index access is out of bounds
+    dig 4
+    len
+    uncover 2
+    intc_1 // 2
+    *
+    dig 5
+    swap
+    extract_uint16
+    uncover 2
+    select
+    uncover 3
+    cover 2
+    substring3
+    // smart_contracts/consent_manager/contract.py:102
+    // consent.erased = arc4.Bool(True)
+    pushint 689
+    intc_2 // 1
+    setbit
+    // smart_contracts/consent_manager/contract.py:103
+    // consent.is_active = arc4.Bool(False)
+    pushint 688
+    intc_0 // 0
+    setbit
+    // smart_contracts/consent_manager/contract.py:104
+    // consent.purpose = arc4.String("ERASED")
+    dup
+    pushint 64
+    extract_uint16
+    dig 1
+    intc_0 // 0
+    dig 2
+    extract3
+    bytec 8 // 0x0006455241534544
+    concat
+    dig 2
+    pushint 66
+    extract_uint16
+    dig 3
+    len
+    dig 4
+    dig 2
+    uncover 2
+    substring3
+    uncover 2
+    swap
+    concat
+    dig 1
+    uncover 3
+    -
+    uncover 2
+    intc_3 // 8
+    +
+    dig 1
+    -
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    replace2 66
+    uncover 2
+    pushint 68
+    extract_uint16
+    intc_3 // 8
+    +
+    uncover 2
+    -
+    itob
+    extract 6 2
+    replace2 68
+    // smart_contracts/consent_manager/contract.py:105
+    // consent.data_hash = arc4.String("ERASED")
+    dup
+    pushint 66
+    extract_uint16
+    dig 1
+    intc_0 // 0
+    dig 2
+    extract3
+    // smart_contracts/consent_manager/contract.py:104
+    // consent.purpose = arc4.String("ERASED")
+    bytec 8 // 0x0006455241534544
+    // smart_contracts/consent_manager/contract.py:105
+    // consent.data_hash = arc4.String("ERASED")
+    concat
+    dig 2
+    pushint 68
+    extract_uint16
+    dig 3
+    len
+    uncover 4
+    dig 2
+    uncover 2
+    substring3
+    uncover 2
+    swap
+    concat
+    dig 1
+    uncover 3
+    -
+    uncover 2
+    intc_3 // 8
+    +
+    swap
+    -
+    itob
+    extract 6 2
+    replace2 68
+    // smart_contracts/consent_manager/contract.py:106
+    // consent.data_scope = arc4.String("ERASED")
+    dup
+    pushint 68
+    extract_uint16
+    intc_0 // 0
+    swap
+    extract3
+    // smart_contracts/consent_manager/contract.py:104
+    // consent.purpose = arc4.String("ERASED")
+    bytec 8 // 0x0006455241534544
+    // smart_contracts/consent_manager/contract.py:106
+    // consent.data_scope = arc4.String("ERASED")
+    concat
+    // smart_contracts/consent_manager/contract.py:107
+    // arr[index.native] = consent.copy()
+    dig 2
+    uncover 2
+    <
+    assert // index access is out of bounds
+    swap
+    callsub dynamic_array_replace_dynamic_element
+    // smart_contracts/consent_manager/contract.py:108
+    // self.consents[sender_addr] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+    // smart_contracts/consent_manager/contract.py:97
+    // @arc4.abimethod
+    intc_2 // 1
+    return
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.get_patient_consents[routing]() -> void:
+get_patient_consents:
+    // smart_contracts/consent_manager/contract.py:110
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/consent_manager/contract.py:114
+    // return self.consents[patient].copy()
+    bytec_1 // 0x635f
+    swap
+    concat
+    box_get
+    assert // check self.consents entry exists
+    // smart_contracts/consent_manager/contract.py:110
+    // @arc4.abimethod(readonly=True)
+    bytec 9 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_2 // 1
+    return
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.validate_consent[routing]() -> void:
+validate_consent:
+    intc_0 // 0
+    // smart_contracts/consent_manager/contract.py:116
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 3
+    dup
+    cover 3
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_1 // 2
+    +
+    swap
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // smart_contracts/consent_manager/contract.py:125
+    // arr = self.consents[principal].copy()
+    bytec_1 // 0x635f
+    uncover 2
+    concat
+    dup
+    cover 2
+    dup
+    box_get
+    swap
+    cover 3
+    assert // check self.consents entry exists
+    // smart_contracts/consent_manager/contract.py:126
+    // consent = arr[index.native].copy()
+    swap
+    btoi
+    dup
+    cover 2
+    // smart_contracts/consent_manager/contract.py:127
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    cover 2
+    // smart_contracts/consent_manager/contract.py:130
+    // consent.is_active.native
+    intc_1 // 2
+    *
+    intc_1 // 2
+    +
+    dup
+    cover 2
+    dig 1
+    swap
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 88
+    +
+    intc_2 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    // smart_contracts/consent_manager/contract.py:130-132
+    // consent.is_active.native
+    // and not consent.erased.native
+    // and now <= consent.expiry.native
+    bz validate_consent_after_if_else@9
+    // smart_contracts/consent_manager/contract.py:131
+    // and not consent.erased.native
+    dig 4
+    dup
+    dig 2
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 88
+    +
+    intc_2 // 1
+    box_extract
+    intc_2 // 1
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bnz validate_consent_after_if_else@9
+    // smart_contracts/consent_manager/contract.py:132
+    // and now <= consent.expiry.native
+    dig 4
+    dup
+    dig 2
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 80
+    +
+    intc_3 // 8
+    box_extract
+    btoi
+    dig 2
+    >=
+    // smart_contracts/consent_manager/contract.py:130-132
+    // consent.is_active.native
+    // and not consent.erased.native
+    // and now <= consent.expiry.native
+    bz validate_consent_after_if_else@9
+    // smart_contracts/consent_manager/contract.py:134
+    // if consent.data_scope == arc4.String("All"):
+    dig 3
+    dup
+    extract 2 0
+    swap
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dig 4
+    dup
+    intc_1 // 2
+    *
+    dig 3
+    swap
+    extract_uint16
+    swap
+    intc_2 // 1
+    +
+    uncover 2
+    dig 1
+    - // on error: index access is out of bounds
+    dig 3
+    len
+    uncover 2
+    intc_1 // 2
+    *
+    dig 4
+    swap
+    extract_uint16
+    uncover 2
+    select
+    substring3
+    dup
+    pushint 68
+    extract_uint16
+    dig 1
+    len
+    substring3
+    dup
+    bury 8
+    pushbytes 0x0003416c6c
+    ==
+    bz validate_consent_after_if_else@6
+    // smart_contracts/consent_manager/contract.py:135
+    // return arc4.Bool(True)
+    bytec_2 // 0x80
+
+validate_consent_after_inlined_smart_contracts.consent_manager.contract.ConsentManager.validate_consent@10:
+    // smart_contracts/consent_manager/contract.py:116
+    // @arc4.abimethod(readonly=True)
+    bytec 9 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_2 // 1
+    return
+
+validate_consent_after_if_else@6:
+    // smart_contracts/consent_manager/contract.py:136
+    // if consent.data_scope == required_scope:
+    dig 6
+    dig 6
+    ==
+    bz validate_consent_after_if_else@9
+    // smart_contracts/consent_manager/contract.py:137
+    // return arc4.Bool(True)
+    bytec_2 // 0x80
+    // smart_contracts/consent_manager/contract.py:116
+    // @arc4.abimethod(readonly=True)
+    b validate_consent_after_inlined_smart_contracts.consent_manager.contract.ConsentManager.validate_consent@10
+
+validate_consent_after_if_else@9:
+    // smart_contracts/consent_manager/contract.py:139
+    // return arc4.Bool(False)
+    bytec_0 // 0x00
+    // smart_contracts/consent_manager/contract.py:116
+    // @arc4.abimethod(readonly=True)
+    b validate_consent_after_inlined_smart_contracts.consent_manager.contract.ConsentManager.validate_consent@10
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.update_consent_duration[routing]() -> void:
+update_consent_duration:
+    // smart_contracts/consent_manager/contract.py:141
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/consent_manager/contract.py:148
+    // arr = self.consents[sender_addr].copy()
+    bytec_1 // 0x635f
+    // smart_contracts/consent_manager/contract.py:147
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:148
+    // arr = self.consents[sender_addr].copy()
+    concat
+    dup
+    box_get
+    assert // check self.consents entry exists
+    // smart_contracts/consent_manager/contract.py:149
+    // consent = arr[index.native].copy()
+    uncover 3
+    btoi
+    dig 1
+    extract 2 0
+    dig 2
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dig 2
+    intc_1 // 2
+    *
+    dig 2
+    swap
+    extract_uint16
+    dig 3
+    intc_2 // 1
+    +
+    dig 2
+    dig 1
+    - // on error: index access is out of bounds
+    dig 4
+    len
+    uncover 2
+    intc_1 // 2
+    *
+    dig 5
+    swap
+    extract_uint16
+    uncover 2
+    select
+    uncover 3
+    cover 2
+    substring3
+    // smart_contracts/consent_manager/contract.py:148-150
+    // arr = self.consents[sender_addr].copy()
+    // consent = arr[index.native].copy()
+    // assert consent.is_active.native, "Consent not active"
+    intc_1 // 2
+    dig 3
+    *
+    intc_1 // 2
+    +
+    dig 5
+    swap
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 88
+    +
+    dig 5
+    swap
+    intc_2 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    // smart_contracts/consent_manager/contract.py:150
+    // assert consent.is_active.native, "Consent not active"
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    assert // Consent not active
+    // smart_contracts/consent_manager/contract.py:151
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    // smart_contracts/consent_manager/contract.py:152
+    // consent.expiry = arc4.UInt64(now + new_duration_in_seconds.native)
+    uncover 6
+    btoi
+    +
+    itob
+    replace2 78
+    // smart_contracts/consent_manager/contract.py:153
+    // arr[index.native] = consent.copy()
+    dig 2
+    uncover 2
+    <
+    assert // index access is out of bounds
+    swap
+    callsub dynamic_array_replace_dynamic_element
+    // smart_contracts/consent_manager/contract.py:154
+    // self.consents[sender_addr] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+    // smart_contracts/consent_manager/contract.py:141
+    // @arc4.abimethod
+    intc_2 // 1
+    return
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.request_access[routing]() -> void:
+request_access:
+    // smart_contracts/consent_manager/contract.py:156
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_1 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // smart_contracts/consent_manager/contract.py:162
+    // self.request_counter.value += UInt64(1)
+    intc_0 // 0
+    bytec 6 // "req_counter"
+    app_global_get_ex
+    assert // check self.request_counter exists
+    intc_2 // 1
+    +
+    bytec 6 // "req_counter"
+    dig 1
+    app_global_put
+    // smart_contracts/consent_manager/contract.py:164
+    // id=arc4.UInt64(self.request_counter.value),
+    itob
+    // smart_contracts/consent_manager/contract.py:165
+    // provider=arc4.Address(Txn.sender),
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:167
+    // timestamp=arc4.UInt64(op.Global.latest_timestamp),
+    global LatestTimestamp
+    itob
+    // smart_contracts/consent_manager/contract.py:163-169
+    // new_request = AccessRequest(
+    //     id=arc4.UInt64(self.request_counter.value),
+    //     provider=arc4.Address(Txn.sender),
+    //     purpose=purpose,
+    //     timestamp=arc4.UInt64(op.Global.latest_timestamp),
+    //     is_pending=arc4.Bool(True),
+    // )
+    cover 2
+    concat
+    pushbytes 0x0033
+    concat
+    swap
+    concat
+    // smart_contracts/consent_manager/contract.py:168
+    // is_pending=arc4.Bool(True),
+    bytec_2 // 0x80
+    // smart_contracts/consent_manager/contract.py:163-169
+    // new_request = AccessRequest(
+    //     id=arc4.UInt64(self.request_counter.value),
+    //     provider=arc4.Address(Txn.sender),
+    //     purpose=purpose,
+    //     timestamp=arc4.UInt64(op.Global.latest_timestamp),
+    //     is_pending=arc4.Bool(True),
+    // )
+    concat
+    swap
+    concat
+    swap
+    // smart_contracts/consent_manager/contract.py:171
+    // if patient in self.access_requests:
+    bytec 5 // 0x61725f
+    swap
+    concat
+    dup
+    cover 2
+    box_len
+    bury 1
+    bz request_access_else_body@3
+    // smart_contracts/consent_manager/contract.py:172
+    // arr = self.access_requests[patient].copy()
+    dig 1
+    dup
+    box_get
+    assert // check self.access_requests entry exists
+    // smart_contracts/consent_manager/contract.py:173
+    // arr.append(new_request.copy())
+    dup
+    intc_0 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 4 // 0x0002
+    uncover 4
+    concat
+    cover 2
+    intc_2 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    // smart_contracts/consent_manager/contract.py:174
+    // self.access_requests[patient] = arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+
+request_access_after_if_else@4:
+    // smart_contracts/consent_manager/contract.py:156
+    // @arc4.abimethod
+    intc_2 // 1
+    return
+
+request_access_else_body@3:
+    // smart_contracts/consent_manager/contract.py:176
+    // arr = arc4.DynamicArray[AccessRequest](new_request.copy())
+    bytec 7 // 0x00010002
+    swap
+    concat
+    // smart_contracts/consent_manager/contract.py:177
+    // self.access_requests[patient] = arr.copy()
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b request_access_after_if_else@4
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.get_pending_requests[routing]() -> void:
+get_pending_requests:
+    intc_0 // 0
+    dup
+    bytec_3 // ""
+    dupn 2
+    // smart_contracts/consent_manager/contract.py:179
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/consent_manager/contract.py:183
+    // pending = arc4.DynamicArray[AccessRequest]()
+    pushbytes 0x0000
+    swap
+    // smart_contracts/consent_manager/contract.py:184
+    // if patient in self.access_requests:
+    bytec 5 // 0x61725f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz get_pending_requests_after_if_else@9
+    // smart_contracts/consent_manager/contract.py:185
+    // arr = self.access_requests[patient].copy()
+    dupn 2
+    box_get
+    swap
+    bury 9
+    assert // check self.access_requests entry exists
+    // smart_contracts/consent_manager/contract.py:185-186
+    // arr = self.access_requests[patient].copy()
+    // for i in urange(arr.length):
+    intc_0 // 0
+    intc_1 // 2
+    box_extract
+    btoi
+    bury 4
+    // smart_contracts/consent_manager/contract.py:186
+    // for i in urange(arr.length):
+    intc_0 // 0
+    bury 3
+
+get_pending_requests_for_header@3:
+    // smart_contracts/consent_manager/contract.py:186
+    // for i in urange(arr.length):
+    dig 2
+    dig 4
+    <
+    bz get_pending_requests_after_if_else@9
+    // smart_contracts/consent_manager/contract.py:187
+    // req = arr[i].copy()
+    dig 6
+    dup
+    extract 2 0
+    swap
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dig 4
+    dup
+    intc_1 // 2
+    *
+    dig 3
+    swap
+    extract_uint16
+    dig 1
+    intc_2 // 1
+    +
+    dup
+    bury 10
+    uncover 3
+    dig 1
+    - // on error: index access is out of bounds
+    dig 4
+    len
+    uncover 2
+    intc_1 // 2
+    *
+    dig 5
+    swap
+    extract_uint16
+    uncover 2
+    select
+    uncover 3
+    cover 2
+    substring3
+    bury 7
+    // smart_contracts/consent_manager/contract.py:187-188
+    // req = arr[i].copy()
+    // if req.is_pending.native:
+    intc_1 // 2
+    *
+    intc_1 // 2
+    +
+    dig 1
+    dup
+    uncover 2
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 52
+    +
+    intc_2 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    // smart_contracts/consent_manager/contract.py:188
+    // if req.is_pending.native:
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bz get_pending_requests_after_if_else@6
+    // smart_contracts/consent_manager/contract.py:189
+    // pending.append(req.copy())
+    dig 1
+    dup
+    intc_0 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 4 // 0x0002
+    dig 8
+    concat
+    cover 2
+    intc_2 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    bury 2
+
+get_pending_requests_after_if_else@6:
+    dig 4
+    bury 3
+    b get_pending_requests_for_header@3
+
+get_pending_requests_after_if_else@9:
+    // smart_contracts/consent_manager/contract.py:179
+    // @arc4.abimethod(readonly=True)
+    bytec 9 // 0x151f7c75
+    dig 2
+    concat
+    log
+    intc_2 // 1
+    return
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.approve_request[routing]() -> void:
+approve_request:
+    intc_0 // 0
+    bytec_3 // ""
+    // smart_contracts/consent_manager/contract.py:192
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dupn 2
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_1 // 2
+    +
+    swap
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 3
+    dupn 2
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_1 // 2
+    +
+    swap
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/consent_manager/contract.py:202
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:203
+    // arr = self.access_requests[sender_addr].copy()
+    bytec 5 // 0x61725f
+    // smart_contracts/consent_manager/contract.py:202
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:203
+    // arr = self.access_requests[sender_addr].copy()
+    concat
+    dupn 2
+    box_get
+    swap
+    cover 2
+    assert // check self.access_requests entry exists
+    // smart_contracts/consent_manager/contract.py:204
+    // found = arc4.Bool(False)
+    bytec_0 // 0x00
+    swap
+    // smart_contracts/consent_manager/contract.py:205
+    // found_idx = UInt64(0)
+    intc_0 // 0
+    swap
+    // smart_contracts/consent_manager/contract.py:207
+    // for i in urange(arr.length):
+    intc_0 // 0
+    intc_1 // 2
+    box_extract
+    btoi
+    intc_0 // 0
+
+approve_request_for_header@2:
+    // smart_contracts/consent_manager/contract.py:207
+    // for i in urange(arr.length):
+    dup
+    dig 2
+    <
+    bz approve_request_after_for@8
+    // smart_contracts/consent_manager/contract.py:208-209
+    // req = arr[i].copy()
+    // if req.id == request_id and req.is_pending.native:
+    intc_1 // 2
+    dig 1
+    *
+    intc_1 // 2
+    +
+    dup
+    bury 14
+    dig 6
+    dup
+    uncover 2
+    intc_1 // 2
+    box_extract
+    btoi
+    intc_1 // 2
+    +
+    intc_3 // 8
+    box_extract
+    // smart_contracts/consent_manager/contract.py:209
+    // if req.id == request_id and req.is_pending.native:
+    dig 12
+    b==
+    bz approve_request_after_if_else@6
+    // smart_contracts/consent_manager/contract.py:208-209
+    // req = arr[i].copy()
+    // if req.id == request_id and req.is_pending.native:
+    dig 5
+    dup
+    dig 14
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 52
+    +
+    intc_2 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    // smart_contracts/consent_manager/contract.py:209
+    // if req.id == request_id and req.is_pending.native:
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bz approve_request_after_if_else@6
+    // smart_contracts/consent_manager/contract.py:210
+    // found = arc4.Bool(True)
+    bytec_2 // 0x80
+    bury 4
+    dup
+    bury 3
+
+approve_request_after_for@8:
+    // smart_contracts/consent_manager/contract.py:214
+    // assert found.native, "Pending request not found"
+    dig 3
+    intc_0 // 0
+    getbit
+    assert // Pending request not found
+    // smart_contracts/consent_manager/contract.py:216
+    // req = arr[found_idx].copy()
+    dig 4
+    dup
+    extract 2 0
+    dig 1
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dig 5
+    dup
+    intc_1 // 2
+    *
+    dig 3
+    swap
+    extract_uint16
+    dig 1
+    intc_2 // 1
+    +
+    dig 3
+    dig 1
+    - // on error: index access is out of bounds
+    dig 5
+    len
+    uncover 2
+    intc_1 // 2
+    *
+    dig 6
+    swap
+    extract_uint16
+    uncover 2
+    select
+    uncover 4
+    cover 2
+    substring3
+    // smart_contracts/consent_manager/contract.py:217
+    // req.is_pending = arc4.Bool(False)
+    pushint 400
+    intc_0 // 0
+    setbit
+    // smart_contracts/consent_manager/contract.py:218
+    // arr[found_idx] = req.copy()
+    dig 1
+    uncover 3
+    <
+    assert // index access is out of bounds
+    uncover 2
+    dig 1
+    uncover 3
+    callsub dynamic_array_replace_dynamic_element
+    // smart_contracts/consent_manager/contract.py:219
+    // self.access_requests[sender_addr] = arr.copy()
+    dig 7
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/consent_manager/contract.py:221
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    // smart_contracts/consent_manager/contract.py:222
+    // expiry = now + duration_in_seconds.native
+    dig 9
+    btoi
+    dig 1
+    +
+    // smart_contracts/consent_manager/contract.py:226
+    // data_fiduciary=req.provider,
+    dig 2
+    extract 8 32
+    // smart_contracts/consent_manager/contract.py:227
+    // purpose=req.purpose,
+    dig 3
+    pushint 40
+    extract_uint16
+    dig 4
+    len
+    uncover 5
+    cover 2
+    substring3
+    // smart_contracts/consent_manager/contract.py:230
+    // granted_at=arc4.UInt64(now),
+    uncover 3
+    itob
+    // smart_contracts/consent_manager/contract.py:231
+    // expiry=arc4.UInt64(expiry),
+    uncover 3
+    itob
+    // smart_contracts/consent_manager/contract.py:224-234
+    // new_consent = Consent(
+    //     data_principal=sender_addr,
+    //     data_fiduciary=req.provider,
+    //     purpose=req.purpose,
+    //     data_hash=data_hash,
+    //     data_scope=data_scope,
+    //     granted_at=arc4.UInt64(now),
+    //     expiry=arc4.UInt64(expiry),
+    //     is_active=arc4.Bool(True),
+    //     erased=arc4.Bool(False),
+    // )
+    dig 10
+    dup
+    cover 5
+    uncover 4
+    concat
+    bytec 10 // 0x0057
+    concat
+    dig 3
+    len
+    pushint 87
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    swap
+    dig 15
+    +
+    itob
+    extract 6 2
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    bytec_2 // 0x80
+    concat
+    swap
+    concat
+    dig 12
+    concat
+    dig 10
+    concat
+    swap
+    // smart_contracts/consent_manager/contract.py:236
+    // if sender_addr in self.consents:
+    bytec_1 // 0x635f
+    swap
+    concat
+    dup
+    bury 16
+    box_len
+    bury 1
+    bz approve_request_else_body@10
+    // smart_contracts/consent_manager/contract.py:237
+    // c_arr = self.consents[sender_addr].copy()
+    dig 14
+    dup
+    box_get
+    assert // check self.consents entry exists
+    // smart_contracts/consent_manager/contract.py:238
+    // c_arr.append(new_consent.copy())
+    dup
+    intc_0 // 0
+    extract_uint16
+    swap
+    extract 2 0
+    bytec 4 // 0x0002
+    uncover 4
+    concat
+    cover 2
+    intc_2 // 1
+    uncover 3
+    callsub dynamic_array_concat_dynamic_element
+    // smart_contracts/consent_manager/contract.py:239
+    // self.consents[sender_addr] = c_arr.copy()
+    dig 1
+    box_del
+    pop
+    box_put
+
+approve_request_after_if_else@11:
+    // smart_contracts/consent_manager/contract.py:192
+    // @arc4.abimethod
+    intc_2 // 1
+    return
+
+approve_request_else_body@10:
+    // smart_contracts/consent_manager/contract.py:241
+    // c_arr = arc4.DynamicArray[Consent](new_consent.copy())
+    bytec 7 // 0x00010002
+    swap
+    concat
+    // smart_contracts/consent_manager/contract.py:242
+    // self.consents[sender_addr] = c_arr.copy()
+    dig 14
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b approve_request_after_if_else@11
+
+approve_request_after_if_else@6:
+    // smart_contracts/consent_manager/contract.py:207
+    // for i in urange(arr.length):
+    dup
+    intc_2 // 1
+    +
+    bury 1
+    b approve_request_for_header@2
+
+
+// smart_contracts.consent_manager.contract.ConsentManager.reject_request[routing]() -> void:
+reject_request:
+    intc_0 // 0
+    bytec_3 // ""
+    dupn 2
+    // smart_contracts/consent_manager/contract.py:244
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/consent_manager/contract.py:247
+    // arr = self.access_requests[sender_addr].copy()
+    bytec 5 // 0x61725f
+    // smart_contracts/consent_manager/contract.py:246
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/consent_manager/contract.py:247
+    // arr = self.access_requests[sender_addr].copy()
+    concat
+    dupn 2
+    box_get
+    swap
+    cover 2
+    assert // check self.access_requests entry exists
+    // smart_contracts/consent_manager/contract.py:247-248
+    // arr = self.access_requests[sender_addr].copy()
+    // for i in urange(arr.length):
+    intc_0 // 0
+    intc_1 // 2
+    box_extract
+    btoi
+    // smart_contracts/consent_manager/contract.py:248
+    // for i in urange(arr.length):
+    intc_0 // 0
+
+reject_request_for_header@2:
+    // smart_contracts/consent_manager/contract.py:248
+    // for i in urange(arr.length):
+    dup
+    dig 2
+    <
+    bz reject_request_after_for@8
+    // smart_contracts/consent_manager/contract.py:249
+    // req = arr[i].copy()
+    dig 2
+    dup
+    extract 2 0
+    swap
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    dup
+    cover 2
+    bury 10
+    dig 2
+    dup
+    intc_1 // 2
+    *
+    dig 2
+    swap
+    extract_uint16
+    dig 1
+    intc_2 // 1
+    +
+    dup
+    bury 12
+    uncover 4
+    dig 1
+    - // on error: index access is out of bounds
+    dig 4
+    len
+    uncover 2
+    intc_1 // 2
+    *
+    dig 5
+    swap
+    extract_uint16
+    uncover 2
+    select
+    uncover 3
+    cover 2
+    substring3
+    bury 10
+    // smart_contracts/consent_manager/contract.py:249-250
+    // req = arr[i].copy()
+    // if req.id == request_id and req.is_pending.native:
+    intc_1 // 2
+    *
+    intc_1 // 2
+    +
+    dup
+    bury 7
+    dig 4
+    dup
+    uncover 2
+    intc_1 // 2
+    box_extract
+    btoi
+    intc_1 // 2
+    +
+    intc_3 // 8
+    box_extract
+    // smart_contracts/consent_manager/contract.py:250
+    // if req.id == request_id and req.is_pending.native:
+    dig 5
+    b==
+    bz reject_request_after_if_else@6
+    // smart_contracts/consent_manager/contract.py:249-250
+    // req = arr[i].copy()
+    // if req.id == request_id and req.is_pending.native:
+    dig 3
+    dup
+    dig 7
+    intc_1 // 2
+    box_extract
+    btoi
+    pushint 52
+    +
+    intc_2 // 1
+    box_extract
+    intc_0 // 0
+    getbit
+    // smart_contracts/consent_manager/contract.py:250
+    // if req.id == request_id and req.is_pending.native:
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    bz reject_request_after_if_else@6
+    // smart_contracts/consent_manager/contract.py:251
+    // req.is_pending = arc4.Bool(False)
+    dig 8
+    pushint 400
+    intc_0 // 0
+    setbit
+    // smart_contracts/consent_manager/contract.py:252
+    // arr[i] = req.copy()
+    dig 1
+    dup
+    cover 2
+    dig 10
+    <
+    assert // index access is out of bounds
+    dig 4
+    swap
+    uncover 2
+    callsub dynamic_array_replace_dynamic_element
+    bury 3
+
+reject_request_after_for@8:
+    // smart_contracts/consent_manager/contract.py:254
+    // self.access_requests[sender_addr] = arr.copy()
+    dig 3
+    dup
+    box_del
+    pop
+    dig 3
+    box_put
+    // smart_contracts/consent_manager/contract.py:244
+    // @arc4.abimethod
+    intc_2 // 1
+    return
+
+reject_request_after_if_else@6:
+    dig 6
+    bury 1
+    b reject_request_for_header@2

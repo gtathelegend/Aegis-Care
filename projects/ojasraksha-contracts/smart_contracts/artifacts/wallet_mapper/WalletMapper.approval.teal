@@ -1,0 +1,562 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 2 1 0 6
+    bytecblock 0x7369645f 0x6164725f 0x151f7c75 0x62656e5f
+    // smart_contracts/WalletMapper/contract.py:22
+    // class WalletMapper(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@17
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0x62862306 0x4ee7156b 0x76e31a7e 0x66a82a70 0xcb6e647b 0xb953ca18 0x0abd931f 0x4dca0cdd // method "fund_app(uint64)void", method "register_short_id(byte[6])void", method "clear_registration()void", method "get_wallet_from_short_id(byte[6])address", method "get_short_id_from_wallet(address)byte[6]", method "add_beneficiary(byte[6],string)void", method "clear_beneficiaries()void", method "get_beneficiaries(address)(byte[6],address,string,uint64)[]"
+    txna ApplicationArgs 0
+    match fund_app register_short_id clear_registration get_wallet_from_short_id get_short_id_from_wallet add_beneficiary clear_beneficiaries get_beneficiaries
+    err
+
+main___algopy_default_create@17:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.fund_app[routing]() -> void:
+fund_app:
+    // smart_contracts/WalletMapper/contract.py:46
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    len
+    pushint 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    intc_1 // 1
+    return
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.register_short_id[routing]() -> void:
+register_short_id:
+    // smart_contracts/WalletMapper/contract.py:53
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 6
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 6>
+    // smart_contracts/WalletMapper/contract.py:56
+    // caller = arc4.Address(Txn.sender)
+    txn Sender
+    dup
+    cover 2
+    // smart_contracts/WalletMapper/contract.py:58-59
+    // # check if already registered
+    // if caller in self.address_to_short_id:
+    bytec_1 // 0x6164725f
+    swap
+    concat
+    dup
+    cover 2
+    box_len
+    bury 1
+    bz register_short_id_after_if_else@5
+    // smart_contracts/WalletMapper/contract.py:60-61
+    // # If they are registering the SAME ID again, just return (idempotent)
+    // if self.address_to_short_id[caller] == short_id:
+    dig 1
+    box_get
+    assert // check self.address_to_short_id entry exists
+    ==
+    assert // Wallet already has a different Short ID. Clear it first.
+
+register_short_id_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.register_short_id@6:
+    // smart_contracts/WalletMapper/contract.py:53
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+register_short_id_after_if_else@5:
+    // smart_contracts/WalletMapper/contract.py:67-68
+    // # Check short ID is not already taken by someone else
+    // assert short_id not in self.short_id_to_address, "Short ID already taken"
+    bytec_0 // 0x7369645f
+    dig 1
+    concat
+    dup
+    box_len
+    bury 1
+    !
+    assert // Short ID already taken
+    // smart_contracts/WalletMapper/contract.py:70
+    // self.short_id_to_address[short_id] = caller
+    dig 3
+    dup
+    cover 2
+    box_put
+    // smart_contracts/WalletMapper/contract.py:71
+    // self.address_to_short_id[caller] = short_id.copy()
+    dig 2
+    dig 2
+    box_put
+    // smart_contracts/WalletMapper/contract.py:73
+    // arc4.emit("ShortIdRegistered(address,byte[6])", caller, short_id)
+    swap
+    concat
+    pushbytes 0x1c4aea3b // method "ShortIdRegistered(address,byte[6])"
+    swap
+    concat
+    log
+    // smart_contracts/WalletMapper/contract.py:53
+    // @arc4.abimethod
+    b register_short_id_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.register_short_id@6
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.clear_registration[routing]() -> void:
+clear_registration:
+    // smart_contracts/WalletMapper/contract.py:79
+    // assert caller in self.address_to_short_id, "Not registered"
+    bytec_1 // 0x6164725f
+    // smart_contracts/WalletMapper/contract.py:78
+    // caller = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/WalletMapper/contract.py:79
+    // assert caller in self.address_to_short_id, "Not registered"
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Not registered
+    // smart_contracts/WalletMapper/contract.py:81
+    // old_id = self.address_to_short_id[caller].copy()
+    dup
+    box_get
+    pop
+    swap
+    // smart_contracts/WalletMapper/contract.py:83
+    // del self.address_to_short_id[caller]
+    box_del
+    pop
+    // smart_contracts/WalletMapper/contract.py:84
+    // del self.short_id_to_address[old_id]
+    bytec_0 // 0x7369645f
+    swap
+    concat
+    box_del
+    pop
+    // smart_contracts/WalletMapper/contract.py:75
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.get_wallet_from_short_id[routing]() -> void:
+get_wallet_from_short_id:
+    // smart_contracts/WalletMapper/contract.py:86
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 6
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 6>
+    // smart_contracts/WalletMapper/contract.py:89
+    // assert short_id in self.short_id_to_address, "Short ID not found"
+    bytec_0 // 0x7369645f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Short ID not found
+    // smart_contracts/WalletMapper/contract.py:90
+    // return self.short_id_to_address[short_id].copy()
+    box_get
+    pop
+    // smart_contracts/WalletMapper/contract.py:86
+    // @arc4.abimethod(readonly=True)
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.get_short_id_from_wallet[routing]() -> void:
+get_short_id_from_wallet:
+    // smart_contracts/WalletMapper/contract.py:92
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/WalletMapper/contract.py:95
+    // assert wallet in self.address_to_short_id, "Wallet not registered"
+    bytec_1 // 0x6164725f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Wallet not registered
+    // smart_contracts/WalletMapper/contract.py:96
+    // return self.address_to_short_id[wallet].copy()
+    box_get
+    pop
+    // smart_contracts/WalletMapper/contract.py:92
+    // @arc4.abimethod(readonly=True)
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.add_beneficiary[routing]() -> void:
+add_beneficiary:
+    intc_2 // 0
+    dupn 2
+    pushbytes ""
+    dupn 5
+    // smart_contracts/WalletMapper/contract.py:98
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dupn 2
+    len
+    intc_3 // 6
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 6>
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    intc_2 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_0 // 2
+    +
+    swap
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // smart_contracts/WalletMapper/contract.py:102
+    // owner = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/WalletMapper/contract.py:104
+    // assert beneficiary_id in self.short_id_to_address, "Beneficiary ID not found"
+    bytec_0 // 0x7369645f
+    uncover 2
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Beneficiary ID not found
+    // smart_contracts/WalletMapper/contract.py:105
+    // ben_wallet = self.short_id_to_address[beneficiary_id]
+    box_get
+    pop
+    dup
+    cover 2
+    // smart_contracts/WalletMapper/contract.py:107
+    // assert owner != ben_wallet, "Cannot add self"
+    dig 1
+    !=
+    assert // Cannot add self
+    // smart_contracts/WalletMapper/contract.py:109-110
+    // # Prevent duplicates
+    // if owner in self.beneficiaries:
+    bytec_3 // 0x62656e5f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz add_beneficiary_after_if_else@9
+    // smart_contracts/WalletMapper/contract.py:111-112
+    // existing = self.beneficiaries[owner].copy()
+    // for i in urange(existing.length):
+    dup
+    intc_2 // 0
+    intc_0 // 2
+    box_extract
+    btoi
+    bury 9
+    // smart_contracts/WalletMapper/contract.py:112
+    // for i in urange(existing.length):
+    intc_2 // 0
+    bury 6
+
+add_beneficiary_for_header@3:
+    // smart_contracts/WalletMapper/contract.py:112
+    // for i in urange(existing.length):
+    dig 5
+    dig 9
+    <
+    bz add_beneficiary_after_if_else@9
+    // smart_contracts/WalletMapper/contract.py:113
+    // if existing[i].beneficiary_id == beneficiary_id:
+    intc_0 // 2
+    dig 6
+    *
+    intc_0 // 2
+    +
+    dig 1
+    dup
+    uncover 2
+    intc_0 // 2
+    box_extract
+    btoi
+    intc_0 // 2
+    +
+    intc_3 // 6
+    box_extract
+    dig 4
+    ==
+    bnz add_beneficiary_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.add_beneficiary@13
+    // smart_contracts/WalletMapper/contract.py:112
+    // for i in urange(existing.length):
+    dig 5
+    intc_1 // 1
+    +
+    bury 6
+    b add_beneficiary_for_header@3
+
+add_beneficiary_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.add_beneficiary@13:
+    // smart_contracts/WalletMapper/contract.py:98
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+add_beneficiary_after_if_else@9:
+    // smart_contracts/WalletMapper/contract.py:116
+    // now = op.Global.latest_timestamp
+    global LatestTimestamp
+    // smart_contracts/WalletMapper/contract.py:121
+    // created_at=arc4.UInt64(now)
+    itob
+    // smart_contracts/WalletMapper/contract.py:117-122
+    // record = BeneficiaryRecord(
+    //     beneficiary_id=beneficiary_id.copy(),
+    //     beneficiary_wallet=ben_wallet.copy(),
+    //     hashed_password=hashed_password,
+    //     created_at=arc4.UInt64(now)
+    // )
+    dig 4
+    dig 3
+    concat
+    pushbytes 0x0030
+    concat
+    swap
+    concat
+    dig 3
+    concat
+    // smart_contracts/WalletMapper/contract.py:124
+    // if owner in self.beneficiaries:
+    dig 1
+    box_len
+    bury 1
+    bz add_beneficiary_else_body@11
+    // smart_contracts/WalletMapper/contract.py:125
+    // arr = self.beneficiaries[owner].copy()
+    dig 1
+    box_get
+    assert // check self.beneficiaries entry exists
+    // smart_contracts/WalletMapper/contract.py:126
+    // arr.append(record.copy())
+    dup
+    intc_2 // 0
+    extract_uint16
+    dup
+    cover 2
+    bury 13
+    extract 2 0
+    bury 15
+    pushbytes 0x0002
+    uncover 2
+    concat
+    bury 12
+    pushbytes 0x
+    bury 13
+    intc_0 // 2
+    *
+    bury 5
+    intc_2 // 0
+    bury 7
+
+add_beneficiary_for_header@15:
+    dig 6
+    dig 5
+    <
+    bz add_beneficiary_after_for@17
+    dig 12
+    dig 7
+    dup
+    cover 2
+    extract_uint16
+    intc_0 // 2
+    +
+    itob
+    extract 6 2
+    dig 13
+    swap
+    concat
+    bury 13
+    intc_0 // 2
+    +
+    bury 7
+    b add_beneficiary_for_header@15
+
+add_beneficiary_after_for@17:
+    dig 12
+    len
+    bury 8
+    intc_2 // 0
+    bury 7
+
+add_beneficiary_for_header@18:
+    dig 6
+    intc_0 // 2
+    <
+    bz add_beneficiary_after_for@20
+    dig 10
+    dig 7
+    dup
+    cover 2
+    extract_uint16
+    dig 9
+    +
+    itob
+    extract 6 2
+    dig 13
+    swap
+    concat
+    bury 13
+    intc_0 // 2
+    +
+    bury 7
+    b add_beneficiary_for_header@18
+
+add_beneficiary_after_for@20:
+    dig 9
+    // smart_contracts/WalletMapper/contract.py:126
+    // arr.append(record.copy())
+    intc_1 // 1
+    +
+    itob
+    extract 6 2
+    dig 12
+    concat
+    dig 13
+    dig 6
+    dig 10
+    substring3
+    concat
+    dig 11
+    extract 2 0
+    concat
+    // smart_contracts/WalletMapper/contract.py:127
+    // self.beneficiaries[owner] = arr.copy()
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b add_beneficiary_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.add_beneficiary@13
+
+add_beneficiary_else_body@11:
+    // smart_contracts/WalletMapper/contract.py:129
+    // arr = arc4.DynamicArray[BeneficiaryRecord](record.copy())
+    pushbytes 0x00010002
+    swap
+    concat
+    // smart_contracts/WalletMapper/contract.py:130
+    // self.beneficiaries[owner] = arr.copy()
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    b add_beneficiary_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.add_beneficiary@13
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.clear_beneficiaries[routing]() -> void:
+clear_beneficiaries:
+    // smart_contracts/WalletMapper/contract.py:136
+    // if owner in self.beneficiaries:
+    bytec_3 // 0x62656e5f
+    // smart_contracts/WalletMapper/contract.py:135
+    // owner = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/WalletMapper/contract.py:136
+    // if owner in self.beneficiaries:
+    concat
+    dup
+    box_len
+    bury 1
+    bz clear_beneficiaries_after_if_else@3
+    // smart_contracts/WalletMapper/contract.py:137
+    // del self.beneficiaries[owner]
+    dup
+    box_del
+    pop
+
+clear_beneficiaries_after_if_else@3:
+    // smart_contracts/WalletMapper/contract.py:132
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.WalletMapper.contract.WalletMapper.get_beneficiaries[routing]() -> void:
+get_beneficiaries:
+    // smart_contracts/WalletMapper/contract.py:139
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/WalletMapper/contract.py:141
+    // if owner in self.beneficiaries:
+    bytec_3 // 0x62656e5f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz get_beneficiaries_after_if_else@3
+    // smart_contracts/WalletMapper/contract.py:142
+    // return self.beneficiaries[owner].copy()
+    dup
+    box_get
+    assert // check self.beneficiaries entry exists
+
+get_beneficiaries_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.get_beneficiaries@4:
+    // smart_contracts/WalletMapper/contract.py:139
+    // @arc4.abimethod(readonly=True)
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+get_beneficiaries_after_if_else@3:
+    // smart_contracts/WalletMapper/contract.py:143
+    // return arc4.DynamicArray[BeneficiaryRecord]()
+    pushbytes 0x0000
+    // smart_contracts/WalletMapper/contract.py:139
+    // @arc4.abimethod(readonly=True)
+    b get_beneficiaries_after_inlined_smart_contracts.WalletMapper.contract.WalletMapper.get_beneficiaries@4

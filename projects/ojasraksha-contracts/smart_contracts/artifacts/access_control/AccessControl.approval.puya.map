@@ -1,0 +1,807 @@
+{
+  "version": 3,
+  "sources": [
+    "../../AccessControl/contract.py"
+  ],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAOkH;AAA3E;AAA/B;AAHR;;;;;;AAAA;;;AAAA;;;;AAAA;;AAAA;AAAA;AAAA;;AAAA;;;AAAA;;;;;;;;;;;;AAAA;;;AAAA;;;;;;AAAA;AAAA;;;;;;AAAA;;;AAAA;;;;AAAA;AAUQ;AAAyB;AAAzB;AAJH;AAAA;AAMA;;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;;;AAGqD;AAAA;AAAA;AAAA;AAAd;;AAAA;AAAV;;;AAAA;AAAA;;AAAA;AAAd;;AAAZ;AAAA;;AAAA;AAHH;AAAA;AAKA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAEsB;;AAAZ;AAAA;AAAA;AAAA;AAA2B;AAA3B;AAAP;AACA;AADkC;AAClC;AAHH;AAAA;AAKA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAEsB;;AAAZ;AAAA;AAAA;AAAA;AAA2B;AAA3B;AAAP;AACA;AAA4B;;;AAA5B;AAHH;AAAA",
+  "op_pc_offset": 0,
+  "pc_events": {
+    "1": {
+      "subroutine": "algopy.arc4.ARC4Contract.approval_program",
+      "params": {},
+      "block": "main",
+      "stack_in": [],
+      "op": "intcblock 1 0 32"
+    },
+    "6": {
+      "op": "bytecblock \"admins\" \"super_admin\" 0x80 base32(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPA)"
+    },
+    "62": {
+      "op": "txn ApplicationID",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "64": {
+      "op": "bnz main_after_if_else@2",
+      "stack_out": []
+    },
+    "67": {
+      "op": "bytec_1 // \"super_admin\"",
+      "defined_out": [
+        "\"super_admin\""
+      ],
+      "stack_out": [
+        "\"super_admin\""
+      ]
+    },
+    "68": {
+      "op": "bytec_3 // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM",
+      "defined_out": [
+        "\"super_admin\"",
+        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+      ],
+      "stack_out": [
+        "\"super_admin\"",
+        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+      ]
+    },
+    "69": {
+      "op": "app_global_put",
+      "stack_out": []
+    },
+    "70": {
+      "block": "main_after_if_else@2",
+      "stack_in": [],
+      "op": "pushbytes 0x30c6d58a // method \"opt_in()void\"",
+      "defined_out": [
+        "Method(opt_in()void)"
+      ],
+      "stack_out": [
+        "Method(opt_in()void)"
+      ]
+    },
+    "76": {
+      "op": "txna ApplicationArgs 0",
+      "defined_out": [
+        "Method(opt_in()void)",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "Method(opt_in()void)",
+        "tmp%0#1"
+      ]
+    },
+    "79": {
+      "op": "match main_opt_in_route@4",
+      "stack_out": []
+    },
+    "83": {
+      "block": "main_switch_case_next@5",
+      "stack_in": [],
+      "op": "txn OnCompletion",
+      "defined_out": [
+        "tmp%6#0"
+      ],
+      "stack_out": [
+        "tmp%6#0"
+      ]
+    },
+    "85": {
+      "op": "!",
+      "defined_out": [
+        "tmp%7#0"
+      ],
+      "stack_out": [
+        "tmp%7#0"
+      ]
+    },
+    "86": {
+      "op": "assert",
+      "stack_out": []
+    },
+    "87": {
+      "op": "txn ApplicationID",
+      "defined_out": [
+        "tmp%8#0"
+      ],
+      "stack_out": [
+        "tmp%8#0"
+      ]
+    },
+    "89": {
+      "op": "bz main_create_NoOp@10",
+      "stack_out": []
+    },
+    "92": {
+      "op": "pushbytess 0x05468436 0x4828cd2d // method \"add_admin(address)void\", method \"remove_admin(address)void\"",
+      "defined_out": [
+        "Method(add_admin(address)void)",
+        "Method(remove_admin(address)void)"
+      ],
+      "stack_out": [
+        "Method(add_admin(address)void)",
+        "Method(remove_admin(address)void)"
+      ]
+    },
+    "104": {
+      "op": "txna ApplicationArgs 0",
+      "defined_out": [
+        "Method(add_admin(address)void)",
+        "Method(remove_admin(address)void)",
+        "tmp%10#0"
+      ],
+      "stack_out": [
+        "Method(add_admin(address)void)",
+        "Method(remove_admin(address)void)",
+        "tmp%10#0"
+      ]
+    },
+    "107": {
+      "op": "match add_admin remove_admin",
+      "stack_out": []
+    },
+    "113": {
+      "op": "err"
+    },
+    "114": {
+      "block": "main_create_NoOp@10",
+      "stack_in": [],
+      "op": "pushbytes 0xfd2c93cd // method \"initialize()void\"",
+      "defined_out": [
+        "Method(initialize()void)"
+      ],
+      "stack_out": [
+        "Method(initialize()void)"
+      ]
+    },
+    "120": {
+      "op": "txna ApplicationArgs 0",
+      "defined_out": [
+        "Method(initialize()void)",
+        "tmp%11#0"
+      ],
+      "stack_out": [
+        "Method(initialize()void)",
+        "tmp%11#0"
+      ]
+    },
+    "123": {
+      "op": "match main_initialize_route@11",
+      "stack_out": []
+    },
+    "127": {
+      "op": "err"
+    },
+    "128": {
+      "block": "main_initialize_route@11",
+      "stack_in": [],
+      "op": "bytec_1 // \"super_admin\"",
+      "defined_out": [
+        "\"super_admin\""
+      ],
+      "stack_out": [
+        "\"super_admin\""
+      ]
+    },
+    "129": {
+      "op": "bytec_3 // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM",
+      "defined_out": [
+        "\"super_admin\"",
+        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+      ],
+      "stack_out": [
+        "\"super_admin\"",
+        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+      ]
+    },
+    "130": {
+      "op": "app_global_put",
+      "stack_out": []
+    },
+    "131": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "132": {
+      "op": "return",
+      "stack_out": []
+    },
+    "133": {
+      "block": "main_opt_in_route@4",
+      "stack_in": [],
+      "op": "txn OnCompletion",
+      "defined_out": [
+        "tmp%1#1"
+      ],
+      "stack_out": [
+        "tmp%1#1"
+      ]
+    },
+    "135": {
+      "op": "intc_0 // OptIn",
+      "defined_out": [
+        "OptIn",
+        "tmp%1#1"
+      ],
+      "stack_out": [
+        "tmp%1#1",
+        "OptIn"
+      ]
+    },
+    "136": {
+      "op": "==",
+      "defined_out": [
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "tmp%2#0"
+      ]
+    },
+    "137": {
+      "op": "txn ApplicationID",
+      "defined_out": [
+        "tmp%2#0",
+        "tmp%3#0"
+      ],
+      "stack_out": [
+        "tmp%2#0",
+        "tmp%3#0"
+      ]
+    },
+    "139": {
+      "op": "&&",
+      "defined_out": [
+        "tmp%5#0"
+      ],
+      "stack_out": [
+        "tmp%5#0"
+      ]
+    },
+    "140": {
+      "op": "assert",
+      "stack_out": []
+    },
+    "141": {
+      "op": "b opt_in"
+    },
+    "144": {
+      "subroutine": "smart_contracts.AccessControl.contract.AccessControl.opt_in[routing]",
+      "params": {},
+      "block": "opt_in",
+      "stack_in": [],
+      "op": "intc_1 // 0",
+      "defined_out": [
+        "0"
+      ],
+      "stack_out": [
+        "0"
+      ]
+    },
+    "145": {
+      "op": "bytec_1 // \"super_admin\"",
+      "defined_out": [
+        "\"super_admin\"",
+        "0"
+      ],
+      "stack_out": [
+        "0",
+        "\"super_admin\""
+      ]
+    },
+    "146": {
+      "op": "app_global_get_ex",
+      "defined_out": [
+        "maybe_exists%0#0",
+        "maybe_value%0#0"
+      ],
+      "stack_out": [
+        "maybe_value%0#0",
+        "maybe_exists%0#0"
+      ]
+    },
+    "147": {
+      "error": "check self.super_admin exists",
+      "op": "assert // check self.super_admin exists",
+      "stack_out": [
+        "maybe_value%0#0"
+      ]
+    },
+    "148": {
+      "op": "txn Sender",
+      "defined_out": [
+        "maybe_value%0#0",
+        "reinterpret_Encoded(uint8[32])%0#0"
+      ],
+      "stack_out": [
+        "maybe_value%0#0",
+        "reinterpret_Encoded(uint8[32])%0#0"
+      ]
+    },
+    "150": {
+      "op": "==",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "151": {
+      "op": "pushbytes 0x00",
+      "defined_out": [
+        "0x00",
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0",
+        "0x00"
+      ]
+    },
+    "154": {
+      "op": "intc_1 // 0",
+      "stack_out": [
+        "tmp%0#0",
+        "0x00",
+        "0"
+      ]
+    },
+    "155": {
+      "op": "uncover 2",
+      "stack_out": [
+        "0x00",
+        "0",
+        "tmp%0#0"
+      ]
+    },
+    "157": {
+      "op": "setbit",
+      "defined_out": [
+        "aggregate%encoded_bool%0#0"
+      ],
+      "stack_out": [
+        "aggregate%encoded_bool%0#0"
+      ]
+    },
+    "158": {
+      "op": "txn Sender",
+      "defined_out": [
+        "aggregate%encoded_bool%0#0",
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "aggregate%encoded_bool%0#0",
+        "tmp%2#0"
+      ]
+    },
+    "160": {
+      "op": "bytec_0 // \"admins\"",
+      "defined_out": [
+        "\"admins\"",
+        "aggregate%encoded_bool%0#0",
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "aggregate%encoded_bool%0#0",
+        "tmp%2#0",
+        "\"admins\""
+      ]
+    },
+    "161": {
+      "op": "uncover 2",
+      "stack_out": [
+        "tmp%2#0",
+        "\"admins\"",
+        "aggregate%encoded_bool%0#0"
+      ]
+    },
+    "163": {
+      "op": "app_local_put",
+      "stack_out": []
+    },
+    "164": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "165": {
+      "op": "return",
+      "stack_out": []
+    },
+    "166": {
+      "subroutine": "smart_contracts.AccessControl.contract.AccessControl.add_admin[routing]",
+      "params": {},
+      "block": "add_admin",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1",
+      "defined_out": [
+        "admin#0"
+      ],
+      "stack_out": [
+        "admin#0"
+      ]
+    },
+    "169": {
+      "op": "dup",
+      "defined_out": [
+        "admin#0",
+        "admin#0 (copy)"
+      ],
+      "stack_out": [
+        "admin#0",
+        "admin#0 (copy)"
+      ]
+    },
+    "170": {
+      "op": "len",
+      "defined_out": [
+        "admin#0",
+        "len%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "len%0#0"
+      ]
+    },
+    "171": {
+      "op": "intc_2 // 32",
+      "defined_out": [
+        "32",
+        "admin#0",
+        "len%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "172": {
+      "op": "==",
+      "defined_out": [
+        "admin#0",
+        "eq%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "eq%0#0"
+      ]
+    },
+    "173": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "admin#0"
+      ]
+    },
+    "174": {
+      "op": "txn Sender",
+      "defined_out": [
+        "admin#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%0#1"
+      ]
+    },
+    "176": {
+      "op": "intc_1 // 0",
+      "defined_out": [
+        "0",
+        "admin#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%0#1",
+        "0"
+      ]
+    },
+    "177": {
+      "op": "bytec_0 // \"admins\"",
+      "defined_out": [
+        "\"admins\"",
+        "0",
+        "admin#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%0#1",
+        "0",
+        "\"admins\""
+      ]
+    },
+    "178": {
+      "op": "app_local_get_ex",
+      "defined_out": [
+        "admin#0",
+        "maybe_exists%0#0",
+        "maybe_value%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "maybe_value%0#0",
+        "maybe_exists%0#0"
+      ]
+    },
+    "179": {
+      "error": "check self.admins exists for account",
+      "op": "assert // check self.admins exists for account",
+      "stack_out": [
+        "admin#0",
+        "maybe_value%0#0"
+      ]
+    },
+    "180": {
+      "op": "bytec_2 // 0x80",
+      "defined_out": [
+        "0x80",
+        "admin#0",
+        "maybe_value%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "maybe_value%0#0",
+        "0x80"
+      ]
+    },
+    "181": {
+      "op": "==",
+      "defined_out": [
+        "admin#0",
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%2#0"
+      ]
+    },
+    "182": {
+      "error": "Not admin",
+      "op": "assert // Not admin",
+      "stack_out": [
+        "admin#0"
+      ]
+    },
+    "183": {
+      "op": "bytec_0 // \"admins\"",
+      "stack_out": [
+        "admin#0",
+        "\"admins\""
+      ]
+    },
+    "184": {
+      "op": "bytec_2 // 0x80",
+      "stack_out": [
+        "admin#0",
+        "\"admins\"",
+        "0x80"
+      ]
+    },
+    "185": {
+      "op": "app_local_put",
+      "stack_out": []
+    },
+    "186": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "187": {
+      "op": "return",
+      "stack_out": []
+    },
+    "188": {
+      "subroutine": "smart_contracts.AccessControl.contract.AccessControl.remove_admin[routing]",
+      "params": {},
+      "block": "remove_admin",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1",
+      "defined_out": [
+        "admin#0"
+      ],
+      "stack_out": [
+        "admin#0"
+      ]
+    },
+    "191": {
+      "op": "dup",
+      "defined_out": [
+        "admin#0",
+        "admin#0 (copy)"
+      ],
+      "stack_out": [
+        "admin#0",
+        "admin#0 (copy)"
+      ]
+    },
+    "192": {
+      "op": "len",
+      "defined_out": [
+        "admin#0",
+        "len%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "len%0#0"
+      ]
+    },
+    "193": {
+      "op": "intc_2 // 32",
+      "defined_out": [
+        "32",
+        "admin#0",
+        "len%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "194": {
+      "op": "==",
+      "defined_out": [
+        "admin#0",
+        "eq%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "eq%0#0"
+      ]
+    },
+    "195": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "admin#0"
+      ]
+    },
+    "196": {
+      "op": "txn Sender",
+      "defined_out": [
+        "admin#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%0#1"
+      ]
+    },
+    "198": {
+      "op": "intc_1 // 0",
+      "defined_out": [
+        "0",
+        "admin#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%0#1",
+        "0"
+      ]
+    },
+    "199": {
+      "op": "bytec_0 // \"admins\"",
+      "defined_out": [
+        "\"admins\"",
+        "0",
+        "admin#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%0#1",
+        "0",
+        "\"admins\""
+      ]
+    },
+    "200": {
+      "op": "app_local_get_ex",
+      "defined_out": [
+        "admin#0",
+        "maybe_exists%0#0",
+        "maybe_value%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "maybe_value%0#0",
+        "maybe_exists%0#0"
+      ]
+    },
+    "201": {
+      "error": "check self.admins exists for account",
+      "op": "assert // check self.admins exists for account",
+      "stack_out": [
+        "admin#0",
+        "maybe_value%0#0"
+      ]
+    },
+    "202": {
+      "op": "bytec_2 // 0x80",
+      "defined_out": [
+        "0x80",
+        "admin#0",
+        "maybe_value%0#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "maybe_value%0#0",
+        "0x80"
+      ]
+    },
+    "203": {
+      "op": "==",
+      "defined_out": [
+        "admin#0",
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "tmp%2#0"
+      ]
+    },
+    "204": {
+      "error": "Not admin",
+      "op": "assert // Not admin",
+      "stack_out": [
+        "admin#0"
+      ]
+    },
+    "205": {
+      "op": "bytec_0 // \"admins\"",
+      "stack_out": [
+        "admin#0",
+        "\"admins\""
+      ]
+    },
+    "206": {
+      "op": "pushbytes 0x00",
+      "defined_out": [
+        "\"admins\"",
+        "0x00",
+        "admin#0"
+      ],
+      "stack_out": [
+        "admin#0",
+        "\"admins\"",
+        "0x00"
+      ]
+    },
+    "209": {
+      "op": "app_local_put",
+      "stack_out": []
+    },
+    "210": {
+      "op": "intc_0 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "211": {
+      "op": "return",
+      "stack_out": []
+    }
+  }
+}

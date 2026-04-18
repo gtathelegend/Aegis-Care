@@ -1,0 +1,283 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 32 1 8 0
+    // smart_contracts/Auditlog/contract.py:40
+    // class AuditLog(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@12
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0x663077aa 0xa25c1e4c 0xbde19902 0x25f2c316 0xcdc74e43 // method "log_consent_granted(address,address,string,uint64,string)void", method "log_consent_revoked(address,address,uint64)void", method "log_data_accessed(address,address,string,uint64,bool)void", method "log_access_requested(address,address,string,uint64)void", method "log_erasure_requested(address,uint64)void"
+    txna ApplicationArgs 0
+    match log_consent_granted log_consent_revoked log_data_accessed log_access_requested log_erasure_requested
+    err
+
+main___algopy_default_create@12:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// smart_contracts.Auditlog.contract.AuditLog.log_consent_granted[routing]() -> void:
+log_consent_granted:
+    // smart_contracts/Auditlog/contract.py:42
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    intc_3 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 5
+    dup
+    intc_3 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // smart_contracts/Auditlog/contract.py:51
+    // arc4.emit(ConsentGranted(principal, fiduciary, purpose, expiry, scopes))
+    uncover 5
+    uncover 5
+    concat
+    pushbytes 0x004c
+    concat
+    pushint 76
+    uncover 4
+    +
+    swap
+    uncover 3
+    concat
+    swap
+    itob
+    extract 6 2
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    pushbytes 0x44a2ab6d // method "ConsentGranted(address,address,string,uint64,string)"
+    swap
+    concat
+    log
+    // smart_contracts/Auditlog/contract.py:42
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.Auditlog.contract.AuditLog.log_consent_revoked[routing]() -> void:
+log_consent_revoked:
+    // smart_contracts/Auditlog/contract.py:53
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/Auditlog/contract.py:60
+    // arc4.emit(ConsentRevoked(principal, fiduciary, timestamp))
+    cover 2
+    concat
+    swap
+    concat
+    pushbytes 0x81808732 // method "ConsentRevoked(address,address,uint64)"
+    swap
+    concat
+    log
+    // smart_contracts/Auditlog/contract.py:53
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.Auditlog.contract.AuditLog.log_data_accessed[routing]() -> void:
+log_data_accessed:
+    // smart_contracts/Auditlog/contract.py:62
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    intc_3 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 5
+    dup
+    len
+    intc_1 // 1
+    ==
+    assert // invalid number of bytes for arc4.bool
+    // smart_contracts/Auditlog/contract.py:71
+    // arc4.emit(DataAccessed(principal, fiduciary, purpose, timestamp, is_emergency))
+    uncover 4
+    uncover 4
+    concat
+    pushbytes 0x004b
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    swap
+    concat
+    pushbytes 0xa9a2a025 // method "DataAccessed(address,address,string,uint64,bool)"
+    swap
+    concat
+    log
+    // smart_contracts/Auditlog/contract.py:62
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.Auditlog.contract.AuditLog.log_access_requested[routing]() -> void:
+log_access_requested:
+    // smart_contracts/Auditlog/contract.py:73
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    intc_3 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/Auditlog/contract.py:81
+    // arc4.emit(AccessRequested(principal, fiduciary, purpose, timestamp))
+    uncover 3
+    uncover 3
+    concat
+    pushbytes 0x004a
+    concat
+    swap
+    concat
+    swap
+    concat
+    pushbytes 0x734ddbb6 // method "AccessRequested(address,address,string,uint64)"
+    swap
+    concat
+    log
+    // smart_contracts/Auditlog/contract.py:73
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.Auditlog.contract.AuditLog.log_erasure_requested[routing]() -> void:
+log_erasure_requested:
+    // smart_contracts/Auditlog/contract.py:83
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_0 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/Auditlog/contract.py:89
+    // arc4.emit(ErasureRequested(principal, timestamp))
+    concat
+    pushbytes 0xee919032 // method "ErasureRequested(address,uint64)"
+    swap
+    concat
+    log
+    // smart_contracts/Auditlog/contract.py:83
+    // @arc4.abimethod
+    intc_1 // 1
+    return
