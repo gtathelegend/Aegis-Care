@@ -72,9 +72,9 @@ export default function App() {
             <Route path="/admin" element={<AdminDashboard />} />
 
             {/* Dashboard Protected Routes */}
-            <Route path="/patient" element={<DashboardShell><PatientPortal /></DashboardShell>} />
-            <Route path="/hospital" element={<DashboardShell><HospitalPortal /></DashboardShell>} />
-            <Route path="/doctor" element={<DashboardShell><DoctorDashboard /></DashboardShell>} />
+            <Route path="/patient" element={<PatientPortal />} />
+            <Route path="/hospital" element={<HospitalPortal />} />
+            <Route path="/doctor" element={<DoctorDashboard />} />
             <Route path="/lab" element={<DashboardShell><LabDashboard /></DashboardShell>} />
             <Route path="/pharmacy" element={<DashboardShell><PharmacyDashboard /></DashboardShell>} />
             <Route path="/insurance" element={<DashboardShell><InsuranceDashboard /></DashboardShell>} />

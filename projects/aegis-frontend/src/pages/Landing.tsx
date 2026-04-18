@@ -1,401 +1,763 @@
+import { useEffect, useState } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
-import { motion, useScroll, useTransform } from 'framer-motion'
-import { 
-  Building2, 
-  Stethoscope, 
-  FlaskConical, 
-  User, 
-  ShieldCheck, 
-  ArrowRight,
-  Shield,
-  Activity,
-  UserCheck,
-  Lock,
-  Clock
-} from 'lucide-react'
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ConnectWallet from '../components/ConnectWallet'
+import LandingEffects from '../components/LandingEffects'
 import { useRole } from '../hooks/useRole'
-import logoUrl from '../assets/final_logo.jpeg'
+import '../styles/landing.css'
 
-const Landing = () => {
+export default function Landing() {
   const { activeAddress } = useWallet()
   const { loading } = useRole()
   const navigate = useNavigate()
-  const { scrollY } = useScroll()
-
   const [walletModalOpen, setWalletModalOpen] = useState(false)
 
-  // Auto-redirect if connected
   useEffect(() => {
     if (activeAddress && !loading) {
       navigate('/patient')
     }
   }, [activeAddress, loading, navigate])
 
-  const navBackground = useTransform(scrollY, [0, 50], ['rgba(244, 246, 244, 0)', 'rgba(244, 246, 244, 0.8)'])
+  const openWallet = (e?: React.MouseEvent) => {
+    e?.preventDefault()
+    setWalletModalOpen(true)
+  }
+
+  const goto = (path: string) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    navigate(path)
+  }
 
   return (
-    <div className="min-h-screen bg-[#f4f6f4] overflow-x-hidden font-['Inter'] flex flex-col relative text-slate-800">
-      {/* Background Gradients */}
-      <div className="absolute top-0 right-0 w-[800px] h-[500px] bg-gradient-to-l from-[#a5c3a9]/30 to-transparent blur-[120px] pointer-events-none" />
-      <div className="absolute top-[-100px] left-[-200px] w-[500px] h-[500px] bg-gradient-to-r from-[#d9e6d8]/50 to-transparent blur-[120px] pointer-events-none" />
-
-      {/* Navbar */}
-      <motion.nav 
-        style={{ backgroundColor: navBackground }}
-        className="fixed top-0 left-0 right-0 z-50 px-8 py-4 flex items-center justify-between backdrop-blur-md border-b border-transparent transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <img src={logoUrl} alt="Ojasraksha Logo" className="w-10 h-10 object-contain" />
-          <span className="font-['Outfit'] font-semibold text-2xl tracking-tight text-[#162723]">Ojasraksha</span>
+    <>
+      <LandingEffects />
+      <div className="landing-page">
+        <div className="grid-bg"></div>
+        <div className="blobs">
+          <i className="b1"></i>
+          <i className="b2"></i>
+          <i className="b3"></i>
+          <i className="b4"></i>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <button 
-            type="button" 
-            onClick={() => navigate('/admin')}
-            className="px-5 py-2.5 rounded-full border border-[#2d463d] text-[#e0e8e4] bg-[#2d463d]/90 font-medium text-sm transition-all hover:bg-[#1f332c]"
-          >
-            Admin
-          </button>
-          
-          <button 
-            type="button"
-            onClick={() => setWalletModalOpen(true)}
-            className="px-6 py-2.5 rounded-full bg-[#bfd68c] text-[#1f2937] font-semibold text-sm transition-all hover:bg-[#aacc6d] shadow-sm hover:shadow-md"
-          >
-            Connect Wallet
-          </button>
-        </div>
-      </motion.nav>
+        <div className="cursor" id="cursor"></div>
+        <div className="rail"><i id="rail"></i></div>
 
-      {/* Hidden Wallet Modal logic decoupled from UI */}
-      {walletModalOpen && (
-         <div className="hidden">
-           <ConnectWallet openModal={walletModalOpen} closeModal={() => setWalletModalOpen(false)} />
-         </div>
-      )}
-      <ConnectWallet openModal={walletModalOpen} closeModal={() => setWalletModalOpen(false)} />
-
-
-      <main className="flex-grow flex flex-col items-center pt-32 pb-24 w-full">
-        
-        {/* HERO SECTION */}
-        <section className="w-full max-w-5xl px-6 flex flex-col items-center text-center mt-12 mb-24 z-10 relative">
-          
-          {/* Badge */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white shadow-sm border border-gray-100 mb-8"
-          >
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-gray-600 tracking-wide uppercase">Secure Consent Management <span className="text-gray-300 mx-1">|</span> <span className="text-blue-500">v2.4 Released</span></span>
-          </motion.div>
-
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
-            className="font-['Outfit'] font-black text-[5rem] leading-[1.05] tracking-tight text-[#0a1122] mb-6 max-w-4xl"
-          >
-            Take Control of Your <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8eb563] to-[#5a9c73]">Medical Data</span>
-          </motion.h1>
-
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
-            className="text-lg text-[#52665e] max-w-2xl mb-10 leading-relaxed"
-          >
-            Ojasraksha is a blockchain-powered consent platform that lets patients control who accesses their health records while enabling hospitals to stay compliant.
-          </motion.p>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
-            className="flex items-center gap-4"
-          >
-            <button 
-              onClick={() => setWalletModalOpen(true)}
-              className="px-8 py-3.5 rounded-xl bg-[#2d463d] text-white font-medium flex items-center gap-2 hover:bg-[#1e3029] transition-colors shadow-lg shadow-[#2d463d]/20"
-            >
-              Access Patient Portal <ArrowRight size={18} />
-            </button>
-            <button 
-              onClick={() => navigate('/beneficiary-login')}
-              className="px-8 py-3.5 rounded-xl bg-[#f0f4f2] text-[#3e5249] font-medium border border-transparent hover:border-[#cfdad5] transition-colors"
-            >
-              Beneficiary Access
-            </button>
-          </motion.div>
-        </section>
-
-        {/* NODE DIAGRAM SECTION */}
-        <section className="relative w-full max-w-4xl h-[450px] flex items-center justify-center mb-32 z-10 pointer-events-none">
-          {/* Centered rings */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-[300px] h-[300px] rounded-full border border-[#dce3de]/50 absolute" />
-            <div className="w-[450px] h-[450px] rounded-full border border-[#dce3de]/30 absolute border-dashed" />
-            <div className="w-[600px] h-[600px] rounded-full border border-[#dce3de]/20 absolute" />
-          </div>
-
-          {/* Central Shield Shield */}
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
-            className="absolute bg-white rounded-[2rem] w-24 h-24 flex items-center justify-center shadow-xl shadow-blue-900/5 z-20"
-          >
-            <Shield className="w-10 h-10 text-blue-500" />
-          </motion.div>
-
-          {/* Connecting Lines */}
-          <svg className="absolute inset-0 w-full h-full -z-10" pointerEvents="none">
-             {/* Hospital Line */}
-             <line x1="250" y1="180" x2="400" y2="225" stroke="#a0b8a3" strokeWidth="1.5" />
-             <circle cx="340" cy="206" r="3" fill="#648868" />
-             
-             {/* Doctor Line */}
-             <line x1="600" y1="180" x2="448" y2="225" stroke="#a0b8a3" strokeWidth="1.5" />
-             <circle cx="530" cy="202" r="3" fill="#88b56f" />
-
-             {/* Patient Line */}
-             <line x1="250" y1="360" x2="400" y2="270" stroke="#a0b8a3" strokeWidth="1.5" />
-             <circle cx="350" cy="300" r="3" fill="#30473a" />
-
-             {/* Lab Line */}
-             <line x1="600" y1="360" x2="448" y2="270" stroke="#a0b8a3" strokeWidth="1.5" />
-             <circle cx="530" cy="315" r="3" fill="#c4906f" />
-          </svg>
-
-          {/* Floating Nodes */}
-          
-          {/* Hospital */}
-          <motion.div 
-             initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
-             className="absolute top-[120px] left-[180px] bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/50 flex flex-col items-center gap-2"
-          >
-             <div className="bg-[#f0f4f4] rounded-xl p-3"><Building2 className="w-5 h-5 text-[#5e777a]" /></div>
-             <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Hospital</span>
-          </motion.div>
-
-          {/* Doctor */}
-          <motion.div 
-             initial={{ x: 20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
-             className="absolute top-[120px] right-[180px] bg-white text-white rounded-2xl p-4 shadow-lg shadow-gray-200/50 flex flex-col items-center gap-2"
-          >
-             <div className="bg-[#f8f9eb] rounded-xl p-3"><Stethoscope className="w-5 h-5 text-[#a3c22b]" /></div>
-             <span className="text-[10px] font-bold text-[#a3c22b] tracking-widest uppercase text-slate-800">Doctor</span>
-          </motion.div>
-
-          {/* Patient */}
-          <motion.div 
-             initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 }}
-             className="absolute bottom-[40px] left-[180px] bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/50 flex flex-col items-center gap-2"
-          >
-             <div className="bg-[#f4f5f7] rounded-xl p-3"><User className="w-5 h-5 text-[#42526e]" /></div>
-             <span className="text-[10px] font-bold text-gray-700 tracking-widest uppercase">Patient</span>
-          </motion.div>
-
-          {/* Lab */}
-          <motion.div 
-             initial={{ x: 20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.5 }}
-             className="absolute bottom-[40px] right-[180px] bg-[#fffcf9] rounded-2xl p-4 shadow-lg shadow-orange-900/5 flex flex-col items-center gap-2"
-          >
-             <div className="bg-[#fff3eb] rounded-xl p-3"><FlaskConical className="w-5 h-5 text-[#d97c45]" /></div>
-             <span className="text-[10px] font-bold text-[#d97c45] tracking-widest uppercase">Lab</span>
-          </motion.div>
-
-          {/* Floating Patient Portal Title card */}
-           <motion.div 
-             animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-             className="absolute -top-[50px] -left-[100px] bg-white rounded-[2rem] pl-4 pr-8 py-4 shadow-xl shadow-gray-300/30 flex items-center gap-4 -rotate-6"
-          >
-             <div className="bg-[#93b052] rounded-2xl w-14 h-14 flex items-center justify-center">
-                 <User className="w-6 h-6 text-white" />
-             </div>
-             <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-[#5c7a6e] tracking-widest uppercase">Portal</span>
-                <span className="font-['Outfit'] font-bold text-xl text-[#0a1122]">Patient</span>
-             </div>
-          </motion.div>
-
-        </section>
-
-
-        {/* HOW IT WORKS MARQUEE & INTRO */}
-        <section className="w-full relative py-16 flex flex-col items-center z-10">
-          
-          <div className="absolute top-0 w-full overflow-hidden flex whitespace-nowrap opacity-30 select-none">
-            <motion.div 
-              animate={{ x: [0, -1000] }}
-              transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
-              className="font-['Outfit'] font-black text-6xl text-[#d4dfd4] tracking-tight flex gap-8 whitespace-nowrap"
-            >
-              <span>Ojasraksha</span> <span className="text-[#a0b8a3]">Your Health Data. Your Control. Always.</span>
-              <span className="ml-8">Ojasraksha</span> <span className="text-[#a0b8a3]">Your Health Data. Your Control. Always.</span>
-              <span className="ml-8">Ojasraksha</span> <span className="text-[#a0b8a3]">Your Health Data. Your Control. Always.</span>
-            </motion.div>
-          </div>
-
-          <div className="relative mt-24 text-center max-w-3xl px-6">
-            <h3 className="text-xs font-bold tracking-[0.2em] text-[#6b8c7e] uppercase mb-4">How It Works</h3>
-            <h2 className="font-['Outfit'] font-black text-5xl text-[#3b5e51] mb-6 tracking-tight">The Standard for Medical Trust</h2>
-            <p className="text-[#647c72] text-lg">A seamless flow designed for patients and clinicians — in three simple steps.</p>
-            <div className="w-12 h-1 bg-gradient-to-r from-[#9dc26a] to-[#739e7c] mx-auto mt-8 rounded-full" />
-          </div>
-
-          {/* Stepper Cards */}
-          <div className="max-w-6xl w-full mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 px-6">
-              
-              <motion.div whileHover={{ y: -5 }} className="bg-[#eef2ef] rounded-[2.5rem] p-8 border border-[#e5ece7] relative overflow-hidden flex flex-col">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#e0e8e4] rounded-full blur-2xl -mr-10 -mt-10" />
-                 <div className="flex items-center gap-3 mb-6 relative">
-                    <div className="w-10 h-10 rounded-full bg-[#7ca390] text-white flex items-center justify-center font-bold text-sm">01</div>
-                    <UserCheck className="w-6 h-6 text-[#5b2a86]" />
-                 </div>
-                 <h4 className="font-['Outfit'] font-bold text-2xl text-[#1e2e28] mb-4 relative hover:text-black">Patient Grants Consent</h4>
-                 <p className="text-[#597368] text-[0.95rem] leading-relaxed relative flex-grow">
-                    Patients manage permissions via a secure blockchain-linked wallet with one-tap control.
-                 </p>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -5 }} className="bg-[#e4ece7] rounded-[2.5rem] p-8 border border-[#dce6e1] relative overflow-hidden flex flex-col">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#d2e0d8] rounded-full blur-2xl -mr-10 -mt-10" />
-                 <div className="flex items-center gap-3 mb-6 relative">
-                    <div className="w-10 h-10 rounded-full bg-[#466657] text-white flex items-center justify-center font-bold text-sm">02</div>
-                    <Building2 className="w-6 h-6 text-[#d85e9b]" />
-                 </div>
-                 <h4 className="font-['Outfit'] font-bold text-2xl text-[#1e2e28] mb-4 relative hover:text-black">Hospital Requests Access</h4>
-                 <p className="text-[#597368] text-[0.95rem] leading-relaxed relative flex-grow">
-                    Verified entities submit real-time access requests through the RBAC-protected portal.
-                 </p>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -5 }} className="bg-[#ecf5d5] rounded-[2.5rem] p-8 border border-[#e2edc4] relative overflow-hidden flex flex-col">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#dcf0a8] rounded-full blur-2xl -mr-10 -mt-10" />
-                 <div className="flex items-center gap-3 mb-6 relative">
-                    <div className="w-10 h-10 rounded-full bg-[#a3c255] text-white flex items-center justify-center font-bold text-sm">03</div>
-                    <Lock className="w-6 h-6 text-[#e8702a]" />
-                 </div>
-                 <h4 className="font-['Outfit'] font-bold text-2xl text-[#1e2e28] mb-4 relative hover:text-black">Immutable Audit</h4>
-                 <p className="text-[#597368] text-[0.95rem] leading-relaxed relative flex-grow">
-                    Smart contracts log every interaction on the Hedera ledger — tamper-proof, forever.
-                 </p>
-                 {/* Floating Portal Doctor card (from Image 5) */}
-                 <div className="absolute -bottom-6 -right-6 bg-white rounded-3xl pr-6 pl-3 py-3 shadow-xl shadow-[#a3c255]/20 flex items-center gap-3">
-                   <div className="bg-[#466657] rounded-xl w-12 h-12 flex items-center justify-center">
-                     <Stethoscope className="w-5 h-5 text-white" />
-                   </div>
-                   <div className="flex flex-col">
-                     <span className="text-[9px] font-bold text-gray-400 tracking-widest uppercase">Portal</span>
-                     <span className="font-['Outfit'] font-bold text-lg text-[#0a1122] leading-tight">Doctor</span>
-                   </div>
-                 </div>
-              </motion.div>
-
-          </div>
-        </section>
-
-        {/* PLATFORM CAPABILITIES SECTION */}
-        <section className="w-full relative py-24 flex flex-col items-center z-10 bg-white mt-12 rounded-[4rem] px-6">
-           <div className="text-center max-w-3xl mb-16">
-            <h3 className="text-xs font-bold tracking-[0.2em] text-[#6b8c7e] uppercase mb-4">Platform Capabilities</h3>
-            <h2 className="font-['Outfit'] font-black text-5xl text-[#1e2e28] mb-6 tracking-tight">Everything Your Practice Needs</h2>
-            <p className="text-[#647c72] text-lg">Built ground-up for healthcare compliance and patient sovereignty.</p>
-          </div>
-
-          <div className="max-w-6xl w-full mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-             
-             {/* Card 1 */}
-             <div className="bg-white rounded-[2rem] p-10 border border-gray-100 shadow-sm hover:shadow-xl transition-shadow flex flex-col">
-                <div className="w-16 h-16 rounded-2xl bg-[#f4faef] flex items-center justify-center mb-8">
-                   <ShieldCheck className="w-8 h-8 text-[#90c242]" />
-                </div>
-                <h4 className="font-['Outfit'] font-bold text-2xl text-[#1e2e28] mb-4">Consent Management</h4>
-                <p className="text-[#6b7280] leading-relaxed flex-grow">
-                   Granular control over who sees your data and for how long — with one-click revocation at any time.
-                </p>
-             </div>
-
-             {/* Card 2 */}
-             <div className="bg-white rounded-[2rem] p-10 border border-gray-100 shadow-sm hover:shadow-xl transition-shadow flex flex-col">
-                <div className="w-16 h-16 rounded-2xl bg-[#f0f4f8] flex items-center justify-center mb-8">
-                   <Clock className="w-8 h-8 text-[#64748b]" />
-                </div>
-                <h4 className="font-['Outfit'] font-bold text-2xl text-[#1e2e28] mb-4">Immutable Audit Logs</h4>
-                <p className="text-[#6b7280] leading-relaxed flex-grow">
-                   Tamper-proof logs secured by Algorand blockchain consensus. Proof of every access, forever.
-                </p>
-             </div>
-
-             {/* Card 3 (Hover active state based on Image 4) */}
-             <div className="bg-white rounded-[2rem] p-10 border-t-2 border-t-[#cde0ca] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] flex flex-col relative overflow-hidden -translate-y-2">
-                <div className="w-16 h-16 rounded-2xl bg-[#e5e9ec] flex items-center justify-center mb-8 relative z-10">
-                   <UserCheck className="w-8 h-8 text-[#334155]" />
-                </div>
-                <h4 className="font-['Outfit'] font-bold text-2xl text-[#1e2e28] mb-4 relative z-10">Patient Data Ownership</h4>
-                <p className="text-[#6b7280] leading-relaxed flex-grow mb-6 relative z-10">
-                   You own the keys to your records. No third-party intermediaries, no silent data sales.
-                </p>
-                <div className="relative z-10">
-                  <a href="#" className="font-bold text-sm text-[#1e2e28] hover:underline inline-flex flex-row items-center gap-1 group">
-                    Learn more <span className="opacity-0 group-hover:opacity-100 transition-opacity"><ArrowRight size={14}/></span>
-                  </a>
-                </div>
-             </div>
-
-          </div>
-        </section>
-
-      </main>
-
-      {/* FOOTER SECTION */}
-      <footer className="w-full bg-[#1c2e26] pt-16 pb-8 px-12 md:px-24 flex flex-col gap-12 z-20 relative">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          
-          {/* Logo & Description */}
-          <div className="md:col-span-2 flex flex-col gap-6">
-            <div className="w-24 h-24 bg-[#23352d] border border-[#3e5249] rounded-2xl flex items-center justify-center shadow-lg p-3">
-              <img src={logoUrl} alt="Ojasraksha Logo" className="w-full h-full object-contain rounded-xl bg-white" />
+        {/* NAV */}
+        <nav className="top" id="nav">
+          <div className="navshell">
+            <div className="brand">
+              <div className="mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/>
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+              </div>
+              <b>Aegis-Care <span>/ v2.4</span></b>
             </div>
-            <p className="text-[#8e9c93] max-w-xs leading-relaxed font-medium">
-              Pioneering the future of HIPAA and GDPR compliant health data governance.
-            </p>
+            <div className="navlinks">
+              <a href="#network">Network</a>
+              <a href="#protocol">Protocol</a>
+              <a href="#flow">Flow</a>
+              <a href="#console">Console</a>
+              <a href="#roles">Portals</a>
+            </div>
+            <div className="navactions">
+              <a href="/admin" onClick={goto('/admin')} className="cta">Admin</a>
+              <a href="#connect" onClick={openWallet} className="cta lime" data-magnetic>
+                <span className="dot"></span>Connect wallet
+              </a>
+            </div>
+          </div>
+        </nav>
+
+        {/* HERO */}
+        <section className="hero">
+          <div className="hero-tag" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+            <div>
+              <div className="t">Audit · Live</div>
+              <div className="v">1,284 signed today</div>
+            </div>
+          </div>
+          <div className="hero-tag-2" aria-hidden="true">
+            <div>
+              <div className="t">Median settle</div>
+              <div className="v">3.3 seconds</div>
+            </div>
           </div>
 
-          {/* Compliance Info */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-[#bfd68c] text-[10px] font-black uppercase tracking-[0.2em]">Compliance</h4>
-            <span className="text-[#cce3d5] text-sm hover:text-white transition-colors cursor-pointer">DPDP Act 2023</span>
+          <div className="wrap" style={{ position: 'relative', zIndex: 2 }}>
+            <div className="eyebrow reveal d1" style={{ marginBottom: '40px' }}>
+              <span className="pulse"></span>
+              <span className="mono">Sovereign Medical Data · DPDP · HIPAA · GDPR</span>
+            </div>
+            <h1>
+              <span className="words" data-words>
+                <span className="w"><i>Your body.</i></span>
+                <span className="w"><i>Your records.</i></span>
+              </span><br/>
+              <em>
+                <span className="words" data-words>
+                  <span className="w"><i>Your&nbsp;keys.</i></span>
+                </span>
+              </em>
+            </h1>
+
+            <div className="lede-row">
+              <p className="lede reveal d3">
+                Aegis-Care is a consent protocol for healthcare. Patients hold the keys to their records.
+                Hospitals, labs and insurers request time-scoped access — every touch is logged to an
+                immutable chain.
+              </p>
+              <div className="ctas reveal d4">
+                <a href="#connect" onClick={openWallet} className="cta lime" data-magnetic>
+                  Access patient portal
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M13 5l7 7-7 7"/>
+                  </svg>
+                </a>
+                <a href="/beneficiary-login" onClick={goto('/beneficiary-login')} className="cta">Beneficiary login</a>
+              </div>
+            </div>
+
+            <div className="hero-meta reveal d5">
+              <div className="item"><span>01 / Chain</span><b>Algorand</b></div>
+              <div className="item"><span>02 / Storage</span><b>IPFS · <em>encrypted</em></b></div>
+              <div className="item"><span>03 / Latency</span><b>~3.3s</b></div>
+              <div className="item"><span>04 / Status</span><b style={{ color: 'var(--ink-green)' }}>● Operational</b></div>
+            </div>
           </div>
 
-          {/* Contact Info */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-[#bfd68c] text-[10px] font-black uppercase tracking-[0.2em]">Contact</h4>
-            <a href="mailto:ojasraksha@gmail.com" className="text-[#cce3d5] text-sm hover:text-white transition-colors">ojasraksha@gmail.com</a>
+          <div className="scrolldown">
+            <div className="bar"></div>
+            <span className="mono" style={{ fontSize: '9px' }}>SCROLL</span>
           </div>
+        </section>
 
+        {/* MARQUEE */}
+        <div className="marquee">
+          <div className="marquee-track" id="mtrack"></div>
         </div>
 
-        <div className="w-full border-t border-[#2e4038] mt-4 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <span className="text-[#72857a] text-xs font-medium">© 2026 Ojasraksha Inc. All rights reserved.</span>
-          <div className="flex items-center gap-8">
-            <a href="#" className="text-[#72857a] text-xs font-medium hover:text-[#cce3d5] transition-colors">Privacy Policy</a>
-            <a href="#" className="text-[#72857a] text-xs font-medium hover:text-[#cce3d5] transition-colors">Terms of Service</a>
-            <a href="#" className="text-[#72857a] text-xs font-medium hover:text-[#cce3d5] transition-colors">Cookie Policy</a>
-          </div>
-        </div>
-      </footer>
+        {/* NETWORK */}
+        <section className="section" id="network">
+          <div className="wrap">
+            <div className="section-head">
+              <div>
+                <div className="mono reveal" style={{ marginBottom: '24px' }}>§ 01 — Network</div>
+                <h2 className="reveal d1">A <em>permissioned mesh</em><br/>between care-givers<br/>and the cared-for.</h2>
+              </div>
+              <div className="meta reveal d2">
+                <div className="mono" style={{ marginBottom: '10px' }}>ROLE-BASED ACCESS</div>
+                <p>Seven verified entity classes, one patient-held key. Requests traverse the chain; data never leaves encryption.</p>
+              </div>
+            </div>
 
-    </div>
+            <div className="constellation reveal d1" id="constellation">
+              <svg className="links" viewBox="0 0 1000 600" preserveAspectRatio="none" id="links">
+                <defs>
+                  <linearGradient id="lg" x1="0" x2="1">
+                    <stop offset="0" stopColor="#0a1514" stopOpacity="0"/>
+                    <stop offset=".5" stopColor="#0a1514" stopOpacity=".7"/>
+                    <stop offset="1" stopColor="#0a1514" stopOpacity="0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              <div className="center">
+                <div className="shield">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="node" data-n="0" data-c="lime" style={{ left: '14%', top: '22%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M3 21V7l9-4 9 4v14"/>
+                    <path d="M9 21v-6h6v6"/>
+                    <path d="M12 7v4"/>
+                    <path d="M10 9h4"/>
+                  </svg>
+                </div>
+                <div className="label">Hospital</div>
+              </div>
+              <div className="node" data-n="1" data-c="coral" style={{ left: '50%', top: '12%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M6 2v6a6 6 0 0 0 12 0V2"/>
+                    <circle cx="18" cy="16" r="3"/>
+                    <path d="M12 8v6"/>
+                  </svg>
+                </div>
+                <div className="label">Doctor</div>
+              </div>
+              <div className="node" data-n="2" data-c="sky" style={{ left: '86%', top: '22%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M10 2v6L4 18a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 8V2"/>
+                    <path d="M9 2h6"/>
+                  </svg>
+                </div>
+                <div className="label">Lab</div>
+              </div>
+              <div className="node" data-n="3" data-c="sun" style={{ left: '12%', top: '78%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/>
+                    <path d="M8 12h8"/>
+                    <path d="M12 8v8"/>
+                  </svg>
+                </div>
+                <div className="label">Pharmacy</div>
+              </div>
+              <div className="node" data-n="4" data-c="violet" style={{ left: '50%', top: '88%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 21a8 8 0 0 1 16 0"/>
+                  </svg>
+                </div>
+                <div className="label">Patient</div>
+              </div>
+              <div className="node" data-n="5" data-c="coral" style={{ left: '88%', top: '78%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/>
+                  </svg>
+                </div>
+                <div className="label">Insurer</div>
+              </div>
+              <div className="node" data-n="6" data-c="lime" style={{ left: '28%', top: '50%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M3 7h18M3 12h18M3 17h18"/>
+                    <circle cx="7" cy="7" r="1.2" fill="currentColor"/>
+                    <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div className="label">Auditor</div>
+              </div>
+              <div className="node" data-n="7" data-c="sky" style={{ left: '72%', top: '50%' }}>
+                <div className="box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <rect x="4" y="8" width="16" height="12" rx="2"/>
+                    <path d="M8 8V6a4 4 0 0 1 8 0v2"/>
+                  </svg>
+                </div>
+                <div className="label">Vault</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* PILLARS */}
+        <section className="section tinted" id="protocol">
+          <div className="wrap">
+            <div className="section-head">
+              <div>
+                <div className="mono reveal">§ 02 — Protocol</div>
+                <h2 className="reveal d1">Consent, signed<br/>in <em>ink that won't fade</em>.</h2>
+              </div>
+              <div className="meta reveal d2">
+                <p>Three primitives. One ledger. Every consent is revocable; every revocation is final.</p>
+              </div>
+            </div>
+            <div className="pillars">
+              <div className="pillar lime reveal d1">
+                <div>
+                  <div className="top">
+                    <div className="num">01 / Primitive</div>
+                    <div className="glyph">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path d="M12 3v18M3 12h18"/>
+                        <circle cx="12" cy="12" r="9"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <h3>Granular<br/>consent</h3>
+                  <p>Scope by record type, requester, and minute-level duration. Cryptographically signed from the patient's wallet — revocable in one tap.</p>
+                </div>
+                <div className="foot">
+                  <span>On-chain</span>
+                  <em>ConsentManager</em>
+                </div>
+              </div>
+              <div className="pillar coral reveal d2">
+                <div>
+                  <div className="top">
+                    <div className="num">02 / Primitive</div>
+                    <div className="glyph">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 9v12"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <h3>Immutable<br/>audit</h3>
+                  <p>Every read, write, approval and revocation lands in AuditLog — replicated across validators, visible to the patient, forever.</p>
+                </div>
+                <div className="foot">
+                  <span>On-chain</span>
+                  <em>AuditLog</em>
+                </div>
+              </div>
+              <div className="pillar violet reveal d3">
+                <div>
+                  <div className="top">
+                    <div className="num">03 / Primitive</div>
+                    <div className="glyph">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/>
+                        <path d="M14 3v4h4"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <h3>Encrypted<br/>records</h3>
+                  <p>Data rests on IPFS, encrypted at the client. Only an active consent token can derive the read key — expiry dissolves it.</p>
+                </div>
+                <div className="foot">
+                  <span>Off-chain</span>
+                  <em>IPFS · AES-GCM</em>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FLOW */}
+        <section className="section" id="flow">
+          <div className="wrap">
+            <div className="flow">
+              <div className="stick">
+                <div className="mono reveal" style={{ marginBottom: '24px' }}>§ 03 — Flow</div>
+                <h3 className="reveal d1">A request,<br/>a signature,<br/>a <em>trace</em>.</h3>
+                <p className="reveal d2">Four steps. Three seconds. Zero silent reads.</p>
+                <div className="kpis reveal d3">
+                  <div className="kpi"><b>3.3s</b><span>Settle time</span></div>
+                  <div className="kpi"><b>256b</b><span>AES-GCM</span></div>
+                  <div className="kpi"><b>0</b><span>Silent reads</span></div>
+                </div>
+              </div>
+              <div className="steps">
+                <div className="step reveal d1" data-c="lime">
+                  <div className="badge">01</div>
+                  <div className="body">
+                    <h4>Entity requests</h4>
+                    <p>A verified hospital submits an access request targeting a specific patient wallet and record scope.</p>
+                  </div>
+                  <div className="arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div className="step reveal d2" data-c="coral">
+                  <div className="badge">02</div>
+                  <div className="body">
+                    <h4>Patient signs</h4>
+                    <p>The patient reviews scope, duration and reason in their wallet. One tap grants or denies.</p>
+                  </div>
+                  <div className="arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="m5 12 5 5L20 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div className="step reveal d3" data-c="sky">
+                  <div className="badge">03</div>
+                  <div className="body">
+                    <h4>Key derives</h4>
+                    <p>The consent token derives a time-bound decryption key. Records are fetched and streamed to the requester.</p>
+                  </div>
+                  <div className="arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="5" y="11" width="14" height="10" rx="2"/>
+                      <path d="M8 11V7a4 4 0 0 1 8 0v2"/>
+                    </svg>
+                  </div>
+                </div>
+                <div className="step reveal d4" data-c="violet">
+                  <div className="badge">04</div>
+                  <div className="body">
+                    <h4>Audit settles</h4>
+                    <p>The event writes to AuditLog. At expiry, the key dissolves — no silent re-reads, ever.</p>
+                  </div>
+                  <div className="arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="9"/>
+                      <path d="M12 7v5l3 3"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* STATS */}
+        <section className="wrap" style={{ padding: '0 24px' }}>
+          <div className="stats">
+            <div className="stat reveal d1">
+              <div className="tag"></div>
+              <b><em>∞</em></b>
+              <span>Retention of audit trail</span>
+            </div>
+            <div className="stat reveal d2">
+              <div className="tag"></div>
+              <b>0</b>
+              <span>Silent reads since mainnet</span>
+            </div>
+            <div className="stat reveal d3">
+              <div className="tag"></div>
+              <b>3.3s</b>
+              <span>Median settle time</span>
+            </div>
+            <div className="stat reveal d4">
+              <div className="tag"></div>
+              <b>7</b>
+              <span>Verified entity classes</span>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURE BAND / CONSOLE */}
+        <section className="section" id="console">
+          <div className="wrap">
+            <div className="section-head">
+              <div>
+                <div className="mono reveal">§ 04 — Console</div>
+                <h2 className="reveal d1">Consent you can<br/><em>see</em> and <em>steer</em>.</h2>
+              </div>
+              <div className="meta reveal d2">
+                <p>A quiet dashboard with loud defaults. Every active permission is visible, pausable, and time-stamped.</p>
+              </div>
+            </div>
+            <div className="feature-band">
+              <div className="copy reveal d1">
+                <h3>A wallet<br/>for <em>permissions</em>.</h3>
+                <p>Aegis-Care treats consent like a portable credential. Issue it, revoke it, expire it — the chain keeps score.</p>
+                <ul>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="m5 12 5 5L20 7"/>
+                    </svg>
+                    <span>Revoke any consent in a single tap — the key dissolves before the next read.</span>
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="m5 12 5 5L20 7"/>
+                    </svg>
+                    <span>Scope permissions down to a single record type, a single provider, a single hour.</span>
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="m5 12 5 5L20 7"/>
+                    </svg>
+                    <span>Receive a signed notification for every inbound request — no silent background access.</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mock reveal d2">
+                <div className="mock-head">
+                  <div className="dots"><i></i><i></i><i></i></div>
+                  <div className="mock-title">Active consents · 12</div>
+                </div>
+                <div className="mock-rows">
+                  <div className="mock-row">
+                    <div className="l">
+                      <i style={{ background: 'var(--lime)' }}>HX</i>
+                      <div>
+                        <div style={{ fontSize: '14px' }}>Helix Hospital</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'rgba(246,245,240,.5)', letterSpacing: '.1em' }}>
+                          LAB RESULTS · 48H
+                        </div>
+                      </div>
+                    </div>
+                    <span className="status active">Active</span>
+                  </div>
+                  <div className="mock-row">
+                    <div className="l">
+                      <i style={{ background: 'var(--coral)' }}>DR</i>
+                      <div>
+                        <div style={{ fontSize: '14px' }}>Dr. Hanwa, K.</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'rgba(246,245,240,.5)', letterSpacing: '.1em' }}>
+                          IMAGING · 2H
+                        </div>
+                      </div>
+                    </div>
+                    <span className="status active">Active</span>
+                  </div>
+                  <div className="mock-row">
+                    <div className="l">
+                      <i style={{ background: 'var(--sky)' }}>LB</i>
+                      <div>
+                        <div style={{ fontSize: '14px' }}>Meridian Labs</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'rgba(246,245,240,.5)', letterSpacing: '.1em' }}>
+                          PROFILE READ · PENDING
+                        </div>
+                      </div>
+                    </div>
+                    <span className="status pending">Pending</span>
+                  </div>
+                  <div className="mock-row">
+                    <div className="l">
+                      <i style={{ background: 'var(--violet)' }}>IN</i>
+                      <div>
+                        <div style={{ fontSize: '14px' }}>Arc Insurance</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'rgba(246,245,240,.5)', letterSpacing: '.1em' }}>
+                          CLAIM REVIEW · EXPIRED
+                        </div>
+                      </div>
+                    </div>
+                    <span className="status expired">Expired</span>
+                  </div>
+                  <div className="mock-row">
+                    <div className="l">
+                      <i style={{ background: 'var(--sun)' }}>PH</i>
+                      <div>
+                        <div style={{ fontSize: '14px' }}>Nil Pharmacy</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'rgba(246,245,240,.5)', letterSpacing: '.1em' }}>
+                          DISPENSING · 24H
+                        </div>
+                      </div>
+                    </div>
+                    <span className="status active">Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ROLES — bento */}
+        <section className="section tinted" id="roles">
+          <div className="wrap">
+            <div className="section-head">
+              <div>
+                <div className="mono reveal">§ 05 — Portals</div>
+                <h2 className="reveal d1">One protocol.<br/><em>Seven front doors.</em></h2>
+              </div>
+              <div className="meta reveal d2">
+                <p>Every role sees exactly what its key unlocks — no more, no less.</p>
+              </div>
+            </div>
+            <div className="roles">
+              <a href="/patient" onClick={goto('/patient')} style={{ textDecoration: 'none', color: 'inherit' }} className="role big reveal d1">
+                <div>
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M4 21a8 8 0 0 1 16 0"/>
+                    </svg>
+                  </div>
+                  <div className="arr">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="t">Patient<br/>portal</div>
+                  <p>The center of the system. Hold the keys, read the log, revoke with a tap. Designed for people, not institutions.</p>
+                  <div className="b" style={{ marginTop: '20px' }}>self-custody · wallet-native</div>
+                </div>
+              </a>
+              <a href="/hospital" onClick={goto('/hospital')} style={{ textDecoration: 'none', color: 'inherit' }} className="role reveal d2" data-c="lime">
+                <div>
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M3 21V7l9-4 9 4v14"/>
+                      <path d="M9 21v-6h6v6"/>
+                    </svg>
+                  </div>
+                  <div className="arr">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="t">Hospital</div>
+                  <div className="b">institutional</div>
+                </div>
+              </a>
+              <a href="/doctor" onClick={goto('/doctor')} style={{ textDecoration: 'none', color: 'inherit' }} className="role reveal d2" data-c="coral">
+                <div>
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M6 2v6a6 6 0 0 0 12 0V2"/>
+                      <circle cx="18" cy="16" r="3"/>
+                      <path d="M12 8v6"/>
+                    </svg>
+                  </div>
+                  <div className="arr">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="t">Doctor</div>
+                  <div className="b">clinician</div>
+                </div>
+              </a>
+              <a href="/lab" onClick={goto('/lab')} style={{ textDecoration: 'none', color: 'inherit' }} className="role reveal d3" data-c="sky">
+                <div>
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M10 2v6L4 18a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 8V2"/>
+                    </svg>
+                  </div>
+                  <div className="arr">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="t">Lab</div>
+                  <div className="b">diagnostics</div>
+                </div>
+              </a>
+              <a href="/pharmacy" onClick={goto('/pharmacy')} style={{ textDecoration: 'none', color: 'inherit' }} className="role reveal d3" data-c="sun">
+                <div>
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <rect x="3" y="3" width="18" height="18" rx="3"/>
+                      <path d="M8 12h8"/>
+                      <path d="M12 8v8"/>
+                    </svg>
+                  </div>
+                  <div className="arr">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="t">Pharmacy</div>
+                  <div className="b">dispensary</div>
+                </div>
+              </a>
+              <a href="/insurance" onClick={goto('/insurance')} style={{ textDecoration: 'none', color: 'inherit' }} className="role reveal d4" data-c="violet">
+                <div>
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/>
+                    </svg>
+                  </div>
+                  <div className="arr">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="t">Insurer</div>
+                  <div className="b">payor</div>
+                </div>
+              </a>
+              <a href="/auditor" onClick={goto('/auditor')} style={{ textDecoration: 'none', color: 'inherit' }} className="role reveal d4" data-c="ink">
+                <div>
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M3 7h18M3 12h18M3 17h18"/>
+                    </svg>
+                  </div>
+                  <div className="arr">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="t">Auditor</div>
+                  <div className="b">oversight</div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="finalcta">
+          <div className="wrap">
+            <h2 className="reveal d1">Healthcare runs on trust.<br/><em>Trust</em> runs on proof.</h2>
+            <p className="reveal d2">Connect a wallet to claim your records — or launch an admin workspace for your institution.</p>
+            <div className="ctas reveal d3">
+              <a href="#connect" onClick={openWallet} className="cta lime" data-magnetic>
+                Connect wallet
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M13 5l7 7-7 7"/>
+                </svg>
+              </a>
+              <a href="/admin" onClick={goto('/admin')} className="cta">Institutional access</a>
+            </div>
+          </div>
+        </section>
+
+        {/* FOOTER */}
+        <footer>
+          <div className="wrap">
+            <div className="row">
+              <div className="fbrand">
+                <div className="brand">
+                  <div className="mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/>
+                      <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                  </div>
+                  <b>Aegis-Care</b>
+                </div>
+                <p>Sovereign consent for healthcare data. Built on Algorand, anchored in law — DPDP Act 2023, HIPAA, GDPR.</p>
+              </div>
+              <div>
+                <h5>Protocol</h5>
+                <ul>
+                  <li><a href="#">ConsentManager</a></li>
+                  <li><a href="#">AuditLog</a></li>
+                  <li><a href="#">HealthcareRBAC</a></li>
+                  <li><a href="#">DataAccessManager</a></li>
+                </ul>
+              </div>
+              <div>
+                <h5>Portals</h5>
+                <ul>
+                  <li><a href="/patient" onClick={goto('/patient')}>Patient</a></li>
+                  <li><a href="/hospital" onClick={goto('/hospital')}>Hospital</a></li>
+                  <li><a href="/doctor" onClick={goto('/doctor')}>Doctor · Lab</a></li>
+                  <li><a href="/insurance" onClick={goto('/insurance')}>Insurer · Auditor</a></li>
+                </ul>
+              </div>
+              <div>
+                <h5>Contact</h5>
+                <ul>
+                  <li><a href="mailto:hello@aegis-care.io">hello@aegis-care.io</a></li>
+                  <li><a href="#">Status</a></li>
+                  <li><a href="#">Security</a></li>
+                </ul>
+              </div>
+            </div>
+            <div className="bigmark">
+              <span>Aegis<em>-</em>Care</span>
+              <span className="side">Sovereign medical data, built for the patient-first decade.</span>
+            </div>
+            <div className="bottom">
+              <span>© 2026 Aegis-Care · All rights reserved</span>
+              <span>DPDP · HIPAA · GDPR</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <ConnectWallet openModal={walletModalOpen} closeModal={() => setWalletModalOpen(false)} />
+    </>
   )
 }
-
-export default Landing
