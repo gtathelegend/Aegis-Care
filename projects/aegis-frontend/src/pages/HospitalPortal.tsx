@@ -431,7 +431,7 @@ const HospitalPortal = () => {
                                                     <FileText size={16} />
                                                 </div>
                                                 <div>
-                                                    <div className="font-semibold text-gray-900 mb-0.5">{rec[4]}</div>
+                                                    <div className="font-semibold text-gray-900 mb-0.5">{rec[5]}</div>
                                                     <div className="text-[10px] font-mono text-gray-400">Anchor: {rec[3].slice(0, 16)}...</div>
                                                 </div>
                                             </div>

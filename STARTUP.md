@@ -1,92 +1,184 @@
 # Aegis Care — Startup Runbook
 
-## 0. Prerequisites (one-time)
+This guide is written for a fresh Windows PC. It includes the full setup and run commands needed to bring the project up from scratch.
 
-```bash
-# AlgoKit CLI + pipx
-pipx install algokit
-pipx ensurepath    # restart terminal after this
+## 0. One-time prerequisites
 
-# Python 3.12 (project requires ^3.12)
+Install these tools first:
+
+- Git
+- Node.js 24 or newer
+- Python 3.12
+- pipx
+- Poetry
+- AlgoKit CLI
+- Docker Desktop
+
+Suggested Windows installs with Scoop:
+
+```powershell
 scoop bucket add versions
 scoop install python312
+```
 
-# Poetry
+Install Poetry and AlgoKit through pipx:
+
+```powershell
 pipx install poetry
-
-# Docker Desktop must be running (needed for LocalNet)
+pipx install algokit
+pipx ensurepath
 ```
 
-## 1. Point Poetry at Python 3.12
+If `poetry` is not available after installation, close and reopen the terminal. If needed, add the pipx apps folder to the current session:
 
-```bash
-cd d:/Vedaang/PPO/Aegis-Care/projects/aegis-contracts
-poetry env use "C:/Users/vedaa/scoop/apps/python312/current/python.exe"
+```powershell
+$env:Path = "$HOME\.local\bin;" + $env:Path
 ```
 
-## 2. Bootstrap dependencies (Python + npm, both projects)
+You can verify the tools with:
 
-```bash
-cd d:/Vedaang/PPO/Aegis-Care
+```powershell
+python --version
+poetry --version
+algokit --version
+```
+
+## 1. Clone the repository
+
+```powershell
+git clone <repo-url>
+cd Aegis-Care
+```
+
+## 2. Point Poetry at Python 3.12
+
+Go to the contracts project and point Poetry to your local Python 3.12 executable:
+
+```powershell
+cd projects/aegis-contracts
+poetry env use "<absolute-path-to-python-3.12.exe>"
+```
+
+If you need help finding the executable path, use:
+
+```powershell
+py -0p
+```
+
+or:
+
+```powershell
+Get-Command python
+```
+
+Confirm Poetry is using the right interpreter:
+
+```powershell
+poetry run python --version
+```
+
+## 3. Bootstrap dependencies
+
+Run this from the repository root to install all Python and npm dependencies for both projects:
+
+```powershell
+cd ..
 algokit project bootstrap all
 ```
 
-## 3. Start LocalNet
+## 4. Start LocalNet
 
-```bash
+Start the local Algorand network and verify it is running:
+
+```powershell
 algokit localnet start
-# verify
 algokit localnet status
 ```
 
-## 4. Build contracts
+## 5. Build the contracts
 
-```bash
-cd d:/Vedaang/PPO/Aegis-Care/projects/aegis-contracts
+Generate contract artifacts and TypeScript clients:
+
+```powershell
+cd projects/aegis-contracts
 algokit project run build
 ```
 
-## 5. Deploy contracts to LocalNet
+## 6. Deploy contracts to LocalNet
 
-```bash
+Deploy the contracts to the local network:
+
+```powershell
 algokit project deploy localnet
 ```
 
-Record the app IDs from the output. If any change, update [projects/aegis-frontend/.env](projects/aegis-frontend/.env) and [projects/aegis-contracts/.env](projects/aegis-contracts/.env) accordingly.
+After deployment, record the app IDs printed in the output and update these files if they change:
 
-## 6. (Optional) Re-deploy to wire bootstrap links
+- [projects/aegis-frontend/.env](projects/aegis-frontend/.env)
+- [projects/aegis-contracts/.env](projects/aegis-contracts/.env)
 
-`VITE_AUDIT_LOG_APP_ID` and `VITE_QUEUE_MANAGER_APP_ID` are set in [projects/aegis-contracts/.env](projects/aegis-contracts/.env), so re-running the deploy will link MedicalRecords→AuditLog and DataAccessManager→QueueManager:
-
-```bash
-algokit project deploy localnet
-```
+On a new PC or a reset LocalNet, the app IDs will be different from any other machine.
 
 ## 7. Run the frontend
 
-```bash
-cd d:/Vedaang/PPO/Aegis-Care/projects/aegis-frontend
+Start the frontend dev server:
+
+```powershell
+cd ../aegis-frontend
 npm run dev
 ```
 
-Open http://localhost:5173/.
+Open the local URL printed by Vite. It will usually be `http://localhost:5173/`, but Vite may pick another free port if that port is already in use.
+
+## 8. Full startup flow in order
+
+If you want the complete copy-paste sequence, use this order:
+
+```powershell
+git clone <repo-url>
+cd Aegis-Care
+cd projects/aegis-contracts
+poetry env use "<absolute-path-to-python-3.12.exe>"
+poetry run python --version
+cd ..
+algokit project bootstrap all
+algokit localnet start
+algokit localnet status
+cd projects/aegis-contracts
+algokit project run build
+algokit project deploy localnet
+cd ../aegis-frontend
+npm run dev
+```
 
 ---
 
-## Daily workflow (after first-time setup)
+## Daily workflow
 
-```bash
-algokit localnet start                                    # start Docker containers
-cd d:/Vedaang/PPO/Aegis-Care/projects/aegis-frontend
-npm run dev                                               # regenerates clients + serves UI
+For normal development after the first setup:
+
+```powershell
+algokit localnet start
+cd projects/aegis-frontend
+npm run dev
 ```
 
-Only re-run steps 4–6 when you edit `smart_contracts/*/contract.py`.
+Only rerun build and deploy when you change files under `projects/aegis-contracts/smart_contracts/*/contract.py`.
+
+## Useful maintenance commands
+
+```powershell
+algokit localnet status
+algokit localnet reset
+algokit localnet stop
+```
+
+Use `reset` if LocalNet becomes inconsistent, then repeat the start, build, and deploy steps.
 
 ## Troubleshooting
 
-- **`poetry: command not found`** → `pipx ensurepath` and restart terminal.
-- **`The currently activated Python version 3.11.x is not supported`** → redo step 1.
-- **`Cannot connect to Docker`** → start Docker Desktop, then `algokit localnet start`.
-- **Frontend shows "APP_ID = 0" errors** → app IDs in [projects/aegis-frontend/.env](projects/aegis-frontend/.env) don't match the deployed ones; update and restart `npm run dev`.
-- **LocalNet state got weird** → `algokit localnet reset` then redo steps 3, 5.
+- `poetry: command not found` → run `pipx ensurepath`, reopen the terminal, and make sure `C:\Users\<you>\.local\bin` is on PATH.
+- `The currently activated Python version 3.11.x is not supported` → rerun the Poetry env selection step and point it to Python 3.12.
+- `Cannot connect to Docker` → start Docker Desktop, then run `algokit localnet start` again.
+- Frontend shows `APP_ID = 0` errors → redeploy contracts on that machine and update the `.env` files with the new app IDs.
+- LocalNet state got weird → run `algokit localnet reset`, then repeat steps 4 through 7.

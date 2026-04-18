@@ -204,7 +204,8 @@ const DoctorDashboard = () => {
   }, [activeAddress, outgoingRequests, algorand, consentAppId, recordsAppId])
 
   const handleUploadPrescription = async () => {
-    if (!selectedPatient || !prescText || !activeAddress || !transactionSigner) return
+    if (!selectedPatient) { enqueueSnackbar('Please resolve a patient ID first.', { variant: 'warning' }); return }
+    if (!prescText || !activeAddress || !transactionSigner) return
     setIsUploading(true)
     try {
         const encrypted = await encryptData(prescText, selectedPatient)
@@ -383,14 +384,14 @@ const DoctorDashboard = () => {
                             {p.records.map((rec: any, ri: number) => (
                               <div key={ri} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100 text-xs">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded text-[9px] uppercase">{rec[4]}</span>
+                                  <span className="font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded text-[9px] uppercase">{rec[5]}</span>
                                   <span className="font-mono text-gray-400 text-[9px]">
                                     <Globe size={9} className="inline mr-0.5" />
                                     {String(rec[3]).slice(0, 12)}...
                                   </span>
                                 </div>
                                 <button
-                                  onClick={() => setViewingRecord({ cid: rec[3], patientAddress: p.address, recordType: rec[4] })}
+                                  onClick={() => setViewingRecord({ cid: rec[3], patientAddress: p.address, recordType: rec[5] })}
                                   className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-[9px] font-bold hover:bg-blue-700 transition-colors"
                                 >
                                   <Eye size={10} /> Decrypt
@@ -541,6 +542,33 @@ const DoctorDashboard = () => {
                        <button onClick={() => setIsUploadModalOpen(false)} className="text-gray-400 hover:text-gray-600">&times;</button>
                    </div>
                   <div className="p-6 space-y-4">
+                      {!selectedPatient && (
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2">Patient Short ID or Wallet</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="e.g. 903AKQ or full wallet address"
+                              value={patientId}
+                              onChange={(e) => setPatientId(e.target.value)}
+                              className="flex-1 p-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                            />
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const addr = await resolveAddress(patientId)
+                                  setSelectedPatient(addr)
+                                } catch {
+                                  enqueueSnackbar('Invalid Patient ID', { variant: 'error' })
+                                }
+                              }}
+                              className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700"
+                            >
+                              Resolve
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest">Prescription / Diagnostic Data</label>
                       <textarea
                         value={prescText}
