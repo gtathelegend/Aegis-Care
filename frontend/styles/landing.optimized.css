@@ -1,0 +1,34 @@
+.landing-page .section,
+.landing-page .finalcta,
+.landing-page footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 900px;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .landing-page .cursor {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .blobs,
+  .landing-page .hero-tag,
+  .landing-page .hero-tag-2,
+  .landing-page .cursor {
+    display: none !important;
+  }
+
+  .landing-page .reveal,
+  .landing-page .words .w > i {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .landing-page .scrolldown .bar,
+  .landing-page .marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+}

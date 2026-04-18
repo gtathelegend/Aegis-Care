@@ -1,0 +1,13 @@
+
+> aegis-care-next@0.1.0 dev
+> next dev -p 5000 -H 0.0.0.0
+
+[1G[0K  [1m[38;2;173;127;168m▲ Next.js 14.2.5[39m[22m
+  - Local:        http://localhost:5000
+  - Network:      http://0.0.0.0:5000
+
+ [32m[1m✓[22m[39m Starting...
+ [32m[1m✓[22m[39m Ready in 1397ms
+ [37m[1m○[22m[39m Compiling /landing ...
+ [32m[1m✓[22m[39m Compiled /landing in 2.4s (472 modules)
+ GET /landing [32m200[39m in 2565ms
