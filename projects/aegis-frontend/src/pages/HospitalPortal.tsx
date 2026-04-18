@@ -1,7 +1,9 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import '../styles/dashboard.css';
 
-export default function HospitalPortal() {
+export default function HospitalDashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -526,9 +528,7 @@ export default function HospitalPortal() {
               </div>
             </div>
               </>
-            ) : (
-              renderHospitalTabContent()
-            )}
+            ) : renderHospitalTabContent()}
           </div>
         </main>
       </div>

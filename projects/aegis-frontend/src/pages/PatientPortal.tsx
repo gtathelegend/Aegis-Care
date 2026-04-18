@@ -15,6 +15,15 @@ export default function PatientPortal() {
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
 
+  const openSlider = useCallback((index: number) => {
+    setSliderIndex(index);
+    setSliderOpen(true);
+  }, []);
+
+  const openQR = useCallback((record: MedicalRecord) => {
+    setQrRecord(record);
+  }, []);
+
   const navLabels: Record<string, string> = {
     overview: 'Overview',
     records: 'Records',
@@ -27,16 +36,165 @@ export default function PatientPortal() {
   };
 
   const currentNavLabel = navLabels[activeNav] ?? 'Overview';
-  const identityQrValue = `${typeof window !== 'undefined' ? window.location.origin : ''}/identity/${patient.shortId}`;
 
-  const openSlider = useCallback((index: number) => {
-    setSliderIndex(index);
-    setSliderOpen(true);
-  }, []);
+  const renderPatientTabContent = () => {
+    if (activeNav === 'records') {
+      return (
+        <div className="card reveal in">
+          <div className="head">
+            <div>
+              <h3>Recent records</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · encrypted · IPFS-pinned</div>
+            </div>
+          </div>
+          <div className="recs">
+            {medicalRecords.map((rec, i) => (
+              <div
+                key={rec.id}
+                className="rec"
+                data-c={rec.color}
+                style={{ position: 'relative', cursor: 'pointer' }}
+                onClick={() => openSlider(i)}
+              >
+                <div className="top">
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" />
+                    </svg>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <span className="chip-s">{recordTypeLabel[rec.type]}</span>
+                    <button
+                      title="Share via QR"
+                      onClick={(e) => { e.stopPropagation(); openQR(rec); }}
+                      style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-3)' }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <path d="M14 14h.01M14 17h3M17 14v3M17 17h3v3h-3v-3"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <h4>{rec.title}</h4>
+                <p>{rec.hospital} · {rec.date}</p>
+                <div className="cid">ipfs://Qm…{rec.ipfsHash.slice(-8)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
-  const openQR = useCallback((record: MedicalRecord) => {
-    setQrRecord(record);
-  }, []);
+    if (activeNav === 'consents') {
+      return (
+        <div className="card reveal in">
+          <div className="head">
+            <div>
+              <h3>Consent list</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>{consents.length} permissions in your account</div>
+            </div>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Requester</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Remaining</th>
+              </tr>
+            </thead>
+            <tbody>
+              {consents.map((consent) => (
+                <tr key={consent.id}>
+                  <td>
+                    <div className="avn">
+                      <div className="av" data-c={consent.grantedToColor}>{consent.grantedToAvatar}</div>
+                      <div>
+                        <div className="nm">{consent.grantedTo}</div>
+                        <div className="rl">{consent.grantedToRole}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{consent.scopeLabel}</td>
+                  <td><span className={`pill-s ${consent.status}`}>{consent.status}</span></td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{consent.remaining}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'audit') {
+      return (
+        <div className="card reveal in">
+          <div className="head">
+            <div>
+              <h3>Audit trail</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>{auditLog.length} immutable events</div>
+            </div>
+          </div>
+          <div className="audit">
+            {auditLog.map((entry) => (
+              <div className="audit-item" key={entry.id}>
+                <span className="pin" data-c={entry.color} />
+                <div className="body">
+                  <div className="t"><em>{entry.actor}</em> · {entry.subject}</div>
+                  <div className="d">{entry.detail}</div>
+                </div>
+                <time>{entry.timestamp}</time>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'vault') {
+      return (
+        <div className="card reveal in">
+          <div className="head">
+            <div>
+              <h3>Identity vault</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Beneficiary and recovery controls</div>
+            </div>
+          </div>
+          <div className="requests">
+            {inboundRequests.map((request) => (
+              <div className="req" key={request.id}>
+                <div className="av" data-c={request.fromColor}>{request.fromAvatar}</div>
+                <div className="body">
+                  <div className="t">{request.from}</div>
+                  <div className="d">{request.scope} · {request.urgency}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="card reveal in">
+        <div className="head">
+          <div>
+            <h3>{currentNavLabel}</h3>
+            <div className="sub" style={{ marginTop: '4px' }}>Section loaded and interactive</div>
+          </div>
+        </div>
+        <div className="requests">
+          <div className="req" style={{ cursor: 'default' }}>
+            <div className="body">
+              <div className="t">This panel is active</div>
+              <div className="d">Use left navigation to switch sections instantly.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const revealEls = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
@@ -93,233 +251,6 @@ export default function PatientPortal() {
       io?.disconnect();
     };
   }, []);
-
-  const renderPatientTabContent = () => {
-    if (activeNav === 'records') {
-      return (
-        <div className="card">
-          <div className="head">
-            <div>
-              <h3>Recent records</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · encrypted · IPFS-pinned</div>
-            </div>
-            <div className="actions">
-              <button className="chip">Upload</button>
-              <button className="chip">Filter</button>
-            </div>
-          </div>
-          <div className="recs">
-            {medicalRecords.map((rec, i) => (
-              <div
-                key={rec.id}
-                className="rec"
-                data-c={rec.color}
-                style={{ position: 'relative', cursor: 'pointer' }}
-                onClick={() => openSlider(i)}
-              >
-                <div className="top">
-                  <div className="icn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" />
-                    </svg>
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span className="chip-s">{recordTypeLabel[rec.type]}</span>
-                    <button
-                      title="Share via QR"
-                      onClick={(e) => { e.stopPropagation(); openQR(rec); }}
-                      style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-3)' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
-                        <path d="M14 14h.01M14 17h3M17 14v3M17 17h3v3h-3v-3" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <h4>{rec.title}</h4>
-                <p>{rec.hospital} · {rec.date}</p>
-                <div className="cid">ipfs://Qm…{rec.ipfsHash.slice(-8)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeNav === 'consents') {
-      const visibleConsents = consents.filter((item) => activeTab === 'all' || item.status === activeTab);
-      return (
-        <div className="card">
-          <div className="head">
-            <div>
-              <h3>Active consents</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>Manage and revoke access windows</div>
-            </div>
-            <div className="actions">
-              <div className="tabs">
-                <button className={activeTab === 'all' ? 'on' : ''} onClick={() => setActiveTab('all')}>All</button>
-                <button className={activeTab === 'active' ? 'on' : ''} onClick={() => setActiveTab('active')}>Active</button>
-                <button className={activeTab === 'pending' ? 'on' : ''} onClick={() => setActiveTab('pending')}>Pending</button>
-                <button className={activeTab === 'expired' ? 'on' : ''} onClick={() => setActiveTab('expired')}>Expired</button>
-              </div>
-            </div>
-          </div>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Requester</th>
-                <th>Scope</th>
-                <th>Status</th>
-                <th>Remaining</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {visibleConsents.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <div className="avn">
-                      <div className="av" data-c={item.grantedToColor}>{item.grantedToAvatar}</div>
-                      <div>
-                        <div className="nm">{item.grantedTo}</div>
-                        <div className="rl">{item.grantedToRole}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{item.scopeLabel}</td>
-                  <td><span className={`pill-s ${item.status}`}>{item.status}</span></td>
-                  <td>
-                    {item.status === 'active' ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>{item.remaining}</span>
-                        <div className="meter"><i style={{ width: `${item.progressPct}%` }} /></div>
-                      </div>
-                    ) : (
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{item.remaining}</span>
-                    )}
-                  </td>
-                  <td className="actions-cell">
-                    <button className="ibtn" title="View">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    if (activeNav === 'audit') {
-      return (
-        <div className="card">
-          <div className="head">
-            <h3>Audit trail</h3>
-          </div>
-          <div className="audit" style={{ padding: '4px 16px 20px' }}>
-            {auditLog.map((item) => (
-              <div className="audit-item" key={item.id}>
-                <span className="pin" data-c={item.color} />
-                <div className="body">
-                  <div className="t"><em>{item.action}</em> · {item.actor}</div>
-                  <div className="d">{item.detail}</div>
-                </div>
-                <time>{item.timestamp}</time>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeNav === 'vault') {
-      return (
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-          <div className="card">
-            <div className="head"><h3>Secure Vault</h3></div>
-            <div className="requests">
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Encryption</div><div className="d">AES-GCM 256 · Active</div></div></div>
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Recovery Backup</div><div className="d">Last backup: 17 Apr 2026</div></div></div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="head"><h3>Access Keys</h3></div>
-            <div className="audit">
-              <div className="audit-item"><span className="pin" data-c="lime" /><div className="body"><div className="t">5 active access keys</div></div></div>
-              <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">0 unauthorized reads</div></div></div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeNav === 'hospitals') {
-      return (
-        <div className="card">
-          <div className="head"><h3>Approved Providers</h3></div>
-          <table className="tbl">
-            <thead><tr><th>Provider</th><th>Role</th><th>Latest Consent</th><th>Status</th></tr></thead>
-            <tbody>
-              {consents.map((item) => (
-                <tr key={`provider-${item.id}`}>
-                  <td>{item.grantedTo}</td>
-                  <td>{item.grantedToRole}</td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px' }}>{item.scopeLabel}</td>
-                  <td><span className={`pill-s ${item.status}`}>{item.status}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    if (activeNav === 'research') {
-      return (
-        <div className="card">
-          <div className="head"><h3>Research Access Requests</h3></div>
-          <div className="requests">
-            {inboundRequests.map((req) => (
-              <div className="req" key={req.id}>
-                <div className="av" data-c={req.fromColor}>{req.fromAvatar}</div>
-                <div className="body">
-                  <div className="t">{req.from}</div>
-                  <div className="d">{req.scope} · {req.urgency}</div>
-                </div>
-                <div className="acts">
-                  <button className="approve">Allow</button>
-                  <button className="deny">Deny</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <div className="card">
-          <div className="head"><h3>Preferences</h3></div>
-          <div className="requests">
-            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Consent Auto-expiry Reminder</div><div className="d">Enabled</div></div></div>
-            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Emergency Access Notification</div><div className="d">Immediate alert + SMS</div></div></div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="head"><h3>Account</h3></div>
-          <div className="audit">
-            <div className="audit-item"><span className="pin" data-c="lime" /><div className="body"><div className="t">Patient ID: {patient.shortId}</div></div></div>
-            <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Wallet linked and verified</div></div></div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="grain">
@@ -504,9 +435,15 @@ export default function PatientPortal() {
                 <div className="sid">
                   847<em>KOR</em>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px', marginBottom: '12px' }}>
-                  <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid var(--line)', padding: '10px', boxShadow: '0 10px 22px -18px rgba(10,21,20,.45)' }}>
-                    <QRCodeSVG value={identityQrValue} size={78} bgColor="#ffffff" fgColor="#0a1514" includeMargin={false} />
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
+                  <div style={{ background: '#fff', padding: '10px', borderRadius: '12px', border: '1px solid var(--line)' }}>
+                    <QRCodeSVG
+                      value={`patient:${patient.shortId}`}
+                      size={76}
+                      bgColor="#ffffff"
+                      fgColor="#0a1514"
+                      level="M"
+                    />
                   </div>
                 </div>
                 <div className="meta">
@@ -945,9 +882,7 @@ export default function PatientPortal() {
               </div>
             </div>
               </>
-            ) : (
-              renderPatientTabContent()
-            )}
+            ) : renderPatientTabContent()}
           </div>
         </main>
       </div>

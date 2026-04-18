@@ -1,7 +1,9 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import '../styles/dashboard.css';
 
-export default function DoctorDashboard() {
+export default function DoctorDashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('active');
 
@@ -565,9 +567,7 @@ export default function DoctorDashboard() {
               </div>
             </div>
               </>
-            ) : (
-              renderDoctorTabContent()
-            )}
+            ) : renderDoctorTabContent()}
           </div>
         </main>
       </div>

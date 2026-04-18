@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import type { MedicalRecord } from '../lib/mockdb'
-import { recordTypeLabel } from '../lib/mockdb'
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import type { MedicalRecord } from '../lib/mockdb';
+import { recordTypeLabel } from '../lib/mockdb';
 
 interface RecordSliderProps {
-  records: MedicalRecord[]
-  initialIndex: number
-  onClose: () => void
-  onShare: (record: MedicalRecord) => void
+  records: MedicalRecord[];
+  initialIndex: number;
+  onClose: () => void;
+  onShare: (record: MedicalRecord) => void;
 }
 
 const colorMap: Record<string, string> = {
@@ -15,7 +17,7 @@ const colorMap: Record<string, string> = {
   sky: 'var(--sky)',
   violet: 'var(--violet)',
   sun: 'var(--sun)',
-}
+};
 
 const typeIcons: Record<string, JSX.Element> = {
   lab: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 2v6L4 18a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 8V2" /><path d="M9 2h6" /></svg>,
@@ -24,83 +26,82 @@ const typeIcons: Record<string, JSX.Element> = {
   discharge: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-5-5z" /><path d="M9 3v6h6" /></svg>,
   vaccination: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m18 2 4 4-4 4" /><path d="m14 6 6-4" /><path d="m6.5 17.5-3 3-2-2 3-3L3 14l7-7 1.5 1.5" /><path d="m10 14 4-4" /></svg>,
   vitals: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 12h4l3-9 4 18 3-9h4" /></svg>,
-}
+};
 
 export default function RecordSlider({ records, initialIndex, onClose, onShare }: RecordSliderProps) {
-  const [idx, setIdx] = useState(initialIndex)
-  const [dir, setDir] = useState<'left' | 'right' | null>(null)
-  const [animating, setAnimating] = useState(false)
-  const overlayRef = useRef<HTMLDivElement>(null)
-  const swipeStartX = useRef<number | null>(null)
-  const swipeStartY = useRef<number | null>(null)
-  const record = records[idx]
+  const [idx, setIdx] = useState(initialIndex);
+  const [dir, setDir] = useState<'left' | 'right' | null>(null);
+  const [animating, setAnimating] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const swipeStartX = useRef<number | null>(null);
+  const swipeStartY = useRef<number | null>(null);
+  const record = records[idx];
 
   const navigate = (direction: 'left' | 'right') => {
-    if (animating) return
-    const next = direction === 'right' ? idx + 1 : idx - 1
-    if (next < 0 || next >= records.length) return
-    setDir(direction)
-    setAnimating(true)
+    if (animating) return;
+    const next = direction === 'right' ? idx + 1 : idx - 1;
+    if (next < 0 || next >= records.length) return;
+    setDir(direction);
+    setAnimating(true);
     setTimeout(() => {
-      setIdx(next)
-      setDir(null)
-      setAnimating(false)
-    }, 260)
-  }
+      setIdx(next);
+      setDir(null);
+      setAnimating(false);
+    }, 260);
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight') navigate('right')
-      if (e.key === 'ArrowLeft') navigate('left')
-    }
-    window.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') navigate('right');
+      if (e.key === 'ArrowLeft') navigate('left');
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
     return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
-    }
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [idx, animating]);
 
-  }, [idx, animating])
+  if (!record) return null;
 
-  if (!record) return null
-
-  const accent = colorMap[record.color] ?? 'var(--lime)'
+  const accent = colorMap[record.color] ?? 'var(--lime)';
 
   const slideStyle: React.CSSProperties = animating
     ? { opacity: 0, transform: dir === 'right' ? 'translateX(-24px)' : 'translateX(24px)', transition: 'all .26s ease' }
-    : { opacity: 1, transform: 'none', transition: 'all .26s ease' }
+    : { opacity: 1, transform: 'none', transition: 'all .26s ease' };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return
-    swipeStartX.current = e.clientX
-    swipeStartY.current = e.clientY
-  }
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    swipeStartX.current = e.clientX;
+    swipeStartY.current = e.clientY;
+  };
 
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (swipeStartX.current === null || swipeStartY.current === null) return
-    const dx = e.clientX - swipeStartX.current
-    const dy = e.clientY - swipeStartY.current
-    const isHorizontalSwipe = Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy)
+    if (swipeStartX.current === null || swipeStartY.current === null) return;
+    const dx = e.clientX - swipeStartX.current;
+    const dy = e.clientY - swipeStartY.current;
+    const isHorizontalSwipe = Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy);
 
     if (isHorizontalSwipe) {
-      if (dx < 0) navigate('right')
-      else navigate('left')
+      if (dx < 0) navigate('right');
+      else navigate('left');
     }
 
-    swipeStartX.current = null
-    swipeStartY.current = null
-  }
+    swipeStartX.current = null;
+    swipeStartY.current = null;
+  };
 
   const onPointerCancel = () => {
-    swipeStartX.current = null
-    swipeStartY.current = null
-  }
+    swipeStartX.current = null;
+    swipeStartY.current = null;
+  };
 
   return (
     <div
       ref={overlayRef}
-      onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
+      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
       style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(10,21,20,.55)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
     >
       <div style={{
@@ -110,6 +111,7 @@ export default function RecordSlider({ records, initialIndex, onClose, onShare }
         boxShadow: '0 40px 80px -32px rgba(10,21,20,.4)',
         animation: 'modalIn .28s cubic-bezier(.2,.65,.3,1)',
       }}>
+        {/* Header */}
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: accent, display: 'grid', placeItems: 'center', color: 'var(--ink)', flexShrink: 0 }}>
@@ -131,14 +133,17 @@ export default function RecordSlider({ records, initialIndex, onClose, onShare }
           </div>
         </div>
 
+        {/* Slide content */}
         <div
           style={{ padding: '28px', touchAction: 'pan-y', ...slideStyle }}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
         >
+          {/* Description */}
           <p style={{ fontSize: '14px', lineHeight: 1.65, color: 'var(--ink-2)', marginBottom: '24px' }}>{record.description}</p>
 
+          {/* Metadata grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
             {[
               { label: 'Date', value: record.date },
@@ -155,6 +160,7 @@ export default function RecordSlider({ records, initialIndex, onClose, onShare }
             ))}
           </div>
 
+          {/* Chain data */}
           <div style={{ padding: '16px', background: 'var(--ink)', borderRadius: '14px', marginBottom: '20px' }}>
             <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'rgba(246,245,240,.5)', letterSpacing: '.16em', textTransform: 'uppercase', marginBottom: '12px' }}>On-chain data</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -173,6 +179,7 @@ export default function RecordSlider({ records, initialIndex, onClose, onShare }
             </div>
           </div>
 
+          {/* Tags */}
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {record.tags.map((tag) => (
               <span key={tag} style={{ padding: '4px 10px', borderRadius: '999px', background: 'var(--bg)', border: '1px solid var(--line)', fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--ink-3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>{tag}</span>
@@ -180,6 +187,7 @@ export default function RecordSlider({ records, initialIndex, onClose, onShare }
           </div>
         </div>
 
+        {/* Side arrows */}
         <button
           onClick={() => navigate('left')}
           disabled={idx === 0}
@@ -238,14 +246,15 @@ export default function RecordSlider({ records, initialIndex, onClose, onShare }
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6" /></svg>
         </button>
 
+        {/* Navigation footer */}
         <div style={{ padding: '14px 24px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--bg-2)' }}>
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             {records.map((_, i) => (
               <button
                 key={i}
-                onClick={() => { if (!animating) setIdx(i) }}
+                onClick={() => { if (!animating) setIdx(i); }}
                 aria-label={`Go to record ${i + 1}`}
-                style={{ width: i === idx ? '20px' : '7px', height: '7px', borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'all .3s', background: i === idx ? accent : 'var(--line-2)' }}
+                style={{ width: i === idx ? '22px' : '7px', height: '7px', borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'all .3s', background: i === idx ? accent : 'var(--line-2)' }}
               />
             ))}
           </div>
@@ -254,5 +263,5 @@ export default function RecordSlider({ records, initialIndex, onClose, onShare }
 
       <style>{`@keyframes modalIn { from { opacity:0; transform:scale(.95) translateY(8px) } to { opacity:1; transform:none } }`}</style>
     </div>
-  )
+  );
 }
