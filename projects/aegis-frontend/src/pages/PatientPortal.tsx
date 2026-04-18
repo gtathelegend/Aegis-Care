@@ -50,9 +50,9 @@ const RecordCard = ({ record, activeAddress }: { record: any, activeAddress: str
   const [error, setError] = useState('')
   const [showViewer, setShowViewer] = useState(false)
 
-  // record is [id, patient, provider, cid, record_type, timestamp, bill_amount]
+  // record is [id, patient, provider, cid, previous_cid, record_type, timestamp, bill_amount]
   const cid = record[3]
-  const recordType = record[4]
+  const recordType = record[5]
   const patientAddr = record[1]
 
   const handleLegacyDecrypt = async () => {
@@ -80,7 +80,7 @@ const RecordCard = ({ record, activeAddress }: { record: any, activeAddress: str
               <div className="text-sm font-semibold text-gray-800 mt-2">Provider: {record[2].slice(0, 8)}...</div>
             </div>
             <div className="text-[10px] text-gray-400 font-bold">
-              {new Date(Number(record[5]) * 1000).toLocaleString()}
+              {new Date(Number(record[6]) * 1000).toLocaleString()}
             </div>
          </div>
 
@@ -462,7 +462,7 @@ const PatientPortal = () => {
 
         // Find the linked record's type for the scope
         const record = patientRecords.find(r => r[3] === linkCid)
-        const scope = record ? record[4] : 'General'
+        const scope = record ? record[5] : 'General'
 
         await consentC.send.approveRequest({
             args: { 
@@ -949,7 +949,7 @@ const PatientPortal = () => {
                                                     <FileText size={14} />
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs font-bold text-gray-900 capitalize">{rec[4]}</div>
+                                                    <div className="text-xs font-bold text-gray-900 capitalize">{rec[5]}</div>
                                                     <div className="text-[10px] text-gray-500 font-mono">CID: {rec[3].slice(0, 16)}...</div>
                                                 </div>
                                             </div>

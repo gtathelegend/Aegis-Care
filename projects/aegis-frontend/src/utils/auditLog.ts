@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-const INDEXER_URL = import.meta.env.VITE_INDEXER_SERVER || 'https://testnet-idx.algonode.cloud'
+const INDEXER_PORT = import.meta.env.VITE_INDEXER_PORT
+const INDEXER_BASE = import.meta.env.VITE_INDEXER_SERVER || 'https://testnet-idx.algonode.cloud'
+const INDEXER_URL = INDEXER_PORT ? `${INDEXER_BASE}:${INDEXER_PORT}` : INDEXER_BASE
 const AUDIT_APP_ID = Number(import.meta.env.VITE_AUDIT_LOG_APP_ID || 0)
 
 // ARC-4 Method Selectors for AuditLog
