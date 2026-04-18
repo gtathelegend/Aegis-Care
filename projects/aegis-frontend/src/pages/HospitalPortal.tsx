@@ -156,6 +156,19 @@ export default function HospitalPortal() {
     window.localStorage.setItem(requestStorageKey, JSON.stringify(requestStatuses));
   }, [requestStatuses]);
 
+  const navLabels: Record<string, string> = {
+    overview: 'Overview',
+    patients: 'Patients',
+    requests: 'Access Requests',
+    records: 'Records',
+    audit: 'Audit Log',
+    staff: 'Staff',
+    compliance: 'Compliance',
+    settings: 'Settings',
+  };
+
+  const currentNavLabel = navLabels[activeNav] ?? 'Overview';
+
   useEffect(() => {
     const revealEls = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -760,6 +773,8 @@ export default function HospitalPortal() {
                 </div>
               </div>
             </div>
+              </>
+            ) : renderHospitalTabContent()}
           </div>
         </main>
       </div>

@@ -153,6 +153,19 @@ export default function DoctorDashboard() {
     window.localStorage.setItem(requestStorageKey, JSON.stringify(requestQueue));
   }, [requestQueue]);
 
+  const navLabels: Record<string, string> = {
+    overview: 'Overview',
+    patients: 'My Patients',
+    consents: 'My Consents',
+    records: 'Accessible Records',
+    requests: 'New Request',
+    schedule: 'Schedule',
+    audit: 'My Audit Trail',
+    settings: 'Settings',
+  };
+
+  const currentNavLabel = navLabels[activeNav] ?? 'Overview';
+
   useEffect(() => {
     const revealEls = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -477,7 +490,7 @@ export default function DoctorDashboard() {
         <main>
           <div className="topbar">
             <div>
-              <div className="crumb">Doctor · {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</div>
+              <div className="crumb">Doctor · {currentNavLabel}</div>
               <h1>Dr. <em style={{ fontStyle: 'italic', color: 'var(--coral)' }}>Hanwa, K.</em></h1>
             </div>
             <div className="search">
@@ -800,6 +813,8 @@ export default function DoctorDashboard() {
                 </div>
               </div>
             </div>
+              </>
+            ) : renderDoctorTabContent()}
           </div>
         </main>
       </div>

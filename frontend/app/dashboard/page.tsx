@@ -1,98 +1,21 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import '../styles/dashboard.css';
-import QRModal from '../components/QRModal';
-import RecordSlider from '../components/RecordSlider';
-import { medicalRecords, consents, auditLog, inboundRequests, getPatientById, patients, recordTypeLabel } from '../lib/mockdb';
-import type { MedicalRecord } from '../lib/mockdb';
-import { useWallet } from '@txnlab/use-wallet-react';
-import { useRole } from '../hooks/useRole';
-import { fetchPatientRecords } from '../lib/medicalPortalData';
+'use client';
 
-const DEFAULT_PATIENT = getPatientById('p1');
+import { useEffect, useState, useCallback } from 'react';
+import '../../styles/dashboard.css';
+import QRModal from '../../components/QRModal';
+import RecordSlider from '../../components/RecordSlider';
+import { QRCodeSVG } from 'qrcode.react';
+import { medicalRecords, consents, auditLog, inboundRequests, getPatientById, recordTypeLabel } from '../../lib/mockdb';
+import type { MedicalRecord } from '../../lib/mockdb';
 
-export default function PatientPortal() {
-  const { activeAddress } = useWallet();
-  const { shortId, isProxyActive, proxyAddress, proxyShortId } = useRole();
+const patient = getPatientById('p1');
+
+export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('all');
   const [qrRecord, setQrRecord] = useState<MedicalRecord | null>(null);
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
-  const [liveRecords, setLiveRecords] = useState<MedicalRecord[]>(medicalRecords.filter((record) => record.patientId === DEFAULT_PATIENT.id));
-
-  const effectiveAddress = isProxyActive && proxyAddress ? proxyAddress : activeAddress;
-
-  const patient = useMemo(() => {
-    if (!effectiveAddress) {
-      return DEFAULT_PATIENT;
-    }
-
-    const directMatch = patients.find((entry) => entry.walletAddress === effectiveAddress);
-    if (directMatch) {
-      return directMatch;
-    }
-
-    const hashSeed = Array.from(effectiveAddress).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-    const mappedPatient = patients[hashSeed % patients.length] ?? DEFAULT_PATIENT;
-    const syntheticShortId = (proxyShortId || shortId || `${(hashSeed % 900) + 100}${effectiveAddress.slice(-3).toUpperCase()}`).slice(0, 6);
-
-    return {
-      ...mappedPatient,
-      name: isProxyActive ? `${mappedPatient.name} (Proxy)` : mappedPatient.name,
-      shortId: syntheticShortId,
-      walletAddress: effectiveAddress,
-      avatar: syntheticShortId.slice(0, 1) || mappedPatient.avatar,
-    };
-  }, [effectiveAddress, isProxyActive, proxyShortId, shortId]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const syncRecords = async () => {
-      if (!effectiveAddress) {
-        if (!cancelled) {
-          setLiveRecords(medicalRecords.filter((record) => record.patientId === DEFAULT_PATIENT.id));
-        }
-        return;
-      }
-
-      try {
-        const result = await fetchPatientRecords(effectiveAddress);
-        if (!cancelled) {
-          setLiveRecords(result.records.length > 0 ? result.records : medicalRecords.filter((record) => record.patientId === result.patient.id));
-        }
-      } catch {
-        if (!cancelled) {
-          setLiveRecords(medicalRecords.filter((record) => record.patientId === patient.id));
-        }
-      }
-    };
-
-    syncRecords();
-    return () => {
-      cancelled = true;
-    };
-  }, [effectiveAddress, patient.id]);
-
-  const patientRecords = useMemo(() => {
-    return liveRecords.length > 0 ? liveRecords : medicalRecords.filter((record) => record.patientId === patient.id);
-  }, [liveRecords, patient.id]);
-
-  const patientConsents = useMemo(() => {
-    return consents.filter((consent) => consent.patientId === patient.id);
-  }, [patient.id]);
-
-  const activeConsentCount = patientConsents.filter((consent) => consent.status === 'active').length;
-  const pendingConsentCount = patientConsents.filter((consent) => consent.status === 'pending').length;
-
-  const openSlider = useCallback((index: number) => {
-    setSliderIndex(index);
-    setSliderOpen(true);
-  }, []);
-
-  const openQR = useCallback((record: MedicalRecord) => {
-    setQrRecord(record);
-  }, []);
 
   const navLabels: Record<string, string> = {
     overview: 'Overview',
@@ -107,164 +30,14 @@ export default function PatientPortal() {
 
   const currentNavLabel = navLabels[activeNav] ?? 'Overview';
 
-  const renderPatientTabContent = () => {
-    if (activeNav === 'records') {
-      return (
-        <div className="card reveal in">
-          <div className="head">
-            <div>
-              <h3>Recent records</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · encrypted · IPFS-pinned</div>
-            </div>
-          </div>
-          <div className="recs">
-            {medicalRecords.map((rec, i) => (
-              <div
-                key={rec.id}
-                className="rec"
-                data-c={rec.color}
-                style={{ position: 'relative', cursor: 'pointer' }}
-                onClick={() => openSlider(i)}
-              >
-                <div className="top">
-                  <div className="icn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="M6 3h9l4 4v14H5V4Z" /><path d="M14 3v4h4" />
-                    </svg>
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span className="chip-s">{recordTypeLabel[rec.type]}</span>
-                    <button
-                      title="Share via QR"
-                      onClick={(e) => { e.stopPropagation(); openQR(rec); }}
-                      style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-3)' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
-                        <path d="M14 14h.01M14 17h3M17 14v3M17 17h3v3h-3v-3"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <h4>{rec.title}</h4>
-                <p>{rec.hospital} · {rec.date}</p>
-                <div className="cid">ipfs://Qm…{rec.ipfsHash.slice(-8)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
+  const openSlider = useCallback((index: number) => {
+    setSliderIndex(index);
+    setSliderOpen(true);
+  }, []);
 
-    if (activeNav === 'consents') {
-      return (
-        <div className="card reveal in">
-          <div className="head">
-            <div>
-              <h3>Consent list</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>{consents.length} permissions in your account</div>
-            </div>
-          </div>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Requester</th>
-                <th>Scope</th>
-                <th>Status</th>
-                <th>Remaining</th>
-              </tr>
-            </thead>
-            <tbody>
-              {consents.map((consent) => (
-                <tr key={consent.id}>
-                  <td>
-                    <div className="avn">
-                      <div className="av" data-c={consent.grantedToColor}>{consent.grantedToAvatar}</div>
-                      <div>
-                        <div className="nm">{consent.grantedTo}</div>
-                        <div className="rl">{consent.grantedToRole}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{consent.scopeLabel}</td>
-                  <td><span className={`pill-s ${consent.status}`}>{consent.status}</span></td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{consent.remaining}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    if (activeNav === 'audit') {
-      return (
-        <div className="card reveal in">
-          <div className="head">
-            <div>
-              <h3>Audit trail</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>{auditLog.length} immutable events</div>
-            </div>
-          </div>
-          <div className="audit">
-            {auditLog.map((entry) => (
-              <div className="audit-item" key={entry.id}>
-                <span className="pin" data-c={entry.color} />
-                <div className="body">
-                  <div className="t"><em>{entry.actor}</em> · {entry.subject}</div>
-                  <div className="d">{entry.detail}</div>
-                </div>
-                <time>{entry.timestamp}</time>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeNav === 'vault') {
-      return (
-        <div className="card reveal in">
-          <div className="head">
-            <div>
-              <h3>Identity vault</h3>
-              <div className="sub" style={{ marginTop: '4px' }}>Beneficiary and recovery controls</div>
-            </div>
-          </div>
-          <div className="requests">
-            {inboundRequests.map((request) => (
-              <div className="req" key={request.id}>
-                <div className="av" data-c={request.fromColor}>{request.fromAvatar}</div>
-                <div className="body">
-                  <div className="t">{request.from}</div>
-                  <div className="d">{request.scope} · {request.urgency}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="card reveal in">
-        <div className="head">
-          <div>
-            <h3>{currentNavLabel}</h3>
-            <div className="sub" style={{ marginTop: '4px' }}>Section loaded and interactive</div>
-          </div>
-        </div>
-        <div className="requests">
-          <div className="req" style={{ cursor: 'default' }}>
-            <div className="body">
-              <div className="t">This panel is active</div>
-              <div className="d">Use left navigation to switch sections instantly.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const openQR = useCallback((record: MedicalRecord) => {
+    setQrRecord(record);
+  }, []);
 
   useEffect(() => {
     const revealEls = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
@@ -322,6 +95,320 @@ export default function PatientPortal() {
     };
   }, []);
 
+  const renderPatientTabContent = () => {
+    if (activeNav === 'records') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>All Records</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · click to open slider</div>
+            </div>
+            <div className="actions">
+              <button className="chip">Recent first</button>
+              <button className="chip">Encrypted only</button>
+            </div>
+          </div>
+          <div className="recs">
+            {medicalRecords.map((rec, i) => (
+              <div
+                key={rec.id}
+                className="rec"
+                data-c={rec.color}
+                style={{ position: 'relative', cursor: 'pointer' }}
+                onClick={() => openSlider(i)}
+              >
+                <div className="top">
+                  <div className="icn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M6 3h9l4 4v14H5V4Z" />
+                      <path d="M14 3v4h4" />
+                    </svg>
+                  </div>
+                  <span className="chip-s">{recordTypeLabel[rec.type]}</span>
+                </div>
+                <h4>{rec.title}</h4>
+                <p>{rec.hospital} · {rec.date}</p>
+                <div className="cid">ipfs://Qm…{rec.ipfsHash.slice(-8)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'consents') {
+      const filteredConsents = consents.filter((item) => activeTab === 'all' || item.status === activeTab);
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Consent Manager</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Review and manage all consent windows</div>
+            </div>
+            <div className="actions">
+              <div className="tabs">
+                <button className={activeTab === 'all' ? 'on' : ''} onClick={() => setActiveTab('all')}>All</button>
+                <button className={activeTab === 'active' ? 'on' : ''} onClick={() => setActiveTab('active')}>Active</button>
+                <button className={activeTab === 'pending' ? 'on' : ''} onClick={() => setActiveTab('pending')}>Pending</button>
+                <button className={activeTab === 'expired' ? 'on' : ''} onClick={() => setActiveTab('expired')}>Expired</button>
+              </div>
+            </div>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Requester</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Expires</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredConsents.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <div className="avn">
+                      <div className="av" data-c={item.grantedToColor}>{item.grantedToAvatar}</div>
+                      <div>
+                        <div className="nm">{item.grantedTo}</div>
+                        <div className="rl">{item.grantedToRole}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>{item.scopeLabel}</td>
+                  <td><span className={`pill-s ${item.status}`}>{item.status}</span></td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>{item.expiresAt}</td>
+                  <td className="actions-cell">
+                    <button className="ibtn" title="View">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                    </button>
+                    {item.status === 'active' && (
+                      <button className="ibtn danger" title="Revoke">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'audit') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Full Audit Trail</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>All access and consent actions are immutable</div>
+            </div>
+            <div className="actions">
+              <button className="chip">Export CSV</button>
+            </div>
+          </div>
+          <div className="audit" style={{ paddingBottom: '20px' }}>
+            {auditLog.map((entry) => (
+              <div className="audit-item" key={entry.id}>
+                <span className="pin" data-c={entry.color} />
+                <div className="body">
+                  <div className="t"><em>{entry.action}</em> · {entry.actor}</div>
+                  <div className="d">{entry.detail} · {entry.subject}</div>
+                </div>
+                <time>{entry.timestamp}</time>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'vault') {
+      const encryptedCount = medicalRecords.filter((rec) => rec.encrypted).length;
+      return (
+        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Vault Health</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>Encryption and storage status</div>
+              </div>
+            </div>
+            <div className="requests" style={{ gap: '12px' }}>
+              <div className="req" style={{ cursor: 'default' }}>
+                <div className="body">
+                  <div className="t">Encrypted Records</div>
+                  <div className="d">{encryptedCount} / {medicalRecords.length} files</div>
+                </div>
+              </div>
+              <div className="req" style={{ cursor: 'default' }}>
+                <div className="body">
+                  <div className="t">IPFS Pin Health</div>
+                  <div className="d">100% online replication</div>
+                </div>
+              </div>
+              <div className="req" style={{ cursor: 'default' }}>
+                <div className="body">
+                  <div className="t">Last Key Rotation</div>
+                  <div className="d">17 Apr 2026, 08:10 UTC</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Inbound Queue</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>Requests waiting for patient decision</div>
+              </div>
+            </div>
+            <div className="requests">
+              {inboundRequests.map((item) => (
+                <div className="req" key={item.id}>
+                  <div className="av" data-c={item.fromColor}>{item.fromAvatar}</div>
+                  <div className="body">
+                    <div className="t">{item.from}</div>
+                    <div className="d">{item.scope} · {item.urgency}</div>
+                  </div>
+                  <div className="acts">
+                    <button className="approve">Approve</button>
+                    <button className="deny">Deny</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'hospitals') {
+      const hospitalMap = medicalRecords.reduce<Record<string, number>>((acc, rec) => {
+        acc[rec.hospital] = (acc[rec.hospital] ?? 0) + 1;
+        return acc;
+      }, {});
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Hospital Registry</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Connected institutions and record activity</div>
+            </div>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Institution</th>
+                <th>Records</th>
+                <th>Last Sync</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(hospitalMap).map(([name, count]) => (
+                <tr key={name}>
+                  <td>{name}</td>
+                  <td>{count}</td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>18 Apr 2026, 14:20</td>
+                  <td><span className="pill-s active">active</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'research') {
+      return (
+        <div className="grid" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Research Sandbox</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>De-identified dataset requests</div>
+              </div>
+            </div>
+            <div className="requests">
+              <div className="req">
+                <div className="av" data-c="sky">RU</div>
+                <div className="body">
+                  <div className="t">Riverside University</div>
+                  <div className="d">Cardio cohort · 180 days · 2,400 records</div>
+                </div>
+                <div className="acts"><button className="approve">Review</button></div>
+              </div>
+              <div className="req">
+                <div className="av" data-c="violet">NH</div>
+                <div className="body">
+                  <div className="t">National Health Lab</div>
+                  <div className="d">Diabetes outcomes · 90 days · 1,180 records</div>
+                </div>
+                <div className="acts"><button className="approve">Review</button></div>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Policy Guardrails</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>Automatic enforcement</div>
+              </div>
+            </div>
+            <div className="audit">
+              <div className="audit-item">
+                <span className="pin" data-c="lime" />
+                <div className="body"><div className="t">PII fields stripped before export</div></div>
+              </div>
+              <div className="audit-item">
+                <span className="pin" data-c="sky" />
+                <div className="body"><div className="t">Consent scope validated at query time</div></div>
+              </div>
+              <div className="audit-item">
+                <span className="pin" data-c="coral" />
+                <div className="body"><div className="t">Expiry window auto-enforced</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Profile Settings</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Identity and notification controls</div>
+            </div>
+          </div>
+          <div className="requests" style={{ gap: '10px' }}>
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Wallet Verified</div><div className="d">0xA1B2...A1B2</div></div></div>
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Alerts</div><div className="d">Push + email enabled</div></div></div>
+            <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Auto-revoke</div><div className="d">Enabled for emergency grants</div></div></div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Security Center</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Session and key protections</div>
+            </div>
+          </div>
+          <div className="audit">
+            <div className="audit-item"><span className="pin" data-c="lime" /><div className="body"><div className="t">2FA for critical approvals</div></div></div>
+            <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Device trust list: 3 active</div></div></div>
+            <div className="audit-item"><span className="pin" data-c="violet" /><div className="body"><div className="t">Last login: 18 Apr 2026, 19:24</div></div></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="grain">
       <div className="blobs">
@@ -359,13 +446,13 @@ export default function PatientPortal() {
                 <path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
                 <path d="M14 3v4h4" />
               </svg>
-              Records<span className="badge">{patientRecords.length}</span>
+              Records<span className="badge">12</span>
             </div>
             <div className={`navitem ${activeNav === 'consents' ? 'active' : ''}`} onClick={() => setActiveNav('consents')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
                 <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" />
               </svg>
-              Consents<span className="badge">{activeConsentCount + pendingConsentCount}</span>
+              Consents<span className="badge">5</span>
             </div>
             <div className={`navitem ${activeNav === 'audit' ? 'active' : ''}`} onClick={() => setActiveNav('audit')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -410,13 +497,13 @@ export default function PatientPortal() {
           <div className="asidefoot">
             <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--ink-3)', letterSpacing: '.16em', textTransform: 'uppercase', padding: '0 10px', marginBottom: '6px' }}>Switch portal</div>
-              <a href="/hospital" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', fontSize: '12px', color: 'var(--ink-2)', fontFamily: 'var(--mono)', letterSpacing: '.08em', textDecoration: 'none', transition: 'all .2s' }}
+              <a href="/hospital-dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', fontSize: '12px', color: 'var(--ink-2)', fontFamily: 'var(--mono)', letterSpacing: '.08em', textDecoration: 'none', transition: 'all .2s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg)'; e.currentTarget.style.color = 'var(--ink)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-2)'; }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21V7l9-4 9 4v14" /><path d="M9 21v-6h6v6" /></svg>
                 Hospital
               </a>
-              <a href="/doctor" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', fontSize: '12px', color: 'var(--ink-2)', fontFamily: 'var(--mono)', letterSpacing: '.08em', textDecoration: 'none', transition: 'all .2s' }}
+              <a href="/doctor-dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', fontSize: '12px', color: 'var(--ink-2)', fontFamily: 'var(--mono)', letterSpacing: '.08em', textDecoration: 'none', transition: 'all .2s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg)'; e.currentTarget.style.color = 'var(--ink)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-2)'; }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2v6a6 6 0 0 0 12 0V2" /><circle cx="18" cy="16" r="3" /></svg>
@@ -436,7 +523,7 @@ export default function PatientPortal() {
             <div>
               <div className="crumb">Patient · {currentNavLabel}</div>
               <h1>
-                Good evening, <em style={{ fontStyle: 'italic', color: 'var(--ink-green)' }}>{patient.name.split(' ')[0]}</em>.
+                Good evening, <em style={{ fontStyle: 'italic', color: 'var(--ink-green)' }}>Ishaan</em>.
               </h1>
             </div>
             <div className="search">
@@ -452,7 +539,7 @@ export default function PatientPortal() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" />
                 </svg>
-                {patient.shortId}
+                847KOR
                 <span className="tag">Verified</span>
               </span>
               <button className="iconbtn">
@@ -479,7 +566,7 @@ export default function PatientPortal() {
                 <div>
                   <div className="k">§ Overview — 18 April 2026</div>
                   <h2>
-                    Your consent mesh is <em>calm</em>.<br />{activeConsentCount} keys held, 0 silent reads.
+                    Your consent mesh is <em>calm</em>.<br />5 keys held, 0 silent reads.
                   </h2>
                   <p>One provider is waiting for your signature. Everything else is behaving exactly as you've instructed.</p>
                 </div>
@@ -502,22 +589,20 @@ export default function PatientPortal() {
                   </div>
                   <span className="tag">Verified</span>
                 </div>
-                <div className="sid">
-                  847<em>KOR</em>
-                </div>
-                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{ background: '#fff', padding: '10px', borderRadius: '12px', border: '1px solid var(--line)' }}>
+                <div className="sid" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: '#fff', borderRadius: '16px', padding: '12px', border: '1px solid var(--line)' }}>
                     <QRCodeSVG
-                      value={`patient:${patient.shortId}`}
-                      size={76}
+                      value={`aegis://patient/${patient.shortId}`}
+                      size={148}
                       bgColor="#ffffff"
                       fgColor="#0a1514"
                       level="M"
+                      includeMargin={false}
                     />
                   </div>
                 </div>
                 <div className="meta">
-                  <span>Chain · <em>Algorand</em></span>
+                  <span>ID · <em>{patient.shortId}</em></span>
                   <span>Since <em>Mar 2026</em></span>
                 </div>
               </div>
@@ -533,7 +618,7 @@ export default function PatientPortal() {
                   </div>
                   <span className="delta">+2 this week</span>
                 </div>
-                <b>{activeConsentCount}</b>
+                <b>5</b>
                 <span className="lbl">Active consents</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none">
                   <path d="M0 20 L20 16 L40 18 L60 10 L80 14 L100 6 L120 9 L140 2" stroke="var(--ink-green)" strokeWidth="1.5" />
@@ -549,7 +634,7 @@ export default function PatientPortal() {
                   </div>
                   <span className="delta">+1 new</span>
                 </div>
-                <b>{patientRecords.length}</b>
+                <b>12</b>
                 <span className="lbl">Records on chain</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none">
                   <path d="M0 22 L20 20 L40 18 L60 16 L80 14 L100 12 L120 8 L140 6" stroke="var(--ink-green)" strokeWidth="1.5" />
@@ -890,7 +975,7 @@ export default function PatientPortal() {
                   <div className="audit-item">
                     <span className="pin" data-c="sky" />
                     <div className="body">
-                      <div className="t"><em>Identity verified</em> · {patient.shortId}</div>
+                      <div className="t"><em>Identity verified</em> · 847KOR</div>
                       <div className="d">Algorand mainnet</div>
                     </div>
                     <time>Mar 21</time>
@@ -903,7 +988,7 @@ export default function PatientPortal() {
               <div className="head">
                 <div>
                   <h3>Recent records</h3>
-                  <div className="sub" style={{ marginTop: '4px' }}>{patientRecords.length} records · encrypted · IPFS-pinned</div>
+                  <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · encrypted · IPFS-pinned</div>
                 </div>
                 <div className="actions">
                   <button className="chip">
@@ -916,7 +1001,7 @@ export default function PatientPortal() {
                 </div>
               </div>
               <div className="recs">
-                {patientRecords.map((rec, i) => (
+                {medicalRecords.map((rec, i) => (
                   <div
                     key={rec.id}
                     className="rec"
@@ -959,7 +1044,7 @@ export default function PatientPortal() {
 
       {sliderOpen && (
         <RecordSlider
-          records={patientRecords}
+          records={medicalRecords}
           initialIndex={sliderIndex}
           onClose={() => setSliderOpen(false)}
           onShare={(rec) => { setSliderOpen(false); openQR(rec); }}
