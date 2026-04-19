@@ -129,6 +129,15 @@ export default function PatientPortal() {
   );
   const activeConsentCount = patientConsents.filter((c) => c.status === 'active').length + approvedRequestCount;
   const pendingConsentCount = patientConsents.filter((consent) => consent.status === 'pending').length;
+  const expiringConsentCount = patientConsents.filter(
+    (consent) => consent.status === 'active' && consent.remaining !== 'key dissolved'
+  ).length;
+  const filteredConsents = useMemo(() => {
+    if (activeTab === 'all') {
+      return patientConsents;
+    }
+    return patientConsents.filter((consent) => consent.status === activeTab);
+  }, [activeTab, patientConsents]);
 
   // Records delta: how many records added in last 7 days
   const recentRecordCount = useMemo(() => {
@@ -759,7 +768,9 @@ export default function PatientPortal() {
                 <div className="head">
                   <div>
                     <h3>Active consents</h3>
-                    <div className="sub" style={{ marginTop: '4px' }}>5 permissions · 2 expire this week</div>
+                    <div className="sub" style={{ marginTop: '4px' }}>
+                      {patientConsents.length} permissions · {expiringConsentCount} expire this week
+                    </div>
                   </div>
                   <div className="actions">
                     <div className="tabs">
@@ -781,176 +792,49 @@ export default function PatientPortal() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>
-                        <div className="avn">
-                          <div className="av" data-c="lime">HX</div>
-                          <div>
-                            <div className="nm">Helix Hospital</div>
-                            <div className="rl">Institutional</div>
+                    {filteredConsents.length > 0 ? filteredConsents.map((consent) => (
+                      <tr key={consent.id}>
+                        <td>
+                          <div className="avn">
+                            <div className="av" data-c={consent.grantedToColor}>{consent.grantedToAvatar}</div>
+                            <div>
+                              <div className="nm">{consent.grantedTo}</div>
+                              <div className="rl">{consent.grantedToRole}</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>
-                        LAB_RESULTS · 48H
-                      </td>
-                      <td>
-                        <span className="pill-s active">Active</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>32h 14m</span>
-                          <div className="meter">
-                            <i style={{ width: '68%' }} />
+                        </td>
+                        <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>
+                          {consent.scopeLabel}
+                        </td>
+                        <td>
+                          <span className={`pill-s ${consent.status}`}>{consent.status}</span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>{consent.remaining}</span>
+                            {consent.status === 'active' && (
+                              <div className="meter">
+                                <i style={{ width: `${consent.progressPct}%` }} />
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="actions-cell">
-                        <button className="ibtn" title="Extend">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M5 12h14M13 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <button className="ibtn danger" title="Revoke">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6 6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="avn">
-                          <div className="av" data-c="coral">DR</div>
-                          <div>
-                            <div className="nm">Dr. Hanwa, K.</div>
-                            <div className="rl">Clinician</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>
-                        IMAGING · 2H
-                      </td>
-                      <td>
-                        <span className="pill-s active">Active</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>1h 04m</span>
-                          <div className="meter">
-                            <i style={{ width: '52%' }} />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="actions-cell">
-                        <button className="ibtn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M5 12h14M13 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <button className="ibtn danger">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6 6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="avn">
-                          <div className="av" data-c="sky">LB</div>
-                          <div>
-                            <div className="nm">Meridian Labs</div>
-                            <div className="rl">Diagnostics</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>
-                        PROFILE · 72H
-                      </td>
-                      <td>
-                        <span className="pill-s pending">Pending</span>
-                      </td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>
-                        awaiting signature
-                      </td>
-                      <td className="actions-cell">
-                        <button className="ibtn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="m5 12 5 5L20 7" />
-                          </svg>
-                        </button>
-                        <button className="ibtn danger">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6 6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="avn">
-                          <div className="av" data-c="sun">PH</div>
-                          <div>
-                            <div className="nm">Nil Pharmacy</div>
-                            <div className="rl">Dispensary</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>
-                        RX_VIEW · 24H
-                      </td>
-                      <td>
-                        <span className="pill-s active">Active</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>18h 40m</span>
-                          <div className="meter">
-                            <i style={{ width: '78%' }} />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="actions-cell">
-                        <button className="ibtn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M5 12h14M13 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <button className="ibtn danger">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6 6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="avn">
-                          <div className="av" data-c="violet">AR</div>
-                          <div>
-                            <div className="nm">Arc Insurance</div>
-                            <div className="rl">Payor</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)', letterSpacing: '.06em' }}>
-                        CLAIM · 7D
-                      </td>
-                      <td>
-                        <span className="pill-s expired">Expired</span>
-                      </td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>
-                        key dissolved
-                      </td>
-                      <td className="actions-cell">
-                        <button className="ibtn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="actions-cell">
+                          <button className="ibtn" title="View">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: 'center', padding: '20px', color: 'var(--ink-3)' }}>
+                          No consents found for this filter
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

@@ -4,6 +4,7 @@ import { MedicalRecordsClient } from '../contracts/MedicalRecords'
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import { uploadToIPFS } from '../utils/ipfs'
 import { useSnackbar } from 'notistack'
+import algosdk from 'algosdk'
 
 export interface PrescriptionUploadParams {
   patientAddress: string
@@ -49,6 +50,19 @@ export const usePrescriptionUpload = (): PrescriptionUploadState => {
       if (medicalAppId === 0) {
         setError('Medical Records contract not configured')
         enqueueSnackbar('Contract configuration error — check VITE_MEDICAL_RECORDS_APP_ID', { variant: 'error' })
+        return
+      }
+
+      // Validate patient address is a proper Algorand address before hitting the contract
+      try {
+        if (!params.patientAddress || params.patientAddress.length !== 58) {
+          throw new Error(`Invalid length: ${params.patientAddress?.length ?? 0}`)
+        }
+        algosdk.decodeAddress(params.patientAddress)
+      } catch {
+        const msg = `Patient wallet address is not a valid Algorand address (got "${params.patientAddress?.slice(0, 20)}…"). Ask the patient to register their Algorand wallet.`
+        setError(msg)
+        enqueueSnackbar(msg, { variant: 'error' })
         return
       }
 

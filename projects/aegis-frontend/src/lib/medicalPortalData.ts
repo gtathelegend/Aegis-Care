@@ -2,6 +2,7 @@ import { MedicalRecordsClient } from '../contracts/MedicalRecords'
 import { patients, getPatientById, recordTypeLabel, type MedicalRecord, type Patient } from './mockdb'
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import { resolveAddress } from '../utils/resolveAddress'
+import algosdk from 'algosdk'
 import { fetchFromIPFS, uploadToIPFS } from '../utils/ipfs'
 import { encryptData } from '../utils/crypto'
 import { calcMedicalRecordBox, calcPrescriptionQueueBox } from '../utils/boxUtils'
@@ -41,9 +42,26 @@ export function findPatientByIdentifier(identifier: string): Patient | null {
   return directMatch ?? null
 }
 
+function isValidAlgorandAddress(addr: string): boolean {
+  if (!addr || addr.length !== 58) return false
+  try {
+    algosdk.decodeAddress(addr)
+    return true
+  } catch {
+    return false
+  }
+}
+
 export async function resolvePatient(identifier: string): Promise<PatientResolution> {
   const patient = findPatientByIdentifier(identifier)
-  const walletAddress = patient?.walletAddress ?? await resolveAddress(identifier)
+
+  // Only use mock walletAddress if it's a valid Algorand address.
+  // Mock patients may have Ethereum-style addresses — skip those and resolve on-chain.
+  const mockAddress = patient?.walletAddress
+  const walletAddress = (mockAddress && isValidAlgorandAddress(mockAddress))
+    ? mockAddress
+    : await resolveAddress(identifier)
+
   return {
     patient: patient ?? {
       ...getPatientById('p1'),

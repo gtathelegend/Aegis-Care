@@ -4,6 +4,7 @@ import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoCl
 import { MedicalRecordsClient } from '../contracts/MedicalRecords'
 import { uploadEncryptedFile } from '../utils/ipfs'
 import { encryptFile } from '../utils/crypto'
+import algosdk from 'algosdk'
 
 export interface UploadRecordParams {
   file: File
@@ -29,6 +30,15 @@ export function useUploadRecord() {
 
     if (medicalAppId === 0) {
       setError('Medical Records contract not configured. Check VITE_MEDICAL_RECORDS_APP_ID')
+      return null
+    }
+
+    try {
+      if (!params.patientAddress || params.patientAddress.length !== 58) throw new Error('bad length')
+      algosdk.decodeAddress(params.patientAddress)
+    } catch {
+      const msg = `Patient wallet address is not a valid Algorand address (got "${params.patientAddress?.slice(0, 20)}…").`
+      setError(msg)
       return null
     }
 
