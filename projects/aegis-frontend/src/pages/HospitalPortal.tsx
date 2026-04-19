@@ -3,6 +3,7 @@ import { useWallet } from '@txnlab/use-wallet-react';
 import '../styles/dashboard.css';
 import QRModal from '../components/QRModal';
 import RecordSlider from '../components/RecordSlider';
+import UploadRecordModal from '../components/UploadRecordModal';
 import {
   auditLog,
   consents,
@@ -91,6 +92,8 @@ export default function HospitalPortal() {
   const [viewerRecords, setViewerRecords] = useState<MedicalRecord[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [shareRecord, setShareRecord] = useState<MedicalRecord | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [selectedPatientAddress, setSelectedPatientAddress] = useState('');
   const [liveRecords, setLiveRecords] = useState<MedicalRecord[]>(medicalRecords);
   const [prescriptionTarget, setPrescriptionTarget] = useState(INITIAL_PATIENT.shortId);
   const [prescriptionMedication, setPrescriptionMedication] = useState('Amoxicillin 500mg');
@@ -374,6 +377,77 @@ export default function HospitalPortal() {
     }
   }, [activeAddress, algorand, enqueueSnackbar, medicalAppId, prescriptionDosage, prescriptionInstructions, prescriptionMedication, prescriptionNotes, prescriptionTarget, transactionSigner]);
 
+  const renderHospitalTabContent = () => {
+    if (activeNav === 'patients') {
+      return (
+        <div style={{ padding: '40px' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h2 style={{ margin: '0 0 8px 0' }}>Patient Registry</h2>
+            <p style={{ margin: 0, color: 'var(--ink-2)', fontSize: '14px' }}>{patients.length} patients registered</p>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Patient Name</th>
+                <th>Short ID</th>
+                <th>Blood Group</th>
+                <th>DOB</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {patients.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <div className="avn">
+                      <div className="av" data-c={p.avatarColor}>{makeInitials(p.name)}</div>
+                      <div>
+                        <div className="nm">{p.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>{p.shortId}</td>
+                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.bloodGroup}</td>
+                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.dob}</td>
+                  <td className="actions-cell">
+                    <button className="ibtn lime" title="Upload record" onClick={() => { setSelectedPatientAddress(p.walletAddress); setUploadModalOpen(true); }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'settings') {
+      return (
+        <div style={{ padding: '40px' }}>
+          <h2 style={{ margin: '0 0 24px 0' }}>Settings</h2>
+          <div style={{ maxWidth: '500px' }}>
+            <div style={{ padding: '20px', background: 'var(--bg-2)', borderRadius: '12px', border: '1px solid var(--line)' }}>
+              <h3 style={{ margin: '0 0 12px 0' }}>Hospital Information</h3>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ink-2)', marginBottom: '4px' }}>Hospital Name</label>
+                  <input value="Helix Hospital" disabled style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '14px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ink-2)', marginBottom: '4px' }}>Email</label>
+                  <input value="admin@helixhospital.com" disabled style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '14px' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return <div style={{ padding: '40px' }}>No content available for this section.</div>;
+  };
+
   return (
     <div className="grain">
       <div className="blobs">
@@ -484,7 +558,9 @@ export default function HospitalPortal() {
           </div>
 
           <div className="content">
-            <div className="hero">
+            {activeNav === 'overview' ? (
+              <>
+                <div className="hero">
               <div className="greet reveal d1" style={{ background: 'var(--ink)' }}>
                 <div>
                   <div className="k">§ Hospital Overview · Live Snapshot</div>
@@ -778,6 +854,16 @@ export default function HospitalPortal() {
           </div>
         </main>
       </div>
+
+      <UploadRecordModal
+        isOpen={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        patientAddress={selectedPatientAddress}
+        onSuccess={(cid) => {
+          alert(`Record uploaded successfully! CID: ${cid.slice(0, 20)}...`);
+          setUploadModalOpen(false);
+        }}
+      />
 
       {viewerRecords.length > 0 && (
         <RecordSlider

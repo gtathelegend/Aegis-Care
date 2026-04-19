@@ -19,12 +19,20 @@ import './styles/App.css'
 
 
 let supportedWallets: SupportedWallet[]
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'a8f7353bbf6e4b1d88f2948fa1c5f2aa'
+
 if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
   const kmdConfig = getKmdConfigFromViteEnvironment()
   supportedWallets = [
     { id: WalletId.DEFLY },
     { id: WalletId.PERA },
     { id: WalletId.EXODUS },
+    {
+      id: WalletId.WALLETCONNECT,
+      options: {
+        projectId: walletConnectProjectId,
+      },
+    },
     {
       id: WalletId.KMD,
       options: {
@@ -39,6 +47,12 @@ if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
     { id: WalletId.DEFLY },
     { id: WalletId.PERA },
     { id: WalletId.EXODUS },
+    {
+      id: WalletId.WALLETCONNECT,
+      options: {
+        projectId: walletConnectProjectId,
+      },
+    },
   ]
 }
 

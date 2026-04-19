@@ -3,6 +3,7 @@ import { useWallet } from '@txnlab/use-wallet-react';
 import '../styles/dashboard.css';
 import QRModal from '../components/QRModal';
 import RecordSlider from '../components/RecordSlider';
+import UploadRecordModal from '../components/UploadRecordModal';
 import {
   auditLog,
   consents,
@@ -101,6 +102,8 @@ export default function DoctorDashboard() {
   const [prescriptionNotes, setPrescriptionNotes] = useState('');
   const [prescriptionSubmitting, setPrescriptionSubmitting] = useState(false);
   const [prescriptionFeedback, setPrescriptionFeedback] = useState('');
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [selectedPatientAddress, setSelectedPatientAddress] = useState('');
 
   const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), []);
   const medicalAppId = Number(import.meta.env.VITE_MEDICAL_RECORDS_APP_ID || 0);
@@ -409,6 +412,81 @@ export default function DoctorDashboard() {
     }
   }, [activeAddress, algorand, enqueueSnackbar, medicalAppId, prescriptionDosage, prescriptionInstructions, prescriptionMedication, prescriptionNotes, prescriptionTarget, transactionSigner]);
 
+  const renderDoctorTabContent = () => {
+    if (activeNav === 'patients') {
+      return (
+        <div style={{ padding: '40px' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h2 style={{ margin: '0 0 8px 0' }}>My Patients</h2>
+            <p style={{ margin: 0, color: 'var(--ink-2)', fontSize: '14px' }}>{patients.length} patients in your care</p>
+          </div>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Patient Name</th>
+                <th>Short ID</th>
+                <th>Blood Group</th>
+                <th>DOB</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {patients.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <div className="avn">
+                      <div className="av" data-c={p.avatarColor}>{makeInitials(p.name)}</div>
+                      <div>
+                        <div className="nm">{p.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>{p.shortId}</td>
+                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.bloodGroup}</td>
+                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.dob}</td>
+                  <td className="actions-cell">
+                    <button className="ibtn lime" title="Upload record" onClick={() => { setSelectedPatientAddress(p.walletAddress); setUploadModalOpen(true); }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (activeNav === 'settings') {
+      return (
+        <div style={{ padding: '40px' }}>
+          <h2 style={{ margin: '0 0 24px 0' }}>Settings</h2>
+          <div style={{ maxWidth: '500px' }}>
+            <div style={{ padding: '20px', background: 'var(--bg-2)', borderRadius: '12px', border: '1px solid var(--line)' }}>
+              <h3 style={{ margin: '0 0 12px 0' }}>Profile</h3>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ink-2)', marginBottom: '4px' }}>Name</label>
+                  <input value={patient.name} disabled style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '14px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ink-2)', marginBottom: '4px' }}>Specialization</label>
+                  <input value="Internal Medicine" disabled style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '14px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ink-2)', marginBottom: '4px' }}>License ID</label>
+                  <input value="LIC-123456" disabled style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '14px' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return <div style={{ padding: '40px' }}>No content available for this section.</div>;
+  };
+
   return (
     <div className="grain">
       <div className="blobs">
@@ -512,43 +590,45 @@ export default function DoctorDashboard() {
           </div>
 
           <div className="content">
-            <div className="hero">
-              <div className="greet reveal d1">
-                <div>
-                  <div className="k">§ Clinician Overview · Live Snapshot</div>
-                  <h2>
-                    {activeConsents} consents <em>active</em>.
-                    <br />{accessibleRecords.length} records in care.
-                  </h2>
-                  <p>{heroSummary} There are {requestQueue.filter((request) => request.status === 'pending').length} clinician requests waiting in the local queue.</p>
-                </div>
-                <div className="foot">
-                  <button className="btn lime" onClick={() => setActiveNav('requests')}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
-                    Request access
-                  </button>
-                  <button className="btn ghost" onClick={() => openRecordViewer(accessibleRecords[0] ?? liveRecords[0] ?? medicalRecords[0])}>View records</button>
-                  <button className="btn ghost" onClick={() => setActiveNav('audit')}>My audit log</button>
-                </div>
-              </div>
-              <div className="id reveal d2">
-                <div className="row">
-                  <div>
-                    <div className="mono">Clinician ID</div>
-                    <h3>Dr. Hanwa, K.</h3>
+            {activeNav === 'overview' ? (
+              <>
+                <div className="hero">
+                  <div className="greet reveal d1">
+                    <div>
+                      <div className="k">§ Clinician Overview · Live Snapshot</div>
+                      <h2>
+                        {activeConsents} consents <em>active</em>.
+                        <br />{accessibleRecords.length} records in care.
+                      </h2>
+                      <p>{heroSummary} There are {requestQueue.filter((request) => request.status === 'pending').length} clinician requests waiting in the local queue.</p>
+                    </div>
+                    <div className="foot">
+                      <button className="btn lime" onClick={() => setActiveNav('requests')}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+                        Request access
+                      </button>
+                      <button className="btn ghost" onClick={() => openRecordViewer(accessibleRecords[0] ?? liveRecords[0] ?? medicalRecords[0])}>View records</button>
+                      <button className="btn ghost" onClick={() => setActiveNav('audit')}>My audit log</button>
+                    </div>
                   </div>
-                  <span className="tag" style={{ background: 'var(--coral)' }}>Clinician</span>
+                  <div className="id reveal d2">
+                    <div className="row">
+                      <div>
+                        <div className="mono">Clinician ID</div>
+                        <h3>Dr. Hanwa, K.</h3>
+                      </div>
+                      <span className="tag" style={{ background: 'var(--coral)' }}>Clinician</span>
+                    </div>
+                    <div className="sid">DOC<em>–4821</em></div>
+                    <div className="meta">
+                      <span>Chain · <em>Algorand</em></span>
+                      <span>Patients · <em>{activePatients}</em></span>
+                    </div>
+                  </div>
                 </div>
-                <div className="sid">DOC<em>–4821</em></div>
-                <div className="meta">
-                  <span>Chain · <em>Algorand</em></span>
-                  <span>Patients · <em>{activePatients}</em></span>
-                </div>
-              </div>
-            </div>
 
-            <div className="kpis">
-              <div className="kpi reveal d1" data-c="coral">
+                <div className="kpis">
+                  <div className="kpi reveal d1" data-c="coral">
                 <div className="top">
                   <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></div>
                   <span className="delta">{activePatients} patients</span>
@@ -557,7 +637,7 @@ export default function DoctorDashboard() {
                 <span className="lbl">My patients</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 22 L20 18 L40 16 L60 12 L80 10 L100 8 L120 6 L140 4" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
               </div>
-              <div className="kpi reveal d2" data-c="lime">
+                  <div className="kpi reveal d2" data-c="lime">
                 <div className="top">
                   <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /></svg></div>
                   <span className="delta">{activeConsents} granted</span>
@@ -724,16 +804,39 @@ export default function DoctorDashboard() {
                     <div className="sub" style={{ marginTop: '4px' }}>Encrypt a prescription, pin it to IPFS, and anchor it on-chain by patient ID.</div>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  <input value={prescriptionTarget} onChange={(event) => setPrescriptionTarget(event.target.value)} placeholder="Patient short ID or wallet address" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
-                  <input value={prescriptionMedication} onChange={(event) => setPrescriptionMedication(event.target.value)} placeholder="Medication" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
-                  <input value={prescriptionDosage} onChange={(event) => setPrescriptionDosage(event.target.value)} placeholder="Dosage and frequency" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
-                  <textarea value={prescriptionInstructions} onChange={(event) => setPrescriptionInstructions(event.target.value)} rows={3} placeholder="Patient instructions" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
-                  <textarea value={prescriptionNotes} onChange={(event) => setPrescriptionNotes(event.target.value)} rows={2} placeholder="Optional notes" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
-                  <button className="btn lime" onClick={submitPrescription} disabled={prescriptionSubmitting}>
-                    {prescriptionSubmitting ? 'Uploading prescription…' : 'Upload prescription'}
+                <div style={{ display: 'grid', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Patient ID</label>
+                    <input value={prescriptionTarget} onChange={(event) => setPrescriptionTarget(event.target.value)} placeholder="e.g., 847KOR" style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '13px' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Medication</label>
+                    <input value={prescriptionMedication} onChange={(event) => setPrescriptionMedication(event.target.value)} placeholder="e.g., Amoxicillin 500mg" style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '13px' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Dosage & Frequency</label>
+                    <input value={prescriptionDosage} onChange={(event) => setPrescriptionDosage(event.target.value)} placeholder="e.g., 1 tablet three times daily for 10 days" style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '13px' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Patient Instructions</label>
+                    <textarea value={prescriptionInstructions} onChange={(event) => setPrescriptionInstructions(event.target.value)} rows={3} placeholder="Take after meals and complete the full course." style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '13px', resize: 'vertical', fontFamily: 'inherit' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Optional Notes</label>
+                    <textarea value={prescriptionNotes} onChange={(event) => setPrescriptionNotes(event.target.value)} rows={2} placeholder="Add any additional notes..." style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '13px', resize: 'vertical', fontFamily: 'inherit' }} />
+                  </div>
+                  <button className="btn lime" onClick={submitPrescription} disabled={prescriptionSubmitting} style={{ marginTop: '4px' }}>
+                    {prescriptionSubmitting ? (
+                      <><svg style={{ width: '14px', height: '14px', display: 'inline-block', marginRight: '6px', animation: 'spin 1s linear infinite' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>Uploading…</>
+                    ) : (
+                      'Upload prescription'
+                    )}
                   </button>
-                  {prescriptionFeedback && <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--ink-2)', lineHeight: 1.6 }}>{prescriptionFeedback}</div>}
+                  {prescriptionFeedback && (
+                    <div style={{ padding: '10px 12px', borderRadius: '8px', background: prescriptionFeedback.includes('Error') || prescriptionFeedback.includes('Failed') ? 'rgba(220, 53, 69, 0.1)' : 'rgba(40, 167, 69, 0.1)', border: `1px solid ${prescriptionFeedback.includes('Error') || prescriptionFeedback.includes('Failed') ? 'rgba(220, 53, 69, 0.3)' : 'rgba(40, 167, 69, 0.3)'}`, fontFamily: 'var(--mono)', fontSize: '11px', color: prescriptionFeedback.includes('Error') || prescriptionFeedback.includes('Failed') ? 'var(--coral)' : 'var(--lime)', lineHeight: 1.6, wordBreak: 'break-word' }}>
+                      {prescriptionFeedback}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -818,6 +921,16 @@ export default function DoctorDashboard() {
           </div>
         </main>
       </div>
+
+      <UploadRecordModal
+          isOpen={uploadModalOpen}
+          onClose={() => setUploadModalOpen(false)}
+          patientAddress={selectedPatientAddress}
+          onSuccess={(cid) => {
+            alert(`Record uploaded successfully! CID: ${cid.slice(0, 20)}...`);
+            setUploadModalOpen(false);
+          }}
+        />
 
       {viewerRecords.length > 0 && (
         <RecordSlider

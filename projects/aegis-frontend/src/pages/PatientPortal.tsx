@@ -494,11 +494,11 @@ export default function PatientPortal() {
                   <button className="btn ghost">Export audit</button>
                 </div>
               </div>
-              <div className="id reveal d2">
-                <div className="row">
+              <div className="id reveal d2" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', textAlign: 'center' }}>
+                <div className="row" style={{ alignSelf: 'stretch', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                   <div>
                     <div className="mono">Short ID</div>
-                    <h3>Your identity</h3>
+                    <h3 style={{ marginTop: '4px' }}>Your identity</h3>
                   </div>
                   <span className="tag">Verified</span>
                 </div>
@@ -506,14 +506,8 @@ export default function PatientPortal() {
                   847<em>KOR</em>
                 </div>
                 <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{ background: '#fff', padding: '10px', borderRadius: '12px', border: '1px solid var(--line)' }}>
-                    <QRCodeSVG
-                      value={`patient:${patient.shortId}`}
-                      size={76}
-                      bgColor="#ffffff"
-                      fgColor="#0a1514"
-                      level="M"
-                    />
+                  <div style={{ background: '#fff', padding: '10px', borderRadius: '12px', border: '1px solid var(--line)', width: '76px', height: '76px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: 'var(--ink-3)' }}>
+                    QR Code
                   </div>
                 </div>
                 <div className="meta">

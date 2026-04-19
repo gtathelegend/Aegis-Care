@@ -251,20 +251,54 @@ export default function DashboardPage() {
                   <button className="btn ghost">Export audit</button>
                 </div>
               </div>
-              <div className="id reveal d2">
-                <div className="row">
+              <div className="id reveal d2" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', textAlign: 'center' }}>
+                <div className="row" style={{ alignSelf: 'stretch', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                   <div>
                     <div className="mono">Short ID</div>
-                    <h3>Your identity</h3>
+                    <h3 style={{ marginTop: '4px' }}>Your identity</h3>
                   </div>
                   <span className="tag">Verified</span>
                 </div>
-                <div className="sid">
-                  847<em>KOR</em>
-                </div>
-                <div className="meta">
-                  <span>Chain · <em>Algorand</em></span>
-                  <span>Since <em>Mar 2026</em></span>
+
+                {/* QR Code SVG */}
+                <svg viewBox="0 0 200 200" style={{ width: '140px', height: '140px', margin: '20px auto', border: '2px solid var(--ink)', borderRadius: '12px', padding: '8px', background: '#fff' }}>
+                  <rect width="200" height="200" fill="white" />
+                  <rect x="10" y="10" width="40" height="40" fill="black" />
+                  <rect x="20" y="20" width="20" height="20" fill="white" />
+                  <rect x="150" y="10" width="40" height="40" fill="black" />
+                  <rect x="160" y="20" width="20" height="20" fill="white" />
+                  <rect x="10" y="150" width="40" height="40" fill="black" />
+                  <rect x="20" y="160" width="20" height="20" fill="white" />
+                  <g fill="black" opacity="0.7">
+                    <rect x="70" y="30" width="8" height="8" />
+                    <rect x="85" y="30" width="8" height="8" />
+                    <rect x="100" y="30" width="8" height="8" />
+                    <rect x="45" y="50" width="8" height="8" />
+                    <rect x="70" y="50" width="8" height="8" />
+                    <rect x="100" y="50" width="8" height="8" />
+                    <rect x="120" y="50" width="8" height="8" />
+                    <rect x="30" y="70" width="8" height="8" />
+                    <rect x="60" y="70" width="8" height="8" />
+                    <rect x="85" y="70" width="8" height="8" />
+                    <rect x="120" y="70" width="8" height="8" />
+                    <rect x="45" y="90" width="8" height="8" />
+                    <rect x="75" y="90" width="8" height="8" />
+                    <rect x="100" y="90" width="8" height="8" />
+                    <rect x="130" y="90" width="8" height="8" />
+                    <rect x="50" y="110" width="8" height="8" />
+                    <rect x="70" y="110" width="8" height="8" />
+                    <rect x="95" y="110" width="8" height="8" />
+                    <rect x="120" y="110" width="8" height="8" />
+                    <rect x="35" y="130" width="8" height="8" />
+                    <rect x="65" y="130" width="8" height="8" />
+                    <rect x="105" y="130" width="8" height="8" />
+                    <rect x="130" y="130" width="8" height="8" />
+                  </g>
+                </svg>
+
+                <div className="meta" style={{ alignSelf: 'stretch', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.14em', paddingTop: '16px', borderTop: '1px solid var(--line)', marginTop: '16px' }}>
+                  <span style={{ fontFamily: 'var(--mono)' }}>ID · <em style={{ color: 'var(--ink)', fontStyle: 'normal', fontWeight: 500 }}>847KOR</em></span>
+                  <span style={{ fontFamily: 'var(--mono)' }}>Since <em style={{ color: 'var(--ink)', fontStyle: 'normal', fontWeight: 500 }}>Mar 2026</em></span>
                 </div>
               </div>
             </div>
