@@ -77,7 +77,7 @@ export async function fetchAuditLogs(address: string): Promise<AuditLogEntry[]> 
       logs.push({
         id: tx.id,
         type,
-        provider: provider !== 'N/A' ? `ID: ${provider}` : 'Ojasraksha Protocol',
+        provider: provider !== 'N/A' ? `ID: ${provider}` : 'Aegis Protocol',
         timestamp: tx['round-time'] * 1000,
         purpose,
         txId: tx.id

@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import '../../styles/dashboard.css';
+import PrescriptionModal from '../../components/PrescriptionModal';
+import { getPrescriptionQueue, markPrescriptionDispensed } from '../../lib/mockdb';
 
 export default function HospitalDashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('all');
+  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+  const [prescriptions, setPrescriptions] = useState(getPrescriptionQueue());
 
   const navLabels: Record<string, string> = {
     overview: 'Overview',
     patients: 'Patients',
     requests: 'Access Requests',
     records: 'Records',
+    prescriptions: 'Prescription Queue',
     audit: 'Audit Log',
     staff: 'Staff',
     compliance: 'Compliance',
@@ -165,6 +170,82 @@ export default function HospitalDashboardPage() {
       );
     }
 
+    if (activeNav === 'prescriptions') {
+      return (
+        <div className="card">
+          <div className="head">
+            <div>
+              <h3>Prescription Queue</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Pending prescriptions for dispensing</div>
+            </div>
+            <div className="actions">
+              <button className="chip" onClick={() => setPrescriptionModalOpen(true)} style={{ cursor: 'pointer' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Add Prescription
+              </button>
+            </div>
+          </div>
+          {prescriptions.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--ink-3)' }}>
+              <p style={{ fontSize: '12px', fontFamily: 'var(--mono)', letterSpacing: '.1em', textTransform: 'uppercase' }}>No pending prescriptions</p>
+            </div>
+          ) : (
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Medication</th>
+                  <th>Dosage</th>
+                  <th>Prescribed By</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {prescriptions.map((px) => (
+                  <tr key={px.id}>
+                    <td>
+                      <div className="avn">
+                        <div className="av" data-c="lime">{px.patientName.split(' ').map(n => n[0]).join('')}</div>
+                        <div>
+                          <div className="nm">{px.patientName}</div>
+                          <div className="rl">Patient ID</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink)' }}>{px.medication}</td>
+                    <td style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink-2)' }}>{px.dosage}</td>
+                    <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{px.prescribedBy}</td>
+                    <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{px.prescribedAt}</td>
+                    <td><span className={`pill-s ${px.status}`}>{px.status}</span></td>
+                    <td className="actions-cell">
+                      {px.status === 'pending' && (
+                        <button
+                          className="ibtn"
+                          title="Mark dispensed"
+                          onClick={() => {
+                            markPrescriptionDispensed(px.id);
+                            setPrescriptions(getPrescriptionQueue());
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      );
+    }
+
     if (activeNav === 'audit') {
       return (
         <div className="card">
@@ -281,6 +362,10 @@ export default function HospitalDashboardPage() {
             <div className={`navitem ${activeNav === 'records' ? 'active' : ''}`} onClick={() => setActiveNav('records')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4" /></svg>
               Records
+            </div>
+            <div className={`navitem ${activeNav === 'prescriptions' ? 'active' : ''}`} onClick={() => setActiveNav('prescriptions')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 2v20M2 12h20" /></svg>
+              Prescription Queue<span className="badge">{prescriptions.filter(p => p.status === 'pending').length}</span>
             </div>
             <div className={`navitem ${activeNav === 'audit' ? 'active' : ''}`} onClick={() => setActiveNav('audit')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 7h18M3 12h18M3 17h18" /></svg>
@@ -532,6 +617,14 @@ export default function HospitalDashboardPage() {
           </div>
         </main>
       </div>
+      <PrescriptionModal
+        isOpen={prescriptionModalOpen}
+        onClose={() => setPrescriptionModalOpen(false)}
+        onSuccess={(rec) => {
+          setPrescriptions(getPrescriptionQueue());
+          setPrescriptionModalOpen(false);
+        }}
+      />
     </div>
   );
 }

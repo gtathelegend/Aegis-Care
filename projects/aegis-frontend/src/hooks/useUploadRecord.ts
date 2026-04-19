@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
-import { MedicalRecordsClient } from '../contracts/MedicalRecordsClient'
+import { MedicalRecordsClient } from '../contracts/MedicalRecords'
 import { uploadEncryptedFile } from '../utils/ipfs'
-import { encryptData } from '../utils/crypto'
+import { encryptFile } from '../utils/crypto'
 
 export interface UploadRecordParams {
   file: File
@@ -14,13 +14,21 @@ export interface UploadRecordParams {
 }
 
 export function useUploadRecord() {
-  const { activeAddress, signer } = useWallet()
+  const { activeAddress, transactionSigner } = useWallet()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), [])
+  const medicalAppId = useMemo(() => Number(import.meta.env.VITE_MEDICAL_RECORDS_APP_ID || 0), [])
+
   const uploadRecord = async (params: UploadRecordParams) => {
-    if (!activeAddress || !signer) {
+    if (!activeAddress) {
       setError('Wallet not connected')
+      return null
+    }
+
+    if (medicalAppId === 0) {
+      setError('Medical Records contract not configured. Check VITE_MEDICAL_RECORDS_APP_ID')
       return null
     }
 
@@ -28,48 +36,42 @@ export function useUploadRecord() {
       setLoading(true)
       setError(null)
 
-      // Read file as ArrayBuffer
-      const fileBuffer = await params.file.arrayBuffer()
+      // Encrypt file using patient address as secret
+      const { encryptedBlob, metadata } = await encryptFile(params.file, params.patientAddress)
 
-      // Encrypt file data
-      const encrypted = await encryptData(new Uint8Array(fileBuffer))
-
-      // Upload encrypted file to Pinata
+      // Upload encrypted bundle to IPFS
       const cid = await uploadEncryptedFile(
-        new Blob([encrypted.ciphertext]),
-        {
-          iv: encrypted.iv,
-          authTag: encrypted.authTag,
-          algorithm: 'AES-256-GCM',
-          size: params.file.size,
-          name: params.title,
-        },
+        encryptedBlob,
+        metadata,
         `${params.title}_${Date.now()}`
       )
 
-      // Call contract to add record
-      const algodClient = await getAlgorandClientFromViteEnvironment()
-      const contract = new MedicalRecordsClient({
-        client: algodClient,
-        sender: { addr: activeAddress, signer },
+      // Call smart contract — AlgoKit v9 auto-resolves box references via simulation
+      const medicalClient = new MedicalRecordsClient({
+        appId: BigInt(medicalAppId),
+        algorand,
       })
 
-      await contract.addRecord({
-        patient: params.patientAddress,
-        provider: activeAddress,
-        cid,
-        previous_cid: '',
-        record_type: params.recordType,
-        title: params.title,
-        bill_amount: params.billAmount || 0,
+      const result = await medicalClient.send.addRecord({
+        args: {
+          patient: params.patientAddress,
+          cid,
+          previousCid: '',
+          recordType: params.recordType,
+          billAmount: BigInt(params.billAmount || 0),
+        },
+        sender: activeAddress,
+        signer: transactionSigner,
+        populateAppCallResources: true,
       })
 
       setLoading(false)
-      return { success: true, cid }
+      return { success: true, cid, txId: result.txIds?.[0] ?? null }
     } catch (err: any) {
       const errMsg = err.message || 'Failed to upload record'
       setError(errMsg)
-      console.error('Error uploading record:', err)
+      console.error('[useUploadRecord] Error:', err)
+      setLoading(false)
       return null
     }
   }

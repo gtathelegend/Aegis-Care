@@ -1,12 +1,12 @@
-# Ojasraksha - Frontend Application
+# Aegis Care - Frontend Application
 
-The user interface for the **Ojasraksha** decentralized healthcare ecosystem. Built with a modern tech stack centered on **React**, **TypeScript**, and **Tailwind CSS**, it provides a high-performance, responsive, and secure experience for all healthcare stakeholders.
+The user interface for the **Aegis Care** decentralized healthcare ecosystem. Built with a modern tech stack centered on **React**, **TypeScript**, and **Tailwind CSS**, it provides a high-performance, responsive, and secure experience for all healthcare stakeholders.
 
 ---
 
 ## 🚀 Stakeholder Dashboards
 
-Ojasraksha provides 8 specialized portals, each with a focus on specific healthcare workflows:
+Aegis Care provides 8 specialized portals, each with a focus on specific healthcare workflows:
 
 | Dashboard | Key Features |
 | --- | --- |
@@ -43,7 +43,7 @@ The project includes a robust polyfill configuration in `vite.config.ts` to ensu
 - **Docker**: For running LocalNet blockchain nodes.
 
 ### 2. Installation
-Run the following from the `projects/ojasraksha-frontend` directory:
+Run the following from the `projects/Aegis-frontend` directory:
 ```bash
 npm install
 ```

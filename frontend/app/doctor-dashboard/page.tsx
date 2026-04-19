@@ -1,18 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import '../../styles/dashboard.css';
+import { getMutableRecords, addRecord, addPrescription, addAuditEntry, patients, addAccessRequest } from '../../lib/mockdb';
+import { uploadToPinata } from '../../lib/ipfs';
 
 export default function DoctorDashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('active');
+  const [records, setRecords] = useState(getMutableRecords());
+
+  // Access request form state
+  const [reqPatientId, setReqPatientId] = useState('p1');
+  const [reqScope, setReqScope] = useState('LAB_RESULTS');
+  const [reqPurpose, setReqPurpose] = useState('');
+  const [reqSubmitStatus, setReqSubmitStatus] = useState('');
+
+  // Record upload form state
+  const [patientId, setPatientId] = useState('p1');
+  const [isUploading, setIsUploading] = useState(false);
+  const [recordType, setRecordType] = useState('lab');
+  const [recordTitle, setRecordTitle] = useState('');
+  const [billAmount, setBillAmount] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navLabels: Record<string, string> = {
     overview: 'Overview',
     patients: 'My Patients',
     consents: 'My Consents',
     records: 'Accessible Records',
-    requests: 'New Request',
+    upload: 'Upload Prescription',
     schedule: 'Schedule',
     audit: 'My Audit Trail',
     settings: 'Settings',
@@ -180,24 +199,386 @@ export default function DoctorDashboardPage() {
       );
     }
 
-    if (activeNav === 'requests') {
+    if (activeNav === 'upload') {
+      const recordTypeColors: Record<string, string> = {
+        lab: 'sky',
+        imaging: 'coral',
+        prescription: 'sky',
+        discharge: 'violet',
+        vaccination: 'sun',
+        vitals: 'lime',
+      };
+
+      const handleRecordSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!recordTitle || !selectedFile) {
+          setUploadStatus('Please select file and enter record title');
+          return;
+        }
+
+        setIsUploading(true);
+        setUploadStatus('Uploading record to IPFS...');
+
+        try {
+          let ipfsHash = `QmMOCK_${Date.now()}`;
+          if (selectedFile) {
+            ipfsHash = await uploadToPinata(selectedFile, { recordType });
+          }
+
+          const patient = patients.find(p => p.id === patientId);
+          const recordData = {
+            patientId,
+            type: recordType as any,
+            title: recordTitle,
+            description: `Record uploaded via doctor dashboard. Bill Amount: ${billAmount || '0'} μAlgos`,
+            uploadedBy: 'Dr. Hanwa, K.',
+            uploadedByRole: 'Clinician',
+            hospital: 'Helix Hospital',
+            date: new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' }),
+            ipfsHash,
+            txHash: `0x${Math.random().toString(16).slice(2, 18)}`,
+            blockHeight: Math.floor(Math.random() * 30000000),
+            encrypted: true,
+            size: `${(selectedFile.size / 1024).toFixed(1)} KB`,
+            tags: [recordType, recordTitle],
+            color: recordTypeColors[recordType] as any,
+          };
+
+          addRecord(recordData);
+
+          addAuditEntry({
+            action: 'WRITE',
+            actor: 'Dr. Hanwa, K.',
+            actorRole: 'Clinician',
+            subject: recordTitle,
+            detail: `WRITE · ${recordType.toUpperCase()} · ${recordData.ipfsHash.slice(0, 8)}`,
+            timestamp: new Date().toLocaleString(),
+            txHash: recordData.txHash,
+            color: recordTypeColors[recordType] as any,
+          });
+
+          setUploadStatus('✓ Record uploaded successfully!');
+          setRecords(getMutableRecords());
+
+          setTimeout(() => {
+            setRecordType('lab');
+            setRecordTitle('');
+            setBillAmount('');
+            setSelectedFile(null);
+            setUploadStatus('');
+            setIsUploading(false);
+          }, 2000);
+        } catch (error) {
+          setUploadStatus(`✗ Error: ${error instanceof Error ? error.message : 'Upload failed'}`);
+          setIsUploading(false);
+        }
+      };
+
       return (
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <div className="grid" style={{ gridTemplateColumns: '1fr 1.2fr', gap: '24px' }}>
           <div className="card">
-            <div className="head"><h3>Create Access Request</h3></div>
-            <div className="requests" style={{ gap: '10px' }}>
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Target Patient</div><div className="d">Ishaan Kapoor (847KOR)</div></div></div>
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Scope</div><div className="d">IMAGING + LAB RESULTS</div></div></div>
-              <div className="req" style={{ cursor: 'default' }}><div className="body"><div className="t">Duration</div><div className="d">24 hours</div></div></div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 2px' }}><button className="chip">Submit request</button></div>
+            <div className="head">
+              <h3>Upload Record</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>Select a file and enter record details</div>
             </div>
+
+            <form onSubmit={handleRecordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="field">
+                <label htmlFor="patient">Patient ID</label>
+                <select
+                  id="patient"
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
+                  className="field"
+                >
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.shortId})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label htmlFor="record-type">Record Type</label>
+                <select
+                  id="record-type"
+                  value={recordType}
+                  onChange={(e) => setRecordType(e.target.value)}
+                  className="field"
+                >
+                  <option value="lab">Lab Results</option>
+                  <option value="imaging">Imaging</option>
+                  <option value="prescription">Prescription</option>
+                  <option value="discharge">Discharge Summary</option>
+                  <option value="vaccination">Vaccination</option>
+                  <option value="vitals">Vitals</option>
+                </select>
+              </div>
+
+              <div className="field">
+                <label htmlFor="title">Record Title</label>
+                <input
+                  id="title"
+                  type="text"
+                  placeholder="e.g., ECG, MRI Report, Blood Panel"
+                  value={recordTitle}
+                  onChange={(e) => setRecordTitle(e.target.value)}
+                  className="field"
+                  required
+                />
+              </div>
+
+              <div className="field">
+                <label htmlFor="bill">Bill Amount (μAlgos, optional)</label>
+                <input
+                  id="bill"
+                  type="number"
+                  placeholder="0"
+                  value={billAmount}
+                  onChange={(e) => setBillAmount(e.target.value)}
+                  className="field"
+                />
+              </div>
+
+              <div className="field">
+                <label htmlFor="file-input">Select File</label>
+                <div
+                  className="upload-zone"
+                  onClick={() => document.getElementById('file-input')?.click()}
+                  style={{ textAlign: 'center', padding: '16px' }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    id="file-input"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.dcm"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    style={{ display: 'none' }}
+                  />
+                  {selectedFile ? (
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--ink)' }}>
+                      <div style={{ marginBottom: '6px' }}>📁 {selectedFile.name}</div>
+                      <div style={{ fontSize: '10px', color: 'var(--ink-3)' }}>
+                        {(selectedFile.size / 1024).toFixed(1)} KB
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)' }}>
+                      <div style={{ marginBottom: '4px' }}>Choose file</div>
+                      <div style={{ fontSize: '10px' }}>PDF, Image, or DICOM</div>
+                    </div>
+                  )}
+                </div>
+                {selectedFile && (
+                  <div style={{ fontSize: '11px', color: 'var(--ink-2)', fontFamily: 'var(--mono)', marginTop: '6px' }}>
+                    Selected: {selectedFile.name}
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                padding: '12px',
+                borderRadius: '12px',
+                background: 'color-mix(in oklch, var(--coral) 12%, var(--bg))',
+                border: '1px solid color-mix(in oklch, var(--coral) 30%, transparent)',
+                color: 'var(--coral)',
+                fontSize: '11px',
+                fontFamily: 'var(--mono)',
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Wallet not connected · IPFS upload will work, on-chain anchoring requires wallet
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRecordType('lab');
+                    setRecordTitle('');
+                    setBillAmount('');
+                    setSelectedFile(null);
+                    setUploadStatus('');
+                  }}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--line)',
+                    background: 'var(--bg)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: '11px',
+                    letterSpacing: '.1em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    color: 'var(--ink-2)',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading || !selectedFile}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: (isUploading || !selectedFile) ? 'var(--ink-3)' : 'var(--ink-green)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: '11px',
+                    letterSpacing: '.1em',
+                    textTransform: 'uppercase',
+                    cursor: (isUploading || !selectedFile) ? 'default' : 'pointer',
+                    color: 'white',
+                    opacity: (isUploading || !selectedFile) ? 0.6 : 1,
+                  }}
+                >
+                  {isUploading ? 'Uploading...' : 'Upload Record'}
+                </button>
+              </div>
+
+              {uploadStatus && (
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: uploadStatus.includes('✓') ? 'var(--bg-green)' : 'var(--bg-coral)',
+                  color: uploadStatus.includes('✓') ? 'var(--ink-green)' : 'var(--coral)',
+                  fontSize: '12px',
+                  fontFamily: 'var(--mono)',
+                  textAlign: 'center',
+                }}>
+                  {uploadStatus}
+                </div>
+              )}
+            </form>
           </div>
+
           <div className="card">
-            <div className="head"><h3>Pending Outgoing</h3></div>
-            <div className="audit">
-              <div className="audit-item"><span className="pin" data-c="coral" /><div className="body"><div className="t">Priya Rajan · FULL CHART · 12H</div><div className="d">requested 32m ago</div></div></div>
-              <div className="audit-item"><span className="pin" data-c="sky" /><div className="body"><div className="t">Arjun Mehta · PROFILE · 72H</div><div className="d">requested 2h ago</div></div></div>
+            <div className="head">
+              <h3>Uploaded Records</h3>
+              <div className="sub" style={{ marginTop: '4px' }}>All medical records by record type</div>
             </div>
+            <table className="tbl" style={{ fontSize: '11px' }}>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th>Patient</th>
+                  <th>Date</th>
+                  <th>Size</th>
+                  <th>IPFS Hash</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.filter(r => r.uploadedBy === 'Dr. Hanwa, K.').slice(0, 10).map((rec) => (
+                  <tr key={rec.id}>
+                    <td><span className="pill-s active">{rec.type}</span></td>
+                    <td style={{ color: 'var(--ink)' }}>{rec.title}</td>
+                    <td style={{ color: 'var(--ink-2)' }}>Ishaan Kapoor</td>
+                    <td style={{ color: 'var(--ink-2)' }}>{rec.date}</td>
+                    <td style={{ color: 'var(--ink-3)' }}>{rec.size}</td>
+                    <td style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', fontSize: '9px' }}>
+                      {rec.ipfsHash.slice(0, 6)}…{rec.ipfsHash.slice(-6)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === 'requests') {
+      const handleRequestSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const patient = patients.find(p => p.id === reqPatientId) ?? patients[0];
+        addAccessRequest({
+          fromDoctor: 'Dr. Hanwa, K.',
+          fromDoctorAvatar: 'KH',
+          fromDoctorColor: 'coral',
+          targetPatientId: patient.id,
+          targetPatientShortId: patient.shortId,
+          scope: reqScope.replace('_', ' '),
+          purpose: reqPurpose || 'Requesting access for ongoing care coordination.',
+          submittedAt: new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          status: 'pending',
+        });
+        setReqSubmitStatus('✓ Request sent — waiting for patient approval');
+        setReqPurpose('');
+        setTimeout(() => setReqSubmitStatus(''), 3000);
+      };
+
+      return (
+        <div style={{ maxWidth: '520px' }}>
+          <div className="card">
+            <div className="head">
+              <div>
+                <h3>Submit a new request</h3>
+                <div className="sub" style={{ marginTop: '4px' }}>SEND ACCESS REQUEST · CARE COORDINATION</div>
+              </div>
+            </div>
+            <form onSubmit={handleRequestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="field">
+                <label>Target Patient</label>
+                <select value={reqPatientId} onChange={e => setReqPatientId(e.target.value)} className="field">
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>{p.shortId} — {p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label>Scope</label>
+                <select value={reqScope} onChange={e => setReqScope(e.target.value)} className="field">
+                  <option value="LAB_RESULTS">LAB_RESULTS</option>
+                  <option value="IMAGING">IMAGING</option>
+                  <option value="FULL_CHART">FULL_CHART</option>
+                  <option value="PROFILE_READ">PROFILE_READ</option>
+                  <option value="DISCHARGE_SUMMARY">DISCHARGE_SUMMARY</option>
+                  <option value="RX_VIEW">RX_VIEW</option>
+                </select>
+              </div>
+              <div className="field">
+                <label>Purpose / Reason</label>
+                <textarea
+                  value={reqPurpose}
+                  onChange={e => setReqPurpose(e.target.value)}
+                  placeholder="Requesting access for ongoing care coordination."
+                  rows={3}
+                  className="field"
+                  style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '13px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '10px 22px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'var(--ink-green)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: '11px',
+                    letterSpacing: '.12em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    color: 'white',
+                  }}
+                >
+                  Submit
+                </button>
+              </div>
+              {reqSubmitStatus && (
+                <div style={{ padding: '10px 14px', borderRadius: '12px', background: 'var(--bg-green)', color: 'var(--ink-green)', fontSize: '12px', fontFamily: 'var(--mono)', textAlign: 'center' }}>
+                  {reqSubmitStatus}
+                </div>
+              )}
+            </form>
           </div>
         </div>
       );
@@ -302,6 +683,10 @@ export default function DoctorDashboardPage() {
             <div className={`navitem ${activeNav === 'records' ? 'active' : ''}`} onClick={() => setActiveNav('records')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4" /></svg>
               Accessible Records
+            </div>
+            <div className={`navitem ${activeNav === 'upload' ? 'active' : ''}`} onClick={() => setActiveNav('upload')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 5v14M5 12h14" /></svg>
+              Upload Prescription
             </div>
             <div className={`navitem ${activeNav === 'requests' ? 'active' : ''}`} onClick={() => setActiveNav('requests')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 5v14M5 12h14" /></svg>

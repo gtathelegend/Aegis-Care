@@ -46,7 +46,7 @@ const LoginScreen = () => {
            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-teal-500 rounded-2xl flex items-center justify-center text-white shadow-lg mb-4 hover:scale-105 transition-transform">
                <ShieldCheck size={28} />
            </div>
-           <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">Ojasraksha</h1>
+           <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">Aegis</h1>
            <p className="text-gray-500 text-sm font-medium">Securing DPDP Health Corridors</p>
         </div>
 

@@ -1,16 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useNavigate } from 'react-router-dom'
 import ConnectWallet from '../components/ConnectWallet'
+import RoleSelectionModal from '../components/RoleSelectionModal'
 import LandingEffects from '../components/LandingEffects'
 import { useRole } from '../hooks/useRole'
 import '../styles/landing.css'
 
 export default function Landing() {
   const { activeAddress } = useWallet()
-  const { shortId, loading } = useRole()
+  const { shortId, loading, roles } = useRole()
   const navigate = useNavigate()
   const [walletModalOpen, setWalletModalOpen] = useState(false)
+  const [roleModalOpen, setRoleModalOpen] = useState(false)
+  const [prevAddress, setPrevAddress] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (activeAddress && !prevAddress) {
+      setPrevAddress(activeAddress)
+      setWalletModalOpen(false)
+      setRoleModalOpen(true)
+    } else if (!activeAddress && prevAddress) {
+      setPrevAddress(null)
+      setRoleModalOpen(false)
+    }
+  }, [activeAddress, prevAddress])
 
   const openWallet = (e?: React.MouseEvent) => {
     e?.preventDefault()
@@ -56,10 +70,6 @@ export default function Landing() {
               <a href="#roles">Portals</a>
             </div>
             <div className="navactions">
-              <a href="/admin" onClick={goto('/admin')} className="cta">Admin</a>
-              <a href="https://perawallet.app/" target="_blank" rel="noreferrer" className="cta" style={{ textDecoration: 'none' }}>
-                Add Pera Wallet
-              </a>
               <a href="#connect" onClick={openWallet} className="cta lime" data-magnetic>
                 <span className="dot"></span>{activeAddress ? 'Wallet connected' : 'Connect wallet'}
               </a>
@@ -69,61 +79,32 @@ export default function Landing() {
 
         {/* HERO */}
         <section className="hero">
-          <div className="hero-tag" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/>
-              <path d="m9 12 2 2 4-4"/>
-            </svg>
-            <div>
-              <div className="t">Audit · Live</div>
-              <div className="v">1,284 signed today</div>
-            </div>
-          </div>
-          <div className="hero-tag-2" aria-hidden="true">
-            <div>
-              <div className="t">Median settle</div>
-              <div className="v">3.3 seconds</div>
-            </div>
-          </div>
-
           <div className="wrap" style={{ position: 'relative', zIndex: 2 }}>
-            <div className="eyebrow reveal d1" style={{ marginBottom: '40px' }}>
+            <div className="eyebrow reveal d1" style={{ marginBottom: '28px' }}>
               <span className="pulse"></span>
               <span className="mono">Sovereign Medical Data · DPDP · HIPAA · GDPR</span>
             </div>
-            <h1>
-              <span className="words" data-words>
-                <span className="w"><i>Your body.</i></span>
-                <span className="w"><i>Your records.</i></span>
-              </span><br/>
-              <em>
-                <span className="words" data-words>
-                  <span className="w"><i>Your&nbsp;keys.</i></span>
-                </span>
-              </em>
-            </h1>
+            
+            <div className="hero-content">
+              <h1 className="hero-headline">
+                <span className="line">Your body.</span>
+                <span className="line">Your records.</span>
+                <span className="line highlight">Your keys.</span>
+              </h1>
 
-            <div className="lede-row">
-              <p className="lede reveal d3">
-                Aegis-Care is a consent protocol for healthcare. Patients hold the keys to their records.
-                Hospitals, labs and insurers request time-scoped access — every touch is logged to an
-                immutable chain.
+              <p className="lede reveal d3" style={{ maxWidth: '600px', marginTop: '28px' }}>
+                Aegis-Care is a consent protocol for healthcare. Patients hold the
+                keys to their records. Hospitals, labs and insurers request time-
+                scoped access — every touch is logged to an immutable chain.
               </p>
-              <div className="ctas reveal d4">
+              
+              <div className="ctas reveal d4" style={{ marginTop: '28px', gap: '12px' }}>
                 <a href="#connect" onClick={openWallet} className="cta lime" data-magnetic>
                   {activeAddress ? 'Switch wallet' : 'Connect wallet'}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M13 5l7 7-7 7"/>
                   </svg>
                 </a>
-                <a href="https://perawallet.app/" target="_blank" rel="noreferrer" className="cta">
-                  Add Pera Wallet
-                </a>
-                {activeAddress && !loading && (
-                  <a href="/patient" onClick={goto('/patient')} className="cta">
-                    Enter patient portal
-                  </a>
-                )}
                 <a href="/beneficiary-login" onClick={goto('/beneficiary-login')} className="cta">Beneficiary login</a>
               </div>
             </div>
@@ -723,7 +704,6 @@ export default function Landing() {
                   <path d="M5 12h14M13 5l7 7-7 7"/>
                 </svg>
               </a>
-              <a href="/admin" onClick={goto('/admin')} className="cta">Institutional access</a>
             </div>
           </div>
         </section>
@@ -765,7 +745,7 @@ export default function Landing() {
               <div>
                 <h5>Contact</h5>
                 <ul>
-                  <li><a href="mailto:hello@aegis-care.io">hello@aegis-care.io</a></li>
+                  <li><a href="mailto:hello@Aegis-care.io">hello@Aegis-care.io</a></li>
                   <li><a href="#">Status</a></li>
                   <li><a href="#">Security</a></li>
                 </ul>
@@ -784,6 +764,7 @@ export default function Landing() {
       </div>
 
       <ConnectWallet openModal={walletModalOpen} closeModal={() => setWalletModalOpen(false)} />
+      <RoleSelectionModal isOpen={roleModalOpen} onClose={() => setRoleModalOpen(false)} />
     </>
   )
 }

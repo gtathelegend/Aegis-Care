@@ -720,7 +720,7 @@ export default function LandingPage() {
               <div>
                 <h5>Contact</h5>
                 <ul>
-                  <li><a href="mailto:hello@aegis-care.io">hello@aegis-care.io</a></li>
+                  <li><a href="mailto:hello@Aegis-care.io">hello@Aegis-care.io</a></li>
                   <li><a href="#">Status</a></li>
                   <li><a href="#">Security</a></li>
                 </ul>

@@ -55,7 +55,7 @@ cd Aegis-Care
 Go to the contracts project and point Poetry to your local Python 3.12 executable:
 
 ```powershell
-cd projects/aegis-contracts
+cd projects/Aegis-contracts
 poetry env use "<absolute-path-to-python-3.12.exe>"
 ```
 
@@ -100,7 +100,7 @@ algokit localnet status
 Generate contract artifacts and TypeScript clients:
 
 ```powershell
-cd projects/aegis-contracts
+cd projects/Aegis-contracts
 algokit project run build
 ```
 
@@ -114,8 +114,8 @@ algokit project deploy localnet
 
 After deployment, record the app IDs printed in the output and update these files if they change:
 
-- [projects/aegis-frontend/.env](projects/aegis-frontend/.env)
-- [projects/aegis-contracts/.env](projects/aegis-contracts/.env)
+- [projects/Aegis-frontend/.env](projects/Aegis-frontend/.env)
+- [projects/Aegis-contracts/.env](projects/Aegis-contracts/.env)
 
 On a new PC or a reset LocalNet, the app IDs will be different from any other machine.
 
@@ -124,7 +124,7 @@ On a new PC or a reset LocalNet, the app IDs will be different from any other ma
 Start the frontend dev server:
 
 ```powershell
-cd ../aegis-frontend
+cd ../Aegis-frontend
 npm run dev
 ```
 
@@ -137,17 +137,17 @@ If you want the complete copy-paste sequence, use this order:
 ```powershell
 git clone <repo-url>
 cd Aegis-Care
-cd projects/aegis-contracts
+cd projects/Aegis-contracts
 poetry env use "<absolute-path-to-python-3.12.exe>"
 poetry run python --version
 cd ..
 algokit project bootstrap all
 algokit localnet start
 algokit localnet status
-cd projects/aegis-contracts
+cd projects/Aegis-contracts
 algokit project run build
 algokit project deploy localnet
-cd ../aegis-frontend
+cd ../Aegis-frontend
 npm run dev
 ```
 
@@ -159,11 +159,11 @@ For normal development after the first setup:
 
 ```powershell
 algokit localnet start
-cd projects/aegis-frontend
+cd projects/Aegis-frontend
 npm run dev
 ```
 
-Only rerun build and deploy when you change files under `projects/aegis-contracts/smart_contracts/*/contract.py`.
+Only rerun build and deploy when you change files under `projects/Aegis-contracts/smart_contracts/*/contract.py`.
 
 ## Useful maintenance commands
 

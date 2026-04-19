@@ -592,7 +592,7 @@ export default function DashboardPage() {
                 <div className="sid" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ background: '#fff', borderRadius: '16px', padding: '12px', border: '1px solid var(--line)' }}>
                     <QRCodeSVG
-                      value={`aegis://patient/${patient.shortId}`}
+                      value={`Aegis://patient/${patient.shortId}`}
                       size={148}
                       bgColor="#ffffff"
                       fgColor="#0a1514"

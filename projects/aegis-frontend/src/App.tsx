@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { SupportedWallet, WalletId, WalletManager, WalletProvider } from '@txnlab/use-wallet-react'
 import { SnackbarProvider } from 'notistack'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -14,6 +15,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import DashboardShell from './components/DashboardShell'
 import { useRole } from './hooks/useRole'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
+import { initializeAccessRequestMockData } from './lib/realtimeAccessRequests'
 import './styles/App.css'
 
 
@@ -76,6 +78,10 @@ const walletManager = new WalletManager({
 })
 
 export default function App() {
+  useEffect(() => {
+    initializeAccessRequestMockData()
+  }, [])
+
   return (
     <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
       <WalletProvider manager={walletManager}>

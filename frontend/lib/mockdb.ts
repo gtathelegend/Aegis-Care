@@ -75,6 +75,28 @@ export interface InboundRequest {
   requestedAt: string;
 }
 
+export interface PrescriptionQueueItem {
+  id: string;
+  patientId: string;
+  patientName: string;
+  medication: string;
+  dosage: string;
+  instructions: string;
+  prescribedBy: string;
+  prescribedAt: string;
+  cid: string;
+  status: 'pending' | 'dispensed';
+  fileName?: string;
+}
+
+export interface Provider {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  color: string;
+}
+
 // ─── Patients ────────────────────────────────────────────────────────────────
 export const patients: Patient[] = [
   { id: 'p1', name: 'Ishaan Kapoor', shortId: '847KOR', walletAddress: '0xA1B2C3D4E5F6a1b2c3d4e5f6A1B2C3D4E5F6A1B2', dob: '14 Mar 1994', bloodGroup: 'O+', allergies: ['Penicillin', 'Latex'], since: 'Mar 2026', avatar: 'IK', avatarColor: 'lime' },
@@ -168,3 +190,117 @@ export const recordTypeIcon: Record<RecordType, string> = {
   vaccination: 'M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M16.24 16.24l2.83 2.83 M2 12h4 M18 12h4',
   vitals: 'M3 12h4l3-9 4 18 3-9h4',
 };
+
+// ─── Mutable State (for adding records at runtime) ────────────────────────────
+let mutableRecords: MedicalRecord[] = [...medicalRecords];
+let mutableConsents: Consent[] = [...consents];
+let prescriptionQueue: PrescriptionQueueItem[] = [];
+let auditEntries: AuditEntry[] = [...auditLog];
+
+// ─── Providers List ────────────────────────────────────────────────────────────
+const providersList: Provider[] = [
+  { id: 'dr1', name: 'Dr. Hanwa, K.', role: 'Clinician', avatar: 'KH', color: 'coral' },
+  { id: 'dr2', name: 'Dr. Seth, A.', role: 'Radiologist', avatar: 'SA', color: 'sky' },
+  { id: 'dr3', name: 'Dr. Patel, S.', role: 'Surgeon', avatar: 'SP', color: 'violet' },
+  { id: 'hosp1', name: 'Helix Hospital', role: 'Institutional', avatar: 'HX', color: 'lime' },
+  { id: 'lab1', name: 'Meridian Labs', role: 'Diagnostics', avatar: 'ML', color: 'sky' },
+  { id: 'pharm1', name: 'Nil Pharmacy', role: 'Dispensary', avatar: 'NP', color: 'sun' },
+];
+
+// ─── Helper Functions ──────────────────────────────────────────────────────────
+export function getMutableRecords(): MedicalRecord[] {
+  return mutableRecords;
+}
+
+export function getMutableConsents(): Consent[] {
+  return mutableConsents;
+}
+
+export function getProviders(): Provider[] {
+  return providersList;
+}
+
+export function getPrescriptionQueue(): PrescriptionQueueItem[] {
+  return prescriptionQueue;
+}
+
+export function addRecord(record: Omit<MedicalRecord, 'id'>): MedicalRecord {
+  const id = `r${Date.now()}`;
+  const newRecord: MedicalRecord = { id, ...record };
+  mutableRecords = [newRecord, ...mutableRecords];
+  return newRecord;
+}
+
+export function addConsent(consent: Omit<Consent, 'id'>): Consent {
+  const id = `c${Date.now()}`;
+  const newConsent: Consent = { id, ...consent };
+  mutableConsents = [newConsent, ...mutableConsents];
+  return newConsent;
+}
+
+export function addPrescription(item: Omit<PrescriptionQueueItem, 'id'>): PrescriptionQueueItem {
+  const id = `px${Date.now()}`;
+  const newItem: PrescriptionQueueItem = { id, ...item };
+  prescriptionQueue = [newItem, ...prescriptionQueue];
+  return newItem;
+}
+
+export function markPrescriptionDispensed(id: string): void {
+  const idx = prescriptionQueue.findIndex(p => p.id === id);
+  if (idx >= 0) {
+    prescriptionQueue[idx] = { ...prescriptionQueue[idx], status: 'dispensed' };
+  }
+}
+
+export function addAuditEntry(entry: Omit<AuditEntry, 'id'>): AuditEntry {
+  const id = `a${Date.now()}`;
+  const newEntry: AuditEntry = { id, ...entry };
+  auditEntries = [newEntry, ...auditEntries];
+  return newEntry;
+}
+
+export function getRecordsByPatientMutable(patientId: string): MedicalRecord[] {
+  return mutableRecords.filter((r) => r.patientId === patientId);
+}
+
+// ─── Access Requests (doctor → patient) ──────────────────────────────────────
+export interface AccessRequest {
+  id: string;
+  fromDoctor: string;
+  fromDoctorAvatar: string;
+  fromDoctorColor: string;
+  targetPatientId: string;
+  targetPatientShortId: string;
+  scope: string;
+  purpose: string;
+  submittedAt: string;
+  status: 'pending' | 'approved' | 'denied';
+}
+
+let accessRequests: AccessRequest[] = [
+  { id: 'ar1', fromDoctor: 'Meridian Labs', fromDoctorAvatar: 'ML', fromDoctorColor: 'sky', targetPatientId: 'p1', targetPatientShortId: '847KOR', scope: 'PROFILE READ · 72H', purpose: 'Pre-operative blood work screening required for scheduled procedure.', submittedAt: '18 Apr 2026, 11:55', status: 'pending' },
+  { id: 'ar2', fromDoctor: 'Dr. Hanwa, K.', fromDoctorAvatar: 'KH', fromDoctorColor: 'coral', targetPatientId: 'p1', targetPatientShortId: '847KOR', scope: 'IMAGING REVIEW · 1H', purpose: 'Emergency follow-up consultation — reviewing complete history for medication adjustment.', submittedAt: '18 Apr 2026, 13:40', status: 'pending' },
+  { id: 'ar3', fromDoctor: 'Helix Hospital', fromDoctorAvatar: 'HX', fromDoctorColor: 'lime', targetPatientId: 'p1', targetPatientShortId: '847KOR', scope: 'DISCHARGE SUMMARY · 6H', purpose: 'Transfer to home-care — discharge summary required.', submittedAt: '17 Apr 2026, 10:00', status: 'pending' },
+];
+
+export function getAccessRequests(): AccessRequest[] {
+  return accessRequests;
+}
+
+export function getPendingAccessRequestsByPatient(patientId: string): AccessRequest[] {
+  return accessRequests.filter(r => r.targetPatientId === patientId && r.status === 'pending');
+}
+
+export function addAccessRequest(req: Omit<AccessRequest, 'id'>): AccessRequest {
+  const id = `ar${Date.now()}`;
+  const newReq: AccessRequest = { id, ...req };
+  accessRequests = [newReq, ...accessRequests];
+  return newReq;
+}
+
+export function updateAccessRequestStatus(id: string, status: 'approved' | 'denied'): void {
+  const idx = accessRequests.findIndex(r => r.id === id);
+  if (idx >= 0) {
+    accessRequests[idx] = { ...accessRequests[idx], status };
+  }
+}

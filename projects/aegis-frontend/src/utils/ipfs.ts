@@ -108,7 +108,7 @@ async function unbundleEncryptedFile(
 export async function uploadEncryptedFile(
   encryptedBlob: Blob,
   metadata: EncryptionMetadata,
-  name = 'Ojasraksha_EncryptedReport'
+  name = 'Aegis_EncryptedReport'
 ): Promise<string> {
   if (!PINATA_JWT) {
     throw new Error('IPFS_CONFIG_ERROR: Pinata JWT is not configured. Check VITE_PINATA_JWT in .env')
@@ -184,7 +184,7 @@ export async function fetchEncryptedFile(
  * Uploads a text string to IPFS via Pinata.
  * Returns the IPFS CID (Content Identifier).
  */
-export async function uploadToIPFS(content: string, name = 'Ojasraksha_Record'): Promise<string> {
+export async function uploadToIPFS(content: string, name = 'Aegis_Record'): Promise<string> {
   if (!PINATA_JWT) {
     throw new Error('Pinata JWT is not configured in the environment.')
   }

@@ -1,4 +1,6 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import '../styles/dashboard.css';
 import QRModal from '../components/QRModal';
 import RecordSlider from '../components/RecordSlider';
@@ -7,18 +9,30 @@ import type { MedicalRecord } from '../lib/mockdb';
 import { useWallet } from '@txnlab/use-wallet-react';
 import { useRole } from '../hooks/useRole';
 import { fetchPatientRecords } from '../lib/medicalPortalData';
+import { useMedicalRecords } from '../hooks/useMedicalRecords';
+import {
+  subscribeToSharedAccessRequests,
+  type SharedAccessRequest,
+} from '../lib/realtimeAccessRequests';
+import { useAccessRequests } from '../hooks/useAccessRequests';
 
 const DEFAULT_PATIENT = getPatientById('p1');
 
 export default function PatientPortal() {
-  const { activeAddress } = useWallet();
-  const { shortId, isProxyActive, proxyAddress, proxyShortId } = useRole();
+  const { activeAddress, wallets } = useWallet();
+  const navigate = useNavigate();
+  const { shortId, isProxyActive, proxyAddress, proxyShortId, disableProxy } = useRole();
+  const { approveRequest, rejectRequest } = useAccessRequests();
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('all');
   const [qrRecord, setQrRecord] = useState<MedicalRecord | null>(null);
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [liveRecords, setLiveRecords] = useState<MedicalRecord[]>(medicalRecords.filter((record) => record.patientId === DEFAULT_PATIENT.id));
+  const [sharedRequests, setSharedRequests] = useState<SharedAccessRequest[]>([]);
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const [settleTime, setSettleTime] = useState<number | null>(null);
+  const fetchStartRef = useRef<number>(0);
 
   const effectiveAddress = isProxyActive && proxyAddress ? proxyAddress : activeAddress;
 
@@ -45,34 +59,51 @@ export default function PatientPortal() {
     };
   }, [effectiveAddress, isProxyActive, proxyShortId, shortId]);
 
+  // Use hook to fetch patient's medical records from blockchain
+  const { allRecords: blockchainRecords, loading: recordsLoading, error: recordsError, refetch: refetchRecords } = useMedicalRecords(effectiveAddress, patient);
+
+  // Track blockchain fetch timing for settle time metric
+  useEffect(() => {
+    if (recordsLoading) {
+      fetchStartRef.current = Date.now();
+    } else if (fetchStartRef.current > 0) {
+      const elapsed = (Date.now() - fetchStartRef.current) / 1000;
+      setSettleTime(Math.round(elapsed * 10) / 10);
+      fetchStartRef.current = 0;
+    }
+  }, [recordsLoading]);
+
+  // Prioritize blockchain data; only use mock if loading or blockchain has data
   useEffect(() => {
     let cancelled = false;
 
-    const syncRecords = async () => {
-      if (!effectiveAddress) {
-        if (!cancelled) {
-          setLiveRecords(medicalRecords.filter((record) => record.patientId === DEFAULT_PATIENT.id));
-        }
-        return;
-      }
+    if (recordsLoading) {
+      // Still loading from blockchain
+      return;
+    }
 
-      try {
-        const result = await fetchPatientRecords(effectiveAddress);
-        if (!cancelled) {
-          setLiveRecords(result.records.length > 0 ? result.records : medicalRecords.filter((record) => record.patientId === result.patient.id));
-        }
-      } catch {
-        if (!cancelled) {
-          setLiveRecords(medicalRecords.filter((record) => record.patientId === patient.id));
-        }
+    // If blockchain returned records (even if empty array), use them
+    if (blockchainRecords && blockchainRecords.length > 0) {
+      if (!cancelled) {
+        setLiveRecords(blockchainRecords);
       }
-    };
+      return;
+    }
 
-    syncRecords();
-    return () => {
-      cancelled = true;
-    };
-  }, [effectiveAddress, patient.id]);
+    // If blockchain is empty but we have an address, don't fall back yet
+    // Just show empty state with option to refresh
+    if (effectiveAddress) {
+      if (!cancelled) {
+        setLiveRecords([]); // Show empty state, not mock data
+      }
+      return;
+    }
+
+    // No wallet connected - show mock data as default
+    if (!cancelled) {
+      setLiveRecords(medicalRecords.filter((record) => record.patientId === DEFAULT_PATIENT.id));
+    }
+  }, [effectiveAddress, blockchainRecords, recordsLoading]);
 
   const patientRecords = useMemo(() => {
     return liveRecords.length > 0 ? liveRecords : medicalRecords.filter((record) => record.patientId === patient.id);
@@ -82,8 +113,42 @@ export default function PatientPortal() {
     return consents.filter((consent) => consent.patientId === patient.id);
   }, [patient.id]);
 
-  const activeConsentCount = patientConsents.filter((consent) => consent.status === 'active').length;
+  const patientInboundRequests = useMemo(() => {
+    return sharedRequests.filter((request) => request.patientId === patient.id);
+  }, [patient.id, sharedRequests]);
+
+  const pendingInboundCount = useMemo(
+    () => patientInboundRequests.filter((request) => request.status === 'pending').length,
+    [patientInboundRequests]
+  );
+
+  // Active consents = approved access requests (real cross-tab data) + mock active consents
+  const approvedRequestCount = useMemo(
+    () => patientInboundRequests.filter((r) => r.status === 'approved').length,
+    [patientInboundRequests]
+  );
+  const activeConsentCount = patientConsents.filter((c) => c.status === 'active').length + approvedRequestCount;
   const pendingConsentCount = patientConsents.filter((consent) => consent.status === 'pending').length;
+
+  // Records delta: how many records added in last 7 days
+  const recentRecordCount = useMemo(() => {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return patientRecords.filter((r) => {
+      const ts = typeof r.blockHeight === 'number' ? r.blockHeight * 1000 : 0;
+      return ts > cutoff;
+    }).length;
+  }, [patientRecords]);
+
+  // Silent reads = access requests approved by patient that were later accessed
+  const silentReadCount = useMemo(
+    () => patientInboundRequests.filter((r) => r.status === 'approved' && r.urgency !== 'emergency').length,
+    [patientInboundRequests]
+  );
+
+  useEffect(() => {
+    const unsubscribe = subscribeToSharedAccessRequests(setSharedRequests);
+    return unsubscribe;
+  }, []);
 
   const openSlider = useCallback((index: number) => {
     setSliderIndex(index);
@@ -93,6 +158,40 @@ export default function PatientPortal() {
   const openQR = useCallback((record: MedicalRecord) => {
     setQrRecord(record);
   }, []);
+
+  const handleLogout = useCallback(async () => {
+    setShowLogoutMenu(false);
+
+    try {
+      // Disconnect all wallets
+      if (wallets && wallets.length > 0) {
+        wallets.forEach(w => w.disconnect());
+      }
+
+      // Disable proxy if active
+      if (isProxyActive) {
+        disableProxy();
+      }
+
+      // Clear any local storage related to wallet/session
+      if (typeof window !== 'undefined') {
+        // Clear wallet-related session data
+        sessionStorage.removeItem('Aegis_proxy_addr');
+        sessionStorage.removeItem('Aegis_proxy_id');
+        localStorage.removeItem('Aegis-doctor-consent-statuses');
+        localStorage.removeItem('Aegis-doctor-request-queue');
+      }
+
+      // Navigate with a slight delay and force page reload
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 200);
+    } catch (err) {
+      console.error('[PatientPortal] Logout error:', err);
+      // Force redirect even if disconnect fails
+      window.location.replace('/');
+    }
+  }, [wallets, isProxyActive, disableProxy]);
 
   const navLabels: Record<string, string> = {
     overview: 'Overview',
@@ -434,10 +533,33 @@ export default function PatientPortal() {
         <main>
           <div className="topbar">
             <div>
-              <div className="crumb">Patient · {currentNavLabel}</div>
+              <div className="crumb">
+                Patient · {currentNavLabel}
+                {recordsLoading && (
+                  <span style={{ marginLeft: '12px', fontSize: '11px', color: 'var(--ink-3)' }}>
+                    ⟳ Loading blockchain data...
+                  </span>
+                )}
+                {effectiveAddress && !recordsLoading && blockchainRecords.length > 0 && (
+                  <span style={{ marginLeft: '12px', fontSize: '11px', color: 'var(--ink-green)' }}>
+                    ✓ Blockchain data
+                  </span>
+                )}
+                {recordsError && !recordsLoading && (
+                  <span style={{ marginLeft: '12px', fontSize: '11px', color: 'var(--ink-coral)' }}>
+                    ⚠ {recordsError}
+                  </span>
+                )}
+              </div>
               <h1>
                 Good evening, <em style={{ fontStyle: 'italic', color: 'var(--ink-green)' }}>{patient.name.split(' ')[0]}</em>.
               </h1>
+              {effectiveAddress && blockchainRecords.length === 0 && !recordsLoading && (
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: 'var(--ink-2)' }}>
+                  No medical records found for wallet {effectiveAddress.slice(0, 6)}...{effectiveAddress.slice(-4)}
+                  {recordsLoading === false && <> · <button onClick={refetchRecords} style={{ background: 'none', border: 'none', color: 'var(--ink-green)', cursor: 'pointer', textDecoration: 'underline' }}>Refresh</button></>}
+                </p>
+              )}
             </div>
             <div className="search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -455,19 +577,61 @@ export default function PatientPortal() {
                 {patient.shortId}
                 <span className="tag">Verified</span>
               </span>
-              <button className="iconbtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" />
-                  <path d="M10 21a2 2 0 0 0 4 0" />
-                </svg>
-                <span className="pip" />
-              </button>
-              <button className="iconbtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M20 7 9 18l-5-5" />
-                </svg>
-              </button>
-              <div className="avatar">I</div>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="avatar"
+                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                  style={{ cursor: 'pointer', fontWeight: 600 }}
+                  title="Click to logout"
+                >
+                  {patient.name.split(' ')[0].charAt(0)}
+                </button>
+                {showLogoutMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '8px',
+                      background: 'var(--bg-2)',
+                      border: '1px solid var(--line)',
+                      borderRadius: '8px',
+                      minWidth: '160px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      zIndex: 1000,
+                    }}
+                  >
+                    <div style={{ padding: '8px 0' }}>
+                      <div style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--ink-2)' }}>
+                        {effectiveAddress?.slice(0, 10)}...
+                      </div>
+                      <hr style={{ margin: '6px 0', borderColor: 'var(--line)' }} />
+                      <button
+                        onClick={handleLogout}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          color: 'var(--ink)',
+                          textAlign: 'left',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--bg)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        🚪 Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -503,16 +667,23 @@ export default function PatientPortal() {
                   <span className="tag">Verified</span>
                 </div>
                 <div className="sid">
-                  847<em>KOR</em>
+                  {patient.shortId.slice(0, -3)}<em>{patient.shortId.slice(-3)}</em>
                 </div>
                 <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{ background: '#fff', padding: '10px', borderRadius: '12px', border: '1px solid var(--line)', width: '76px', height: '76px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: 'var(--ink-3)' }}>
-                    QR Code
+                  <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid var(--line)', overflow: 'hidden' }}>
+                    <QRCodeSVG
+                      value={`Aegis://patient/${patient.shortId}`}
+                      size={140}
+                      bgColor="#ffffff"
+                      fgColor="#0a1514"
+                      level="M"
+                      includeMargin={false}
+                    />
                   </div>
                 </div>
                 <div className="meta">
                   <span>Chain · <em>Algorand</em></span>
-                  <span>Since <em>Mar 2026</em></span>
+                  <span>Since <em>{patient.since}</em></span>
                 </div>
               </div>
             </div>
@@ -525,7 +696,7 @@ export default function PatientPortal() {
                       <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" />
                     </svg>
                   </div>
-                  <span className="delta">+2 this week</span>
+                  <span className="delta">{approvedRequestCount > 0 ? `+${approvedRequestCount} approved` : 'no new'}</span>
                 </div>
                 <b>{activeConsentCount}</b>
                 <span className="lbl">Active consents</span>
@@ -541,9 +712,9 @@ export default function PatientPortal() {
                       <path d="M14 3v4h4" />
                     </svg>
                   </div>
-                  <span className="delta">+1 new</span>
+                  <span className="delta">{recordsLoading ? 'syncing…' : recentRecordCount > 0 ? `+${recentRecordCount} this week` : 'up to date'}</span>
                 </div>
-                <b>{patientRecords.length}</b>
+                <b>{recordsLoading ? '…' : patientRecords.length}</b>
                 <span className="lbl">Records on chain</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none">
                   <path d="M0 22 L20 20 L40 18 L60 16 L80 14 L100 12 L120 8 L140 6" stroke="var(--ink-green)" strokeWidth="1.5" />
@@ -557,9 +728,9 @@ export default function PatientPortal() {
                       <path d="M7 14l4-4 3 3 5-6" />
                     </svg>
                   </div>
-                  <span className="delta">all clean</span>
+                  <span className="delta">{silentReadCount === 0 ? 'all clean' : `${silentReadCount} access`}</span>
                 </div>
-                <b>0</b>
+                <b>{silentReadCount}</b>
                 <span className="lbl">Silent reads</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none">
                   <path d="M0 24 L140 24" stroke="var(--ink-green)" strokeWidth="1.5" />
@@ -573,9 +744,9 @@ export default function PatientPortal() {
                       <path d="M12 7v5l3 3" />
                     </svg>
                   </div>
-                  <span className="delta">median</span>
+                  <span className="delta">{settleTime !== null ? 'last fetch' : 'median'}</span>
                 </div>
-                <b>3.3<em>s</em></b>
+                <b>{settleTime !== null ? <>{settleTime}<em>s</em></> : recordsLoading ? '…' : '—'}</b>
                 <span className="lbl">Settle time</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none">
                   <path d="M0 10 L20 14 L40 8 L60 12 L80 6 L100 10 L120 4 L140 8" stroke="var(--ink-green)" strokeWidth="1.5" />
@@ -788,49 +959,39 @@ export default function PatientPortal() {
                 <div className="head">
                   <div>
                     <h3>Inbound requests</h3>
-                    <div className="sub" style={{ marginTop: '4px' }}>1 new · review and sign</div>
+                    <div className="sub" style={{ marginTop: '4px' }}>{pendingInboundCount} new · review and sign</div>
                   </div>
                 </div>
                 <div className="requests">
-                  <div className="req">
-                    <div className="av" data-c="sky">LB</div>
-                    <div className="body">
-                      <div className="t">
-                        Meridian Labs · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>Profile read</em>
+                  {patientInboundRequests.length > 0 ? patientInboundRequests.map((request) => (
+                    <div className="req" key={request.id}>
+                      <div className="av" data-c={request.requestedByColor}>{request.requestedByAvatar}</div>
+                      <div className="body">
+                        <div className="t">
+                          {request.requestedBy} · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>{request.scope}</em>
+                        </div>
+                        <div className="d">{request.urgency.toUpperCase()} · {request.reason}</div>
                       </div>
-                      <div className="d">72H · Annual physical cross-ref</div>
-                    </div>
-                    <div className="acts">
-                      <button className="approve">Approve</button>
-                      <button className="deny">Deny</button>
-                    </div>
-                  </div>
-                  <div className="req">
-                    <div className="av" data-c="coral">DR</div>
-                    <div className="body">
-                      <div className="t">
-                        Dr. Avani S. · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>Imaging review</em>
+                      <div className="acts">
+                        {request.status === 'pending' ? (
+                          <>
+                            <button className="approve" onClick={() => approveRequest(request.id, patient.walletAddress, request.blockchainRequestId)}>Approve</button>
+                            <button className="deny" onClick={() => rejectRequest(request.id, patient.walletAddress, request.blockchainRequestId)}>Deny</button>
+                          </>
+                        ) : (
+                          <button className={request.status === 'approved' ? 'approve' : 'deny'}>{request.status}</button>
+                        )}
                       </div>
-                      <div className="d">1H · Second-opinion consult</div>
                     </div>
-                    <div className="acts">
-                      <button className="approve">Approve</button>
-                      <button className="deny">Deny</button>
-                    </div>
-                  </div>
-                  <div className="req">
-                    <div className="av" data-c="lime">HX</div>
-                    <div className="body">
-                      <div className="t">
-                        Helix Hospital · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>Discharge summary</em>
+                  )) : (
+                    <div className="req" style={{ cursor: 'default' }}>
+                      <div className="av" data-c="sky">--</div>
+                      <div className="body">
+                        <div className="t">No inbound requests</div>
+                        <div className="d">New document access requests will appear here in real time.</div>
                       </div>
-                      <div className="d">6H · Transfer to home-care</div>
                     </div>
-                    <div className="acts">
-                      <button className="approve">Approve</button>
-                      <button className="deny">Deny</button>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="head" style={{ paddingTop: '6px', borderTop: '1px solid var(--line)' }}>

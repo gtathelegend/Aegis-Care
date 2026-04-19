@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@txnlab/use-wallet-react';
 import '../styles/dashboard.css';
 import QRModal from '../components/QRModal';
@@ -22,6 +23,15 @@ import { useSnackbar } from 'notistack';
 import { MedicalRecordsClient } from '../contracts/MedicalRecords';
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs';
 import { buildPrescriptionBoxReferences, createPrescriptionCid, fetchAllPatientRecords, findPatientByIdentifier, resolvePatient } from '../lib/medicalPortalData';
+import { useMedicalRecords } from '../hooks/useMedicalRecords';
+import { usePrescriptionUpload } from '../hooks/usePrescriptionUpload';
+import {
+  subscribeToSharedAccessRequests,
+  updateSharedAccessRequestStatus,
+  type AccessRequestStatus,
+  type SharedAccessRequest,
+} from '../lib/realtimeAccessRequests';
+import { useAccessRequests } from '../hooks/useAccessRequests';
 
 type ConsentStatus = 'active' | 'pending' | 'expired';
 type ConsentTab = 'active' | 'pending' | 'expired';
@@ -36,8 +46,7 @@ interface DoctorRequest {
   requestedAt: string;
 }
 
-const consentStorageKey = 'aegis-doctor-consent-statuses';
-const requestStorageKey = 'aegis-doctor-request-queue';
+const consentStorageKey = 'Aegis-doctor-consent-statuses';
 
 const DEFAULT_PATIENT = getPatientById('p1');
 
@@ -62,27 +71,25 @@ const loadConsentStatuses = (fallback: Consent[]) => {
   }
 };
 
-const loadRequests = (fallback: DoctorRequest[]) => {
-  if (typeof window === 'undefined') {
-    return fallback;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(requestStorageKey);
-    if (!raw) {
-      return fallback;
-    }
-
-    return JSON.parse(raw) as DoctorRequest[];
-  } catch {
-    return fallback;
-  }
+const toDoctorRequest = (request: SharedAccessRequest): DoctorRequest => {
+  const patient = patients.find((candidate) => candidate.id === request.patientId) ?? DEFAULT_PATIENT;
+  return {
+    id: request.id,
+    patient,
+    scope: request.scope,
+    reason: request.reason,
+    status: request.status,
+    requestedAt: request.requestedAt,
+  };
 };
 
 export default function DoctorDashboard() {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress, transactionSigner, wallets } = useWallet();
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { submitRequest: submitBlockchainRequest } = useAccessRequests();
   const [activeNav, setActiveNav] = useState('overview');
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<ConsentTab>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [consentStatuses, setConsentStatuses] = useState<Record<string, ConsentStatus>>(() => ({}) as Record<string, ConsentStatus>);
@@ -109,6 +116,9 @@ export default function DoctorDashboard() {
   const medicalAppId = Number(import.meta.env.VITE_MEDICAL_RECORDS_APP_ID || 0);
 
   const patient = DEFAULT_PATIENT;
+
+  // Fetch all patient records for doctor view
+  const { records: fetchedRecords, prescriptions: fetchedPrescriptions, allRecords, loading: recordsLoading, refetch: refetchRecords } = useMedicalRecords(activeAddress, patient);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,7 +147,14 @@ export default function DoctorDashboard() {
 
   useEffect(() => {
     setConsentStatuses(loadConsentStatuses(consents));
-    setRequestQueue(loadRequests([]));
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToSharedAccessRequests((requests) => {
+      setRequestQueue(requests.filter((request) => request.requestedByRole === 'doctor').map(toDoctorRequest));
+    });
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
@@ -147,14 +164,6 @@ export default function DoctorDashboard() {
 
     window.localStorage.setItem(consentStorageKey, JSON.stringify(consentStatuses));
   }, [consentStatuses]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    window.localStorage.setItem(requestStorageKey, JSON.stringify(requestQueue));
-  }, [requestQueue]);
 
   const navLabels: Record<string, string> = {
     overview: 'Overview',
@@ -302,43 +311,49 @@ export default function DoctorDashboard() {
     [consentRows, enqueueSnackbar, patient.name]
   );
 
-  const submitRequest = useCallback(() => {
+  const submitRequest = useCallback(async () => {
     const target = patients.find((candidate) => candidate.shortId === requestPatient || candidate.name === requestPatient);
     if (!target) {
       enqueueSnackbar('Select a valid patient short ID or name.', { variant: 'error' });
       return;
     }
 
-    const nextRequest: DoctorRequest = {
-      id: `req-${Date.now()}`,
-      patient: target,
+    const doctorName = activeAddress
+      ? `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}`
+      : 'Dr. Hanwa, K.';
+
+    const nextRequest = await submitBlockchainRequest({
+      patientId: target.id,
+      patientAddress: target.walletAddress,
+      requestedBy: doctorName,
+      requestedByRole: 'doctor',
+      requestedByAvatar: activeAddress ? activeAddress.slice(0, 2).toUpperCase() : 'KH',
+      requestedByColor: 'coral',
       scope: requestScope,
       reason: requestReason,
-      status: 'pending',
-      requestedAt: new Date().toLocaleString(),
-    };
+      isEmergency: false,
+    });
 
-    setRequestQueue((current) => [nextRequest, ...current]);
+    if (!nextRequest) return;
+
     setActivityFeed((current) => [
       {
         id: `request-${nextRequest.id}`,
         action: 'REQUEST',
-        actor: 'Dr. Hanwa, K.',
+        actor: doctorName,
         actorRole: 'Clinician',
         subject: target.name,
-        detail: `REQUEST · ${requestScope} · ${requestReason}`,
+        detail: `REQUEST · ${requestScope} · ${requestReason}${nextRequest.blockchainRequestId ? ` · Chain#${nextRequest.blockchainRequestId}` : ''}`,
         timestamp: nextRequest.requestedAt,
-        txHash: '',
+        txHash: nextRequest.blockchainRequestId ?? '',
         color: 'sky',
       },
       ...current,
     ]);
-
-    enqueueSnackbar(`Access request queued for ${target.name}.`, { variant: 'info' });
-  }, [enqueueSnackbar, requestPatient, requestReason, requestScope]);
+  }, [enqueueSnackbar, requestPatient, requestReason, requestScope, submitBlockchainRequest, activeAddress]);
 
   const updateRequestStatus = useCallback((requestId: string, nextStatus: RequestStatus) => {
-    setRequestQueue((current) => current.map((request) => (request.id === requestId ? { ...request, status: nextStatus } : request)));
+    updateSharedAccessRequestStatus(requestId, nextStatus as AccessRequestStatus);
     setActivityFeed((current) => [
       {
         id: `req-${requestId}-${Date.now()}`,
@@ -355,6 +370,34 @@ export default function DoctorDashboard() {
     ]);
   }, [patient.name]);
 
+  const handleLogout = useCallback(async () => {
+    setShowLogoutMenu(false);
+
+    try {
+      // Disconnect all wallets
+      if (wallets && wallets.length > 0) {
+        wallets.forEach(w => w.disconnect());
+      }
+
+      // Clear any local storage related to wallet/session
+      if (typeof window !== 'undefined') {
+        // Clear wallet-related session data
+        sessionStorage.removeItem('Aegis_proxy_addr');
+        sessionStorage.removeItem('Aegis_proxy_id');
+        localStorage.removeItem('Aegis-doctor-consent-statuses');
+      }
+
+      // Navigate with a slight delay and force page reload
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 200);
+    } catch (err) {
+      console.error('[DoctorDashboard] Logout error:', err);
+      // Force redirect even if disconnect fails
+      window.location.replace('/');
+    }
+  }, [wallets]);
+
   const filteredRequests = requestQueue.filter((request) => {
     const query = normalizeText(searchQuery);
     if (!query) return true;
@@ -365,21 +408,22 @@ export default function DoctorDashboard() {
 
   const heroSummary = `${activeConsents} active consents, ${expiringConsents} expiring windows, and ${accessibleRecords.length} accessible records.`;
 
+  // Use prescription upload hook
+  const { uploadPrescription, uploading: prescriptionUploading } = usePrescriptionUpload();
+
   const submitPrescription = useCallback(async () => {
-    if (!activeAddress || !transactionSigner || !medicalAppId) {
-      enqueueSnackbar('Connect a wallet and ensure the MedicalRecords contract is configured.', { variant: 'error' });
+    if (!activeAddress) {
+      enqueueSnackbar('Connect a wallet first', { variant: 'error' });
       return;
     }
 
-    setPrescriptionSubmitting(true);
     setPrescriptionFeedback('');
 
     try {
-      const target = findPatientByIdentifier(prescriptionTarget);
       const { patient: resolvedPatient, walletAddress } = await resolvePatient(prescriptionTarget);
-      const client = new MedicalRecordsClient({ appId: BigInt(medicalAppId), algorand });
-      const cid = await createPrescriptionCid({
-        patientIdentifier: walletAddress,
+
+      await uploadPrescription({
+        patientAddress: walletAddress,
         patientName: resolvedPatient.name,
         medication: prescriptionMedication,
         dosage: prescriptionDosage,
@@ -388,29 +432,18 @@ export default function DoctorDashboard() {
         providerName: activeAddress,
       });
 
-      const boxReferences = await buildPrescriptionBoxReferences(walletAddress);
+      setPrescriptionFeedback(`Prescription uploaded for ${resolvedPatient.name}`);
+      setPrescriptionMedication('Amoxicillin 500mg');
+      setPrescriptionDosage('1 tablet three times daily for 10 days');
+      setPrescriptionInstructions('Take after meals and complete the full course.');
+      setPrescriptionNotes('');
 
-      await client.send.addPrescription({
-        args: {
-          patient: walletAddress,
-          patientName: target?.name ?? resolvedPatient.name,
-          cid,
-        },
-        sender: activeAddress,
-        signer: transactionSigner,
-        boxReferences,
-      });
-
-      setPrescriptionFeedback(`Prescription anchored for ${resolvedPatient.name}. CID ${cid}`);
-      enqueueSnackbar(`Prescription uploaded for ${resolvedPatient.name}.`, { variant: 'success' });
+      // Refresh records
       setLiveRecords(await fetchAllPatientRecords());
     } catch (error: any) {
       setPrescriptionFeedback(error?.message ?? 'Failed to upload prescription.');
-      enqueueSnackbar(error?.message ?? 'Failed to upload prescription.', { variant: 'error' });
-    } finally {
-      setPrescriptionSubmitting(false);
     }
-  }, [activeAddress, algorand, enqueueSnackbar, medicalAppId, prescriptionDosage, prescriptionInstructions, prescriptionMedication, prescriptionNotes, prescriptionTarget, transactionSigner]);
+  }, [activeAddress, prescriptionDosage, prescriptionInstructions, prescriptionMedication, prescriptionNotes, prescriptionTarget, uploadPrescription, enqueueSnackbar]);
 
   const renderDoctorTabContent = () => {
     if (activeNav === 'patients') {
@@ -585,7 +618,61 @@ export default function DoctorDashboard() {
               <button className="iconbtn" onClick={() => enqueueSnackbar('Clinical notifications are attached to the record queue.', { variant: 'info' })}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" /><path d="M10 21a2 2 0 0 0 4 0" /></svg>
               </button>
-              <div className="avatar" style={{ background: 'var(--coral)', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600' }}>KH</div>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="avatar"
+                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                  style={{ background: 'var(--coral)', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', border: 'none' }}
+                  title="Click to logout"
+                >
+                  KH
+                </button>
+                {showLogoutMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '8px',
+                      background: 'var(--bg-2)',
+                      border: '1px solid var(--line)',
+                      borderRadius: '8px',
+                      minWidth: '160px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      zIndex: 1000,
+                    }}
+                  >
+                    <div style={{ padding: '8px 0' }}>
+                      <div style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--ink-2)' }}>
+                        {activeAddress?.slice(0, 10)}...
+                      </div>
+                      <hr style={{ margin: '6px 0', borderColor: 'var(--line)' }} />
+                      <button
+                        onClick={handleLogout}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          color: 'var(--ink)',
+                          textAlign: 'left',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--bg)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        🚪 Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -825,8 +912,8 @@ export default function DoctorDashboard() {
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Optional Notes</label>
                     <textarea value={prescriptionNotes} onChange={(event) => setPrescriptionNotes(event.target.value)} rows={2} placeholder="Add any additional notes..." style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '13px', resize: 'vertical', fontFamily: 'inherit' }} />
                   </div>
-                  <button className="btn lime" onClick={submitPrescription} disabled={prescriptionSubmitting} style={{ marginTop: '4px' }}>
-                    {prescriptionSubmitting ? (
+                  <button className="btn lime" onClick={submitPrescription} disabled={prescriptionUploading} style={{ marginTop: '4px' }}>
+                    {prescriptionUploading ? (
                       <><svg style={{ width: '14px', height: '14px', display: 'inline-block', marginRight: '6px', animation: 'spin 1s linear infinite' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>Uploading…</>
                     ) : (
                       'Upload prescription'

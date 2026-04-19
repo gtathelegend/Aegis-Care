@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@txnlab/use-wallet-react';
 import '../styles/dashboard.css';
 import QRModal from '../components/QRModal';
@@ -7,7 +8,6 @@ import UploadRecordModal from '../components/UploadRecordModal';
 import {
   auditLog,
   consents,
-  inboundRequests,
   medicalRecords,
   patients,
   getPatientById,
@@ -21,6 +21,14 @@ import { useSnackbar } from 'notistack';
 import { MedicalRecordsClient } from '../contracts/MedicalRecords';
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs';
 import { buildPrescriptionBoxReferences, createPrescriptionCid, fetchAllPatientRecords, findPatientByIdentifier, resolvePatient } from '../lib/medicalPortalData';
+import { usePatientsList } from '../hooks/usePatientsList';
+import { usePrescriptionUpload } from '../hooks/usePrescriptionUpload';
+import {
+  createSharedAccessRequest,
+  subscribeToSharedAccessRequests,
+  updateSharedAccessRequestStatus,
+  type SharedAccessRequest,
+} from '../lib/realtimeAccessRequests';
 
 type RequestStatus = 'pending' | 'approved' | 'rejected';
 type RequestTab = 'all' | RequestStatus;
@@ -34,6 +42,7 @@ interface HospitalRequestView {
   scope: string;
   reason: string;
   urgency: 'routine' | 'urgent' | 'emergency';
+  status: RequestStatus;
   requestedAt: string;
   patient: Patient;
 }
@@ -43,8 +52,6 @@ interface ConsentsSummary {
   pending: number;
   expired: number;
 }
-
-const requestStorageKey = 'aegis-hospital-request-statuses';
 
 const statusStyles: Record<RequestStatus, string> = {
   pending: 'pending',
@@ -60,34 +67,15 @@ const urgencyColor: Record<HospitalRequestView['urgency'], string> = {
 
 const INITIAL_PATIENT = getPatientById('p1');
 
-const loadStatuses = (fallback: HospitalRequestView[]) => {
-  if (typeof window === 'undefined') {
-    return Object.fromEntries(fallback.map((request) => [request.id, 'pending'])) as Record<string, RequestStatus>;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(requestStorageKey);
-    if (!raw) {
-      return Object.fromEntries(fallback.map((request) => [request.id, 'pending'])) as Record<string, RequestStatus>;
-    }
-
-    const parsed = JSON.parse(raw) as Record<string, RequestStatus>;
-    return fallback.reduce<Record<string, RequestStatus>>((accumulator, request) => {
-      accumulator[request.id] = parsed[request.id] ?? 'pending';
-      return accumulator;
-    }, {});
-  } catch {
-    return Object.fromEntries(fallback.map((request) => [request.id, 'pending'])) as Record<string, RequestStatus>;
-  }
-};
-
 export default function HospitalPortal() {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress, transactionSigner, wallets } = useWallet();
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [activeNav, setActiveNav] = useState('overview');
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<RequestTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [requestStatuses, setRequestStatuses] = useState<Record<string, RequestStatus>>(() => ({}) as Record<string, RequestStatus>);
+  const [sharedRequests, setSharedRequests] = useState<SharedAccessRequest[]>([]);
   const [activityFeed, setActivityFeed] = useState<AuditEntry[]>(auditLog);
   const [viewerRecords, setViewerRecords] = useState<MedicalRecord[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
@@ -95,6 +83,9 @@ export default function HospitalPortal() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedPatientAddress, setSelectedPatientAddress] = useState('');
   const [liveRecords, setLiveRecords] = useState<MedicalRecord[]>(medicalRecords);
+  const [hospitalRequestPatient, setHospitalRequestPatient] = useState(INITIAL_PATIENT.shortId);
+  const [hospitalRequestScope, setHospitalRequestScope] = useState('DISCHARGE_SUMMARY · 24H');
+  const [hospitalRequestReason, setHospitalRequestReason] = useState('Need records for discharge planning and care coordination.');
   const [prescriptionTarget, setPrescriptionTarget] = useState(INITIAL_PATIENT.shortId);
   const [prescriptionMedication, setPrescriptionMedication] = useState('Amoxicillin 500mg');
   const [prescriptionDosage, setPrescriptionDosage] = useState('1 tablet three times daily for 10 days');
@@ -106,25 +97,37 @@ export default function HospitalPortal() {
   const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), []);
   const medicalAppId = Number(import.meta.env.VITE_MEDICAL_RECORDS_APP_ID || 0);
 
+  // Use hooks for patients list and prescription upload
+  const { patients: patientsList, loading: patientsLoading } = usePatientsList();
+  const { uploadPrescription, uploading: prescriptionUploading } = usePrescriptionUpload();
+
   const patientById = useMemo(
     () => Object.fromEntries(patients.map((patient) => [patient.id, patient])) as Record<string, Patient>,
     []
   );
 
   const hospitalRequests = useMemo<HospitalRequestView[]>(() => {
-    const patientRotation = ['p1', 'p2', 'p3', 'p4', 'p5'];
-    return inboundRequests.map((request, index) => {
-      const patientId = patientRotation[index % patientRotation.length];
+    return sharedRequests.map((request) => {
       return {
-        ...request,
-        patient: patientById[patientId] ?? INITIAL_PATIENT,
+        id: request.id,
+        from: request.requestedBy,
+        fromRole: request.requestedByRole,
+        fromAvatar: request.requestedByAvatar,
+        fromColor: request.requestedByColor,
+        scope: request.scope,
+        reason: request.reason,
+        urgency: request.urgency,
+        status: request.status,
+        requestedAt: request.requestedAt,
+        patient: patientById[request.patientId] ?? INITIAL_PATIENT,
       };
     });
-  }, [patientById]);
+  }, [patientById, sharedRequests]);
 
   useEffect(() => {
-    setRequestStatuses(loadStatuses(hospitalRequests));
-  }, [hospitalRequests]);
+    const unsubscribe = subscribeToSharedAccessRequests(setSharedRequests);
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,14 +153,6 @@ export default function HospitalPortal() {
       clearInterval(interval);
     };
   }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || Object.keys(requestStatuses).length === 0) {
-      return;
-    }
-
-    window.localStorage.setItem(requestStorageKey, JSON.stringify(requestStatuses));
-  }, [requestStatuses]);
 
   const navLabels: Record<string, string> = {
     overview: 'Overview',
@@ -217,14 +212,13 @@ export default function HospitalPortal() {
     const query = normalizeText(searchQuery);
 
     return hospitalRequests.filter((request) => {
-      const status = requestStatuses[request.id] ?? 'pending';
-      const matchesTab = activeTab === 'all' || status === activeTab;
+      const matchesTab = activeTab === 'all' || request.status === activeTab;
       const matchesQuery = !query || [request.from, request.scope, request.reason, request.patient.name, request.patient.shortId]
         .some((value) => normalizeText(value).includes(query));
 
       return matchesTab && matchesQuery;
     });
-  }, [activeTab, hospitalRequests, requestStatuses, searchQuery]);
+  }, [activeTab, hospitalRequests, searchQuery]);
 
   const filteredRecords = useMemo(() => {
     const query = normalizeText(searchQuery);
@@ -284,7 +278,7 @@ export default function HospitalPortal() {
         return;
       }
 
-      setRequestStatuses((current) => ({ ...current, [requestId]: nextStatus }));
+      updateSharedAccessRequestStatus(requestId, nextStatus);
       setActivityFeed((current) => [
         {
           id: `audit-${requestId}-${Date.now()}`,
@@ -326,25 +320,87 @@ export default function HospitalPortal() {
     [enqueueSnackbar]
   );
 
-  const heroSummary = `${requestStatuses ? Object.values(requestStatuses).filter((status) => status === 'pending').length : 0} requests pending. ${activePatients} patients with on-chain records.`;
-
-  const filteredRecordCount = filteredRecords.length;
-
-  const submitPrescription = useCallback(async () => {
-    if (!activeAddress || !transactionSigner || !medicalAppId) {
-      enqueueSnackbar('Connect a wallet and ensure the MedicalRecords contract is configured.', { variant: 'error' });
+  const submitHospitalRequest = useCallback(() => {
+    const target = patients.find((candidate) => candidate.shortId === hospitalRequestPatient || candidate.name === hospitalRequestPatient);
+    if (!target) {
+      enqueueSnackbar('Select a valid patient short ID or name.', { variant: 'error' });
       return;
     }
 
-    setPrescriptionSubmitting(true);
+    const nextRequest = createSharedAccessRequest({
+      patientId: target.id,
+      requestedBy: 'Helix Hospital',
+      requestedByRole: 'hospital',
+      requestedByAvatar: 'HX',
+      requestedByColor: 'lime',
+      scope: hospitalRequestScope,
+      reason: hospitalRequestReason,
+      urgency: 'routine',
+    });
+
+    setActivityFeed((current) => [
+      {
+        id: `hospital-request-${nextRequest.id}`,
+        action: 'REQUEST',
+        actor: 'Helix Hospital',
+        actorRole: 'Institutional',
+        subject: target.name,
+        detail: `REQUEST · ${hospitalRequestScope} · ${hospitalRequestReason}`,
+        timestamp: nextRequest.requestedAt,
+        txHash: '',
+        color: 'sky',
+      },
+      ...current,
+    ]);
+
+    enqueueSnackbar(`Access request sent for ${target.name}.`, { variant: 'info' });
+  }, [enqueueSnackbar, hospitalRequestPatient, hospitalRequestReason, hospitalRequestScope]);
+
+  const pendingRequestsCount = hospitalRequests.filter((request) => request.status === 'pending').length;
+  const heroSummary = `${pendingRequestsCount} requests pending. ${activePatients} patients with on-chain records.`;
+
+  const filteredRecordCount = filteredRecords.length;
+
+  const handleLogout = useCallback(async () => {
+    setShowLogoutMenu(false);
+
+    try {
+      // Disconnect all wallets
+      if (wallets && wallets.length > 0) {
+        wallets.forEach(w => w.disconnect());
+      }
+
+      // Clear any local storage related to wallet/session
+      if (typeof window !== 'undefined') {
+        // Clear wallet-related session data
+        sessionStorage.removeItem('Aegis_proxy_addr');
+        sessionStorage.removeItem('Aegis_proxy_id');
+      }
+
+      // Navigate with a slight delay and force page reload
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 200);
+    } catch (err) {
+      console.error('[HospitalPortal] Logout error:', err);
+      // Force redirect even if disconnect fails
+      window.location.replace('/');
+    }
+  }, [wallets]);
+
+  const submitPrescription = useCallback(async () => {
+    if (!activeAddress) {
+      enqueueSnackbar('Connect a wallet first', { variant: 'error' });
+      return;
+    }
+
     setPrescriptionFeedback('');
 
     try {
-      const target = findPatientByIdentifier(prescriptionTarget);
       const { patient: resolvedPatient, walletAddress } = await resolvePatient(prescriptionTarget);
-      const client = new MedicalRecordsClient({ appId: BigInt(medicalAppId), algorand });
-      const cid = await createPrescriptionCid({
-        patientIdentifier: walletAddress,
+
+      await uploadPrescription({
+        patientAddress: walletAddress,
         patientName: resolvedPatient.name,
         medication: prescriptionMedication,
         dosage: prescriptionDosage,
@@ -353,29 +409,18 @@ export default function HospitalPortal() {
         providerName: activeAddress,
       });
 
-      const boxReferences = await buildPrescriptionBoxReferences(walletAddress);
+      setPrescriptionFeedback(`Prescription uploaded for ${resolvedPatient.name}`);
+      setPrescriptionMedication('Amoxicillin 500mg');
+      setPrescriptionDosage('1 tablet three times daily for 10 days');
+      setPrescriptionInstructions('Take after meals and complete the full course.');
+      setPrescriptionNotes('');
 
-      await client.send.addPrescription({
-        args: {
-          patient: walletAddress,
-          patientName: target?.name ?? resolvedPatient.name,
-          cid,
-        },
-        sender: activeAddress,
-        signer: transactionSigner,
-        boxReferences,
-      });
-
-      setPrescriptionFeedback(`Prescription anchored for ${resolvedPatient.name}. CID ${cid}`);
-      enqueueSnackbar(`Prescription uploaded for ${resolvedPatient.name}.`, { variant: 'success' });
+      // Refresh records
       setLiveRecords(await fetchAllPatientRecords());
     } catch (error: any) {
       setPrescriptionFeedback(error?.message ?? 'Failed to upload prescription.');
-      enqueueSnackbar(error?.message ?? 'Failed to upload prescription.', { variant: 'error' });
-    } finally {
-      setPrescriptionSubmitting(false);
     }
-  }, [activeAddress, algorand, enqueueSnackbar, medicalAppId, prescriptionDosage, prescriptionInstructions, prescriptionMedication, prescriptionNotes, prescriptionTarget, transactionSigner]);
+  }, [activeAddress, prescriptionDosage, prescriptionInstructions, prescriptionMedication, prescriptionNotes, prescriptionTarget, uploadPrescription, enqueueSnackbar]);
 
   const renderHospitalTabContent = () => {
     if (activeNav === 'patients') {
@@ -396,19 +441,19 @@ export default function HospitalPortal() {
               </tr>
             </thead>
             <tbody>
-              {patients.map((p) => (
+              {(patientsList.length > 0 ? patientsList : patients).map((p: any) => (
                 <tr key={p.id}>
                   <td>
                     <div className="avn">
-                      <div className="av" data-c={p.avatarColor}>{makeInitials(p.name)}</div>
+                      <div className="av" data-c={p.avatarColor || 'sky'}>{makeInitials(p.name)}</div>
                       <div>
                         <div className="nm">{p.name}</div>
                       </div>
                     </div>
                   </td>
                   <td style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>{p.shortId}</td>
-                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.bloodGroup}</td>
-                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.dob}</td>
+                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.bloodGroup || `${p.recordCount} records`}</td>
+                  <td style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{p.dob || p.lastAccess}</td>
                   <td className="actions-cell">
                     <button className="ibtn lime" title="Upload record" onClick={() => { setSelectedPatientAddress(p.walletAddress); setUploadModalOpen(true); }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
@@ -482,7 +527,7 @@ export default function HospitalPortal() {
             </div>
             <div className={`navitem ${activeNav === 'requests' ? 'active' : ''}`} onClick={() => setActiveNav('requests')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /></svg>
-              Access Requests<span className="badge">{Object.values(requestStatuses).filter((status) => status === 'pending').length}</span>
+              Access Requests<span className="badge">{pendingRequestsCount}</span>
             </div>
             <div className={`navitem ${activeNav === 'records' ? 'active' : ''}`} onClick={() => setActiveNav('records')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4" /></svg>
@@ -553,7 +598,61 @@ export default function HospitalPortal() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" /><path d="M10 21a2 2 0 0 0 4 0" /></svg>
                 <span className="pip" />
               </button>
-              <div className="avatar" style={{ background: 'var(--sky)', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600' }}>HL</div>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="avatar"
+                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                  style={{ background: 'var(--sky)', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', border: 'none' }}
+                  title="Click to logout"
+                >
+                  HL
+                </button>
+                {showLogoutMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '8px',
+                      background: 'var(--bg-2)',
+                      border: '1px solid var(--line)',
+                      borderRadius: '8px',
+                      minWidth: '160px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      zIndex: 1000,
+                    }}
+                  >
+                    <div style={{ padding: '8px 0' }}>
+                      <div style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--ink-2)' }}>
+                        {activeAddress?.slice(0, 10)}...
+                      </div>
+                      <hr style={{ margin: '6px 0', borderColor: 'var(--line)' }} />
+                      <button
+                        onClick={handleLogout}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          color: 'var(--ink)',
+                          textAlign: 'left',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--bg)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        🚪 Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -565,7 +664,7 @@ export default function HospitalPortal() {
                 <div>
                   <div className="k">§ Hospital Overview · Live Snapshot</div>
                   <h2>
-                    {Object.values(requestStatuses).filter((status) => status === 'pending').length} requests <em>pending</em>.
+                    {pendingRequestsCount} requests <em>pending</em>.
                     <br />{activePatients} patients on record.
                   </h2>
                   <p>{heroSummary} {requestSummary.active} active consent windows are available for review.</p>
@@ -608,9 +707,9 @@ export default function HospitalPortal() {
               <div className="kpi reveal d2" data-c="coral">
                 <div className="top">
                   <div className="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" /></svg></div>
-                  <span className="delta down">{Object.values(requestStatuses).filter((status) => status === 'pending').length} pending</span>
+                  <span className="delta down">{pendingRequestsCount} pending</span>
                 </div>
-                <b>{Object.values(requestStatuses).filter((status) => status === 'pending').length}</b>
+                <b>{pendingRequestsCount}</b>
                 <span className="lbl">Consent requests</span>
                 <svg className="spark" viewBox="0 0 140 28" fill="none"><path d="M0 10 L20 12 L40 8 L60 14 L80 10 L100 16 L120 12 L140 8" stroke="var(--ink-green)" strokeWidth="1.5" /></svg>
               </div>
@@ -639,7 +738,7 @@ export default function HospitalPortal() {
                 <div className="head">
                   <div>
                     <h3>Access requests</h3>
-                    <div className="sub" style={{ marginTop: '4px' }}>{filteredRequests.length} visible · {Object.values(requestStatuses).filter((status) => status === 'pending').length} awaiting approval</div>
+                    <div className="sub" style={{ marginTop: '4px' }}>{filteredRequests.length} visible · {pendingRequestsCount} awaiting approval</div>
                   </div>
                   <div className="actions">
                     <div className="tabs">
@@ -647,6 +746,21 @@ export default function HospitalPortal() {
                       <button className={activeTab === 'pending' ? 'on' : ''} onClick={() => setActiveTab('pending')}>Pending</button>
                       <button className={activeTab === 'approved' ? 'on' : ''} onClick={() => setActiveTab('approved')}>Approved</button>
                     </div>
+                  </div>
+                </div>
+                <div className="req" style={{ margin: '0 24px 16px', cursor: 'default' }}>
+                  <div className="av" data-c="lime" style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0 }}>HX</div>
+                  <div className="body" style={{ display: 'grid', gap: '6px' }}>
+                    <div className="t">Submit a hospital request</div>
+                    <div className="d">REQUEST REPORTS OR DOCUMENTS FROM PATIENTS</div>
+                    <div style={{ display: 'grid', gap: '8px' }}>
+                      <input value={hospitalRequestPatient} onChange={(event) => setHospitalRequestPatient(event.target.value)} placeholder="Patient short ID or name" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
+                      <input value={hospitalRequestScope} onChange={(event) => setHospitalRequestScope(event.target.value)} placeholder="Scope (for example DISCHARGE_SUMMARY · 24H)" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
+                      <textarea value={hospitalRequestReason} onChange={(event) => setHospitalRequestReason(event.target.value)} rows={2} placeholder="Reason for the request" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
+                    </div>
+                  </div>
+                  <div className="acts">
+                    <button className="approve" onClick={submitHospitalRequest}>Submit</button>
                   </div>
                 </div>
                 <table className="tbl">
@@ -662,7 +776,7 @@ export default function HospitalPortal() {
                   </thead>
                   <tbody>
                     {filteredRequests.map((request) => {
-                      const status = requestStatuses[request.id] ?? 'pending';
+                      const status = request.status;
 
                       return (
                         <tr key={request.id}>
@@ -842,8 +956,8 @@ export default function HospitalPortal() {
                   <input value={prescriptionDosage} onChange={(event) => setPrescriptionDosage(event.target.value)} placeholder="Dosage and frequency" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px' }} />
                   <textarea value={prescriptionInstructions} onChange={(event) => setPrescriptionInstructions(event.target.value)} rows={3} placeholder="Patient instructions" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
                   <textarea value={prescriptionNotes} onChange={(event) => setPrescriptionNotes(event.target.value)} rows={2} placeholder="Optional notes" style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--line)', background: 'var(--bg)', fontSize: '12px', resize: 'vertical' }} />
-                  <button className="btn lime" onClick={submitPrescription} disabled={prescriptionSubmitting}>
-                    {prescriptionSubmitting ? 'Uploading prescription…' : 'Upload prescription'}
+                  <button className="btn lime" onClick={submitPrescription} disabled={prescriptionUploading}>
+                    {prescriptionUploading ? 'Uploading prescription…' : 'Upload prescription'}
                   </button>
                   {prescriptionFeedback && <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--ink-2)', lineHeight: 1.6 }}>{prescriptionFeedback}</div>}
                 </div>

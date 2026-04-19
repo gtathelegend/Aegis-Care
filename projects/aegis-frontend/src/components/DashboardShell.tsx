@@ -1,9 +1,8 @@
 import React, { ReactNode, useState, useMemo } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
-import logoUrl from '../assets/final_logo.jpeg'
-import { 
-  ShieldCheck, 
-  LogOut, 
+import {
+  ShieldCheck,
+  LogOut,
   Fingerprint,
   Loader2,
   ChevronDown,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useRole } from '../hooks/useRole'
+import AegisLogo from './AegisLogo'
 import { WalletMapperClient } from '../contracts/WalletMapper'
 import algosdk from 'algosdk'
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
@@ -165,10 +165,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
         {/* Branding */}
         <div className="h-20 flex items-center px-6 border-b border-[#dce3de] bg-[#f4f6f4]">
-          <div className="flex items-center gap-3">
-            <img src={logoUrl} alt="Ojasraksha Logo" className="w-10 h-10 object-contain rounded-xl shadow-sm" />
-            <span className="font-black text-[#162723] tracking-tighter text-xl font-['Outfit']">Ojasraksha</span>
-          </div>
+          <AegisLogo showText={true} size="md" />
         </div>
 
         {/* Navigation */}

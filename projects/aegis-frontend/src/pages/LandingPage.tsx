@@ -1,7 +1,7 @@
 import { useWallet } from '@txnlab/use-wallet-react'
-import { 
-  Shield, 
-  ArrowRight, 
+import {
+  Shield,
+  ArrowRight,
   ChevronRight,
   ShieldCheck,
   Activity,
@@ -12,13 +12,29 @@ import {
   Users
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ConnectWallet from '../components/ConnectWallet'
+import RoleSelectionModal from '../components/RoleSelectionModal'
+import { useRole } from '../hooks/useRole'
 
 const LandingPage = () => {
   const { activeAddress } = useWallet()
+  const { roles, loading } = useRole()
   const navigate = useNavigate()
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false)
+  const [prevAddress, setPrevAddress] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (activeAddress && !prevAddress) {
+      setPrevAddress(activeAddress)
+      setIsWalletModalOpen(false)
+      setIsRoleModalOpen(true)
+    } else if (!activeAddress && prevAddress) {
+      setPrevAddress(null)
+      setIsRoleModalOpen(false)
+    }
+  }, [activeAddress, prevAddress])
 
   const handleStart = () => {
     if (activeAddress) {
@@ -37,14 +53,11 @@ const LandingPage = () => {
              <div className="w-10 h-10 bg-[#3D5141] rounded-xl flex items-center justify-center">
                 <Shield className="w-6 h-6 text-white" />
              </div>
-             <span className="text-xl font-bold tracking-tight text-[#3D5141]">Ojasraksha</span>
+             <span className="text-xl font-bold tracking-tight text-[#3D5141]">Aegis</span>
           </div>
           
           <div className="flex items-center gap-4">
-             <button className="px-5 py-2 text-sm font-bold text-[#3D5141] border border-[#3D5141]/20 rounded-lg bg-transparent cursor-pointer">
-                Admin
-             </button>
-             <button 
+             <button
                 onClick={handleStart}
                 className="btn-accent"
              >
@@ -70,7 +83,7 @@ const LandingPage = () => {
            </h1>
 
            <p className="text-xl text-muted max-w-2xl mb-12">
-              Ojasraksha is a blockchain-powered consent platform that lets patients control who accesses their health records while enabling hospitals to stay compliant.
+              Aegis is a blockchain-powered consent platform that lets patients control who accesses their health records while enabling hospitals to stay compliant.
            </p>
 
            <div className="flex justify-center gap-4">
@@ -189,6 +202,7 @@ const LandingPage = () => {
       </main>
 
       <ConnectWallet openModal={isWalletModalOpen} closeModal={() => setIsWalletModalOpen(false)} />
+      <RoleSelectionModal isOpen={isRoleModalOpen} onClose={() => setIsRoleModalOpen(false)} />
     </div>
   )
 }

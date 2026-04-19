@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ojasraksha-contracts"
+name = "Aegis-contracts"
 version = "0.1.0"
 description = "Algorand smart contracts"
 authors = ["Yashwanth112004 <puligillayashwanth@gmail.com>"]

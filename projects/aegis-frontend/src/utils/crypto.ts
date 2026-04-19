@@ -11,7 +11,7 @@ const ALGORITHM = 'AES-GCM'
 const IV_LENGTH = 12       // 96-bit IV — GCM standard
 const AUTH_TAG_LENGTH = 16 // 128-bit tag appended by WebCrypto
 const PBKDF2_ITERATIONS = 100_000
-const STATIC_SALT = new TextEncoder().encode('ojasraksha-dpdp-v1') // deterministic salt for POC
+const STATIC_SALT = new TextEncoder().encode('Aegis-care-dpdp-v1') // deterministic salt for POC
 
 // ─── Types ──────────────────────────────────────────────────────────
 export interface EncryptionMetadata {

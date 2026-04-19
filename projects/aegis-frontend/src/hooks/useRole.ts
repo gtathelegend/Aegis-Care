@@ -30,19 +30,19 @@ export const useRole = () => {
   const [error, setError] = useState<string | null>(null)
 
   // Benificiary Proxy State
-  const [proxyAddress, setProxyAddress] = useState<string | null>(sessionStorage.getItem('ojasraksha_proxy_addr'))
-  const [proxyShortId, setProxyShortId] = useState<string | null>(sessionStorage.getItem('ojasraksha_proxy_id'))
+  const [proxyAddress, setProxyAddress] = useState<string | null>(sessionStorage.getItem('Aegis_proxy_addr'))
+  const [proxyShortId, setProxyShortId] = useState<string | null>(sessionStorage.getItem('Aegis_proxy_id'))
 
   const enableProxy = useCallback((ownerAddress: string, ownerIdentifier: string) => {
-      sessionStorage.setItem('ojasraksha_proxy_addr', ownerAddress)
-      sessionStorage.setItem('ojasraksha_proxy_id', ownerIdentifier)
+      sessionStorage.setItem('Aegis_proxy_addr', ownerAddress)
+      sessionStorage.setItem('Aegis_proxy_id', ownerIdentifier)
       setProxyAddress(ownerAddress)
       setProxyShortId(ownerIdentifier)
   }, [])
 
   const disableProxy = useCallback(() => {
-      sessionStorage.removeItem('ojasraksha_proxy_addr')
-      sessionStorage.removeItem('ojasraksha_proxy_id')
+      sessionStorage.removeItem('Aegis_proxy_addr')
+      sessionStorage.removeItem('Aegis_proxy_id')
       setProxyAddress(null)
       setProxyShortId(null)
   }, [])

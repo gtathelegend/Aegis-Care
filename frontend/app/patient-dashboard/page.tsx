@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import '../../styles/dashboard.css';
 import QRModal from '../../components/QRModal';
 import RecordSlider from '../../components/RecordSlider';
-import { medicalRecords, consents, auditLog, inboundRequests, getPatientById, recordTypeLabel } from '../../lib/mockdb';
+import ShareModal from '../../components/ShareModal';
+import { medicalRecords, consents, auditLog, inboundRequests, getPatientById, recordTypeLabel, getMutableRecords, getMutableConsents, getPendingAccessRequestsByPatient, updateAccessRequestStatus } from '../../lib/mockdb';
+import type { AccessRequest } from '../../lib/mockdb';
 import type { MedicalRecord } from '../../lib/mockdb';
 
 const patient = getPatientById('p1');
@@ -13,8 +15,12 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('overview');
   const [activeTab, setActiveTab] = useState('all');
   const [qrRecord, setQrRecord] = useState<MedicalRecord | null>(null);
+  const [shareRecord, setShareRecord] = useState<MedicalRecord | null>(null);
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
+  const [records, setRecords] = useState(getMutableRecords());
+  const [consentsList, setConsentsList] = useState(getMutableConsents());
+  const [inboundReqs, setInboundReqs] = useState<AccessRequest[]>(() => getPendingAccessRequestsByPatient('p1'));
 
   const openSlider = useCallback((index: number) => {
     setSliderIndex(index);
@@ -72,12 +78,17 @@ export default function DashboardPage() {
       applyParallax();
     }
 
+    const pollInterval = setInterval(() => {
+      setInboundReqs(getPendingAccessRequestsByPatient('p1'));
+    }, 2000);
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       if (scrollRaf) {
         window.cancelAnimationFrame(scrollRaf);
       }
       io?.disconnect();
+      clearInterval(pollInterval);
     };
   }, []);
 
@@ -574,49 +585,36 @@ export default function DashboardPage() {
                 <div className="head">
                   <div>
                     <h3>Inbound requests</h3>
-                    <div className="sub" style={{ marginTop: '4px' }}>1 new · review and sign</div>
+                    <div className="sub" style={{ marginTop: '4px' }}>{inboundReqs.length} pending · review and sign</div>
                   </div>
                 </div>
                 <div className="requests">
-                  <div className="req">
-                    <div className="av" data-c="sky">LB</div>
-                    <div className="body">
-                      <div className="t">
-                        Meridian Labs · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>Profile read</em>
+                  {inboundReqs.length === 0 ? (
+                    <div style={{ padding: '24px', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink-3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                      No pending requests
+                    </div>
+                  ) : inboundReqs.map(req => (
+                    <div className="req" key={req.id}>
+                      <div className="av" data-c={req.fromDoctorColor}>{req.fromDoctorAvatar}</div>
+                      <div className="body">
+                        <div className="t">
+                          {req.fromDoctor} · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>{req.scope}</em>
+                        </div>
+                        <div className="d">{req.purpose}</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--ink-3)', letterSpacing: '.1em', marginTop: '4px' }}>{req.submittedAt}</div>
                       </div>
-                      <div className="d">72H · Annual physical cross-ref</div>
-                    </div>
-                    <div className="acts">
-                      <button className="approve">Approve</button>
-                      <button className="deny">Deny</button>
-                    </div>
-                  </div>
-                  <div className="req">
-                    <div className="av" data-c="coral">DR</div>
-                    <div className="body">
-                      <div className="t">
-                        Dr. Avani S. · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>Imaging review</em>
+                      <div className="acts">
+                        <button className="approve" onClick={() => {
+                          updateAccessRequestStatus(req.id, 'approved');
+                          setInboundReqs(getPendingAccessRequestsByPatient('p1'));
+                        }}>Approve</button>
+                        <button className="deny" onClick={() => {
+                          updateAccessRequestStatus(req.id, 'denied');
+                          setInboundReqs(getPendingAccessRequestsByPatient('p1'));
+                        }}>Deny</button>
                       </div>
-                      <div className="d">1H · Second-opinion consult</div>
                     </div>
-                    <div className="acts">
-                      <button className="approve">Approve</button>
-                      <button className="deny">Deny</button>
-                    </div>
-                  </div>
-                  <div className="req">
-                    <div className="av" data-c="lime">HX</div>
-                    <div className="body">
-                      <div className="t">
-                        Helix Hospital · <em style={{ fontStyle: 'normal', color: 'var(--ink-green)', fontWeight: 500 }}>Discharge summary</em>
-                      </div>
-                      <div className="d">6H · Transfer to home-care</div>
-                    </div>
-                    <div className="acts">
-                      <button className="approve">Approve</button>
-                      <button className="deny">Deny</button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="head" style={{ paddingTop: '6px', borderTop: '1px solid var(--line)' }}>
@@ -682,8 +680,37 @@ export default function DashboardPage() {
             <div className="card reveal d3">
               <div className="head">
                 <div>
+                  <h3>My Prescriptions</h3>
+                  <div className="sub" style={{ marginTop: '4px' }}>{records.filter(r => r.type === 'prescription' && r.patientId === 'p1').length} prescriptions · from doctors</div>
+                </div>
+              </div>
+              <table className="tbl" style={{ fontSize: '12px' }}>
+                <thead>
+                  <tr>
+                    <th>Medication</th>
+                    <th>Prescribed By</th>
+                    <th>Date</th>
+                    <th>IPFS Hash</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {records.filter(r => r.type === 'prescription' && r.patientId === 'p1').map((rec) => (
+                    <tr key={rec.id}>
+                      <td style={{ fontFamily: 'var(--mono)', color: 'var(--ink)' }}>{rec.title.replace('Prescription — ', '')}</td>
+                      <td style={{ color: 'var(--ink-2)' }}>{rec.uploadedBy}</td>
+                      <td style={{ color: 'var(--ink-2)' }}>{rec.date}</td>
+                      <td style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', fontSize: '10px' }}>{rec.ipfsHash.slice(0, 6)}…{rec.ipfsHash.slice(-6)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="card reveal d3">
+              <div className="head">
+                <div>
                   <h3>Recent records</h3>
-                  <div className="sub" style={{ marginTop: '4px' }}>{medicalRecords.length} records · encrypted · IPFS-pinned</div>
+                  <div className="sub" style={{ marginTop: '4px' }}>{records.filter(r => r.patientId === 'p1').length} records · encrypted · IPFS-pinned</div>
                 </div>
                 <div className="actions">
                   <button className="chip">
@@ -696,7 +723,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="recs">
-                {medicalRecords.map((rec, i) => (
+                {records.filter(r => r.patientId === 'p1').map((rec, i) => (
                   <div
                     key={rec.id}
                     className="rec"
@@ -715,11 +742,24 @@ export default function DashboardPage() {
                         <button
                           title="Share via QR"
                           onClick={(e) => { e.stopPropagation(); openQR(rec); }}
-                          style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-3)' }}
+                          style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-3)', transition: 'all .2s' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-1)'; e.currentTarget.style.color = 'var(--ink-2)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg)'; e.currentTarget.style.color = 'var(--ink-3)'; }}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
                             <path d="M14 14h.01M14 17h3M17 14v3M17 17h3v3h-3v-3"/>
+                          </svg>
+                        </button>
+                        <button
+                          title="Share with provider"
+                          onClick={(e) => { e.stopPropagation(); setShareRecord(rec); }}
+                          style={{ width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-3)', transition: 'all .2s' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-1)'; e.currentTarget.style.color = 'var(--ink)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg)'; e.currentTarget.style.color = 'var(--ink-3)'; }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                           </svg>
                         </button>
                       </div>
@@ -737,7 +777,7 @@ export default function DashboardPage() {
 
       {sliderOpen && (
         <RecordSlider
-          records={medicalRecords}
+          records={records}
           initialIndex={sliderIndex}
           onClose={() => setSliderOpen(false)}
           onShare={(rec) => { setSliderOpen(false); openQR(rec); }}
@@ -747,6 +787,15 @@ export default function DashboardPage() {
         record={qrRecord}
         patient={patient}
         onClose={() => setQrRecord(null)}
+      />
+      <ShareModal
+        record={shareRecord}
+        onClose={() => setShareRecord(null)}
+        onSuccess={(consent) => {
+          setConsentsList(getMutableConsents());
+          setShareRecord(null);
+        }}
+        patientName={patient.name}
       />
     </div>
   );

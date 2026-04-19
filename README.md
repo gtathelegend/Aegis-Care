@@ -39,7 +39,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     AEGIS CARE ECOSYSTEM                      │
+│                     Aegis CARE ECOSYSTEM                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
@@ -422,7 +422,7 @@ BeneficiaryRecord {
 
 ### Project Structure
 ```
-projects/ojasraksha-contracts/
+projects/Aegis-contracts/
 ├── smart_contracts/
 │   ├── __init__.py
 │   ├── __main__.py

@@ -6,4 +6,4 @@ type = 'workspace'
 projects_root_path = 'projects'
 
 [project.run]
-build = ['ojasraksha-contracts', 'ojasraksha-frontend']
+build = ['Aegis-contracts', 'Aegis-frontend']

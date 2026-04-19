@@ -76,7 +76,7 @@ VITE_HEALTHCARE_RBAC_APP_ID=1239
 ### Step 3: Deploy Smart Contracts
 
 ```bash
-cd projects/ojasraksha-contracts
+cd projects/Aegis-contracts
 
 # LocalNet Setup
 algokit localnet start
@@ -103,7 +103,7 @@ After deployment, capture the app IDs from the output and update your `.env` fil
 ## 🚀 Running the Development Server
 
 ```bash
-cd projects/aegis-frontend
+cd projects/Aegis-frontend
 
 # Install dependencies
 npm install
@@ -408,4 +408,4 @@ console.log('Contract call:', { patient, cid, type });
 
 ---
 
-**Questions?** Check the `CLAUDE.md` file for architecture details or the smart contract documentation in `projects/ojasraksha-contracts/`.
+**Questions?** Check the `CLAUDE.md` file for architecture details or the smart contract documentation in `projects/Aegis-contracts/`.
