@@ -27,7 +27,7 @@ export function usePatientRecords(patientAddress?: string) {
           sender: activeAddress,
         })
 
-        setRecords((result.return as any) || [])
+        setRecords((result as any) || [])
       } catch (err: any) {
         setError(err.message || 'Failed to fetch records')
         console.error('Error fetching patient records:', err)

@@ -38,7 +38,7 @@ export function useWalletProfile() {
           sender: activeAddress,
         })
 
-        const shortIdBytes = result.return as Uint8Array
+        const shortIdBytes = result as Uint8Array
         const shortId = String.fromCharCode(...Array.from(shortIdBytes)).replace(/\0/g, '')
 
         if (shortId) {
