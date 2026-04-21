@@ -1,10 +1,6 @@
 # Aegis Care
 
-# Aegis Care: Healthcare Data Management on Algorand
-
-## Project Overview
-
-**Aegis Care** is a blockchain-based healthcare data management system built on the **Algorand** network. It provides a decentralized, privacy-preserving platform for managing medical records, prescriptions, volunteer data, and healthcare access control. The project uses Algorand smart contracts (Python via Puya/AlgoKit) and IPFS (via CID - Content Identifier) for data storage.
+**Aegis Care** is a decentralized healthcare data management system built on the **Algorand** blockchain. It provides a privacy-preserving platform for managing medical records, prescriptions, volunteer data, and healthcare access control — with a full React frontend connecting directly to on-chain smart contracts.
 
 **Primary Goals:**
 - Enable secure medical record management on-chain
@@ -14,8 +10,6 @@
 - Provide emergency data access mechanisms
 - Maintain volunteer registries for healthcare support
 
-**Status:** V1.0 (Two commits, foundational contracts deployed)
-
 ---
 
 ## Technology Stack
@@ -23,19 +17,52 @@
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | **Blockchain** | Algorand Layer 1 | Smart contract execution & data settlement |
-| **Smart Contracts** | Python (Puya) | Contract logic implementation |
-| **Contract Framework** | AlgoKit | Development, testing, deployment |
+| **Smart Contracts** | Python (Puya) | Contract logic via AlgoKit |
 | **Data Storage** | IPFS (CID) | Off-chain encrypted medical records |
-| **Deployment Tool** | AlgoKit CLI | Contract compilation & deployment |
 | **Client SDK** | AlgoKit Utils (TypeScript) | Contract interaction & deployment |
+| **Frontend** | React 18 + Vite 5 + TypeScript | Patient & provider portals |
+| **Styling** | Tailwind CSS v3 + Framer Motion | UI & animations |
+| **Wallet** | `@txnlab/use-wallet-react` v4 | Defly, Pera, Exodus, WalletConnect, KMD |
+| **Encryption** | Web Crypto API (AES-256-GCM) | Client-side file encryption |
 | **Environment** | Python Poetry, Node.js/npm | Dependency management |
 | **Networks** | LocalNet, Testnet, Mainnet | Development → Production |
 
 ---
 
-## Architecture Overview
+## Repository Structure
 
-### High-Level System Design
+```
+Aegis-Care/
+├── projects/
+│   ├── aegis-contracts/          # Smart contracts (Python/Puya + TypeScript deployer)
+│   │   ├── smart_contracts/
+│   │   │   ├── AccessControl/
+│   │   │   ├── HealthcareRBAC/
+│   │   │   ├── MedicalRecords/
+│   │   │   ├── AuditLog/
+│   │   │   ├── ConsentManager/
+│   │   │   ├── DataAccessManager/
+│   │   │   ├── DataFiduciaryRegistry/
+│   │   │   ├── QueueManager/
+│   │   │   ├── VolunteerRegistry/
+│   │   │   └── WalletMapper/
+│   │   └── scripts/
+│   │       └── deploy_all.ts     # Full deploy + bootstrap + auto-updates frontend .env
+│   └── aegis-frontend/           # React 18 frontend
+│       └── src/
+│           ├── pages/            # One file per portal
+│           ├── components/       # Shared UI (Sidebar, DashboardShell, QRModal, ...)
+│           ├── hooks/            # useRole, useMedicalRecords, usePrescriptionUpload, ...
+│           ├── contracts/        # AlgoKit-generated TypeScript clients + ARC-56 JSON
+│           ├── lib/              # Mock data, helpers, realtime access requests
+│           └── utils/            # Algorand client config, IPFS, crypto, box utilities
+├── STARTUP.md                    # Full setup runbook (Windows)
+└── CLAUDE.md                     # AI assistant project context
+```
+
+---
+
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -51,56 +78,35 @@
 │                            │                                 │
 │  ┌────────────────────────▼─────────────────────────┐       │
 │  │         SMART CONTRACT LAYER (Algorand)          │       │
-│  ├────────────────────────────────────────────────┤       │
-│  │                                                 │        │
-│  │  ┌─────────────────────────────────────────┐  │        │
-│  │  │    ACCESS CONTROL & AUTHENTICATION      │  │        │
-│  │  │  ┌──────────────┐  ┌────────────────┐  │  │        │
-│  │  │  │AccessControl │  │HealthcareRBAC │  │  │        │
-│  │  │  │              │  │  (Roles: 1-32) │  │  │        │
-│  │  │  └──────────────┘  └────────────────┘  │  │        │
-│  │  └─────────────────────────────────────────┘  │        │
-│  │                                                 │        │
-│  │  ┌─────────────────────────────────────────┐  │        │
-│  │  │     DATA MANAGEMENT & WORKFLOW          │  │        │
-│  │  │  ┌──────────────┐  ┌────────────────┐  │  │        │
-│  │  │  │ MedicalRecds │  │ QueueManager   │  │  │        │
-│  │  │  │(PatientRecds)│  │(Access Reqs)   │  │  │        │
-│  │  │  └──────────────┘  └────────────────┘  │  │        │
-│  │  │  ┌──────────────┐                       │  │        │
-│  │  │  │  Prescriptions (in MedicalRecords)  │  │        │
-│  │  │  └──────────────┘                       │  │        │
-│  │  └─────────────────────────────────────────┘  │        │
-│  │                                                 │        │
-│  │  ┌─────────────────────────────────────────┐  │        │
-│  │  │       REGISTRY & GOVERNANCE             │  │        │
-│  │  │  ┌──────────────┐  ┌────────────────┐  │  │        │
-│  │  │  │ DataFiduciary│  │WalletMapper    │  │  │        │
-│  │  │  │ Registry     │  │(ID Mapping)    │  │  │        │
-│  │  │  └──────────────┘  └────────────────┘  │  │        │
-│  │  │  ┌──────────────┐                       │  │        │
-│  │  │  │VolunteerReg. │  (Volunteer tracking)│  │        │
-│  │  │  └──────────────┘                       │  │        │
-│  │  └─────────────────────────────────────────┘  │        │
-│  │                                                 │        │
-│  │  ┌─────────────────────────────────────────┐  │        │
-│  │  │         AUDIT & LOGGING                 │  │        │
-│  │  │  ┌──────────────────────────────────┐   │  │        │
-│  │  │  │  AuditLog (ARC-28 Events)        │   │  │        │
-│  │  │  │  - Consent granted/revoked       │   │  │        │
-│  │  │  │  - Data accessed                 │   │  │        │
-│  │  │  │  - Access requests               │   │  │        │
-│  │  │  │  - Erasure requests              │   │  │        │
-│  │  │  └──────────────────────────────────┘   │  │        │
-│  │  └─────────────────────────────────────────┘  │        │
-│  │                                                 │        │
-│  └─────────────────────────────────────────────────┘       │
+│  ├──────────────────────────────────────────────────┤       │
+│  │                                                   │       │
+│  │  ┌─────────────────────────────────────────┐    │       │
+│  │  │    ACCESS CONTROL & AUTHENTICATION      │    │       │
+│  │  │  AccessControl · HealthcareRBAC         │    │       │
+│  │  └─────────────────────────────────────────┘    │       │
+│  │                                                   │       │
+│  │  ┌─────────────────────────────────────────┐    │       │
+│  │  │     DATA MANAGEMENT & WORKFLOW          │    │       │
+│  │  │  MedicalRecords · QueueManager          │    │       │
+│  │  │  ConsentManager · DataAccessManager     │    │       │
+│  │  └─────────────────────────────────────────┘    │       │
+│  │                                                   │       │
+│  │  ┌─────────────────────────────────────────┐    │       │
+│  │  │       REGISTRY & GOVERNANCE             │    │       │
+│  │  │  DataFiduciaryRegistry · WalletMapper   │    │       │
+│  │  │  VolunteerRegistry                      │    │       │
+│  │  └─────────────────────────────────────────┘    │       │
+│  │                                                   │       │
+│  │  ┌─────────────────────────────────────────┐    │       │
+│  │  │  AUDIT & LOGGING (ARC-28 Events)        │    │       │
+│  │  │  AuditLog                               │    │       │
+│  │  └─────────────────────────────────────────┘    │       │
+│  │                                                   │       │
+│  └───────────────────────────────────────────────────┘       │
 │                                                              │
 │  ┌──────────────────────────────────────────────────┐      │
 │  │        OFF-CHAIN STORAGE (IPFS via CID)         │      │
-│  │  - Encrypted medical records                    │      │
-│  │  - Patient data blobs                           │      │
-│  │  - Content-addressed immutable storage          │      │
+│  │  Encrypted medical records · Patient data blobs │      │
 │  └──────────────────────────────────────────────────┘      │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
@@ -118,596 +124,296 @@
 
 3. PRESCRIPTION WORKFLOW
    Provider adds prescription → MedicalRecords queue + patient history
-                             → QueueManager tracks (optional for urgent flow)
-   Pharmacy marks dispensed   → MedicalRecords updates bill amount
-                             → AuditLog logs
+   Pharmacy marks dispensed   → MedicalRecords updates bill amount → AuditLog logs
 
 4. DATA ACCESS REQUEST (Consent-based)
    Patient initiates request → QueueManager.submit_request()
    Provider approves/rejects → QueueManager.approve_request()
-   Provider accesses data    → DataAccessManager.access_data()
-                            → Validates consent + logs to AuditLog
+   Provider accesses data    → DataAccessManager.access_data() → AuditLog
 
 5. EMERGENCY ACCESS
    Provider triggers emergency → QueueManager creates emergency request
    Admin approves             → QueueManager.approve_request()
-   Provider accesses data     → DataAccessManager.emergency_access()
-                             → Logs as is_emergency=true
+   Provider accesses data     → DataAccessManager.emergency_access() (is_emergency=true)
 ```
 
 ---
 
-## Smart Contracts Details
+## Smart Contracts
 
-### 1. **AccessControl** (`smart_contracts/AccessControl/contract.py`)
-**Purpose:** Basic admin role management for the healthcare system.
+### 1. AccessControl
 
-**Key Components:**
-- **super_admin**: Hardcoded initial admin address
-- **admins**: Local state mapping (address → bool)
-- **OptIn requirement**: Accounts must opt-in to use this contract
+Basic admin role management. Accounts opt-in; the deployer is marked as super admin. Admins can add or remove other admins.
 
-**Public Methods:**
-- `initialize()` - Sets up the hardcoded super admin (create="require")
-- `opt_in()` - Accounts opt-in; marked as admin if sender == super_admin
-- `add_admin(admin)` - Only admins can add new admins
-- `remove_admin(admin)` - Only admins can revoke admin status
+### 2. HealthcareRBAC
 
-**Role:** Foundational access control; likely superseded by HealthcareRBAC in later use.
+Role-Based Access Control via bitmask-encoded roles stored in BoxMaps.
 
----
+| Bit | Value | Role      |
+| --- | ----- | --------- |
+| 0   | 1     | Hospital  |
+| 1   | 2     | Doctor    |
+| 2   | 4     | Lab       |
+| 3   | 8     | Pharmacy  |
+| 4   | 16    | Insurance |
+| 5   | 32    | Auditor   |
 
-### 2. **HealthcareRBAC** (`smart_contracts/HealthcareRBAC/contract.py`)
-**Purpose:** Role-Based Access Control (RBAC) for different healthcare actors.
+**Methods:** `add_admin`, `is_admin`, `register_role`, `update_role`, `get_role`
 
-**Key Components:**
-- **initial_admin**: Hardcoded admin (ZB4FK...)
-- **admins**: BoxMap (address → bool) - Additional admins
-- **roles**: BoxMap (address → uint8) - Role bitmasks
+### 3. MedicalRecords
 
-**Role Bitmasks:**
-```
-Bit 0 (1):  Hospital
-Bit 1 (2):  Doctor
-Bit 2 (4):  Lab
-Bit 3 (8):  Pharmacy
-Bit 4 (16): Insurance
-Bit 5 (32): Auditor
-```
+Core data repository for patient records and prescriptions. Each record stores an IPFS CID, record type, provider, timestamp, and bill amount. Prescriptions have a global dispensing queue.
 
-**Public Methods:**
-- `add_admin(new_admin)` - Only existing admins can add new admins
-- `is_admin(wallet)` - Check if address is admin
-- `register_role(user, role)` - Admins can assign roles; Hospitals can register Doctors/Labs
-- `update_role(user, role)` - Only admins can update roles
-- `get_role(wallet)` - Returns role bitmask (0 if unset)
+**Methods:** `bootstrap(audit_app_id)`, `add_record`, `add_prescription`, `get_pending_prescriptions`, `mark_prescription_dispensed`, `get_patient_records`
 
-**Role:** Central authorization layer for determining who can do what in the healthcare system.
+**Events (ARC-28):** `RecordAdded`, `PrescriptionAddedToQueue`, `PrescriptionDispensed`
 
----
+### 4. AuditLog
 
-### 3. **MedicalRecords** (`smart_contracts/MedicalRecords/contract.py`)
-**Purpose:** Core contract for storing and managing patient medical records and prescriptions.
+Write-only immutable audit trail. Other contracts call it via inner transactions. Events are queryable via Algorand indexers.
 
-**Data Structures:**
-```python
-Record {
-    id: uint64,
-    patient: Address,
-    provider: Address,
-    cid: String,              # IPFS content hash
-    previous_cid: String,     # For versioning
-    record_type: String,      # "Lab Result", "Prescription", etc.
-    timestamp: uint64,
-    bill_amount: uint64
-}
+**Events:** `ConsentGranted`, `ConsentRevoked`, `DataAccessed`, `AccessRequested`, `ErasureRequested`
 
-PrescriptionQueueItem {
-    record_id: uint64,
-    patient: Address,
-    patient_name: String,
-    cid: String,
-    is_dispensed: Bool,
-    bill_amount: uint64
-}
-```
+### 5. ConsentManager
 
-**Global State:**
-- `record_counter` - Incremental ID for records
-- `audit_app` - App ID of AuditLog contract
-- `patient_records` - BoxMap[Address → DynamicArray[Record]]
-- `prescription_queue` - BoxMap[UInt64 → PrescriptionQueueItem]
-- `queue_length` - Count of total prescriptions
+Formal consent workflow with expiry tracking. Acts as the consent validation layer for DataAccessManager.
 
-**Public Methods:**
-- `bootstrap(audit_app_id)` - Link to AuditLog (called once after deploy)
-- `add_record(patient, cid, previous_cid, record_type, bill_amount)` - Upload new medical record
-  - Increments record counter
-  - Appends to patient's record history
-  - Logs to AuditLog contract
-  - Emits ARC-28 event: `RecordAdded`
-- `add_prescription(patient, patient_name, cid)` - Add prescription to global queue
-  - Creates queue item
-  - Adds to patient history
-  - Emits `PrescriptionAddedToQueue` event
-- `get_pending_prescriptions()` - Returns all un-dispensed prescriptions
-- `mark_prescription_dispensed(record_id, bill_amount)` - Mark prescription as dispensed
-  - Updates bill amount in both queue and patient history
-  - Emits `PrescriptionDispensed` event
-- `get_patient_records(patient)` - Retrieve all records for a patient
+### 6. DataAccessManager
 
-**Role:** Central data repository; all medical records flow through this contract.
+Gateway for all data access. Validates consent and logs every access (normal or emergency) to AuditLog.
+
+**Methods:** `bootstrap(consent_manager_app_id, audit_app_id, queue_app_id)`, `access_data`, `emergency_access`
+
+### 7. DataFiduciaryRegistry
+
+Registry of approved healthcare providers. Providers self-register; an admin approves, suspends, or revokes them.
+
+**Methods:** `register_fiduciary`, `approve_fiduciary`, `suspend_fiduciary`, `revoke_fiduciary`, `is_approved`, `get_fiduciary`
+
+### 8. QueueManager
+
+Access request queue with emergency prioritization. Normal requests require patient approval; emergency requests can be approved by admin or patient.
+
+**Statuses:** `0=Pending`, `1=Approved`, `2=Rejected`, `3=Expired`
+
+**Methods:** `submit_request`, `approve_request`, `reject_request`, `check_status`, `get_patient_queue`, `get_request`
+
+### 9. VolunteerRegistry
+
+Privacy-preserving volunteer tracking using hashed identities (32-byte hash → IPFS CID).
+
+**Methods:** `add_volunteer`, `update_status`, `get_volunteer`
+
+### 10. WalletMapper
+
+Maps patient wallets to short 6-byte IDs and manages beneficiary (proxy) relationships with bcrypt-hashed passwords.
+
+**Methods:** `register_short_id`, `clear_registration`, `get_wallet_from_short_id`, `get_short_id_from_wallet`, `add_beneficiary`, `clear_beneficiaries`, `get_beneficiaries`
 
 ---
 
-### 4. **AuditLog** (`smart_contracts/Auditlog/contract.py`)
-**Purpose:** Immutable audit trail of all data access and consent changes via ARC-28 events.
+## Frontend Portals
 
-**Event Structs:**
-```python
-ConsentGranted(principal, fiduciary, purpose, expiry, scopes)
-ConsentRevoked(principal, fiduciary, timestamp)
-DataAccessed(principal, fiduciary, purpose, timestamp, is_emergency)
-AccessRequested(principal, fiduciary, purpose, timestamp)
-ErasureRequested(principal, timestamp)
-```
+| Route | Portal | Description |
+|-------|--------|-------------|
+| `/` | Landing | Wallet connect, role detection, portal routing |
+| `/beneficiary-login` | Beneficiary Login | Proxy access with bcrypt password verification |
+| `/patient` | Patient Portal | Records, consent management, access request approvals |
+| `/hospital` | Hospital Portal | Request queue, prescription upload, activity feed |
+| `/doctor` | Doctor Dashboard | Patient lookup, prescription writing, consent review |
+| `/lab` | Lab Dashboard | AES-256-GCM encrypted file upload → IPFS → Algorand anchor |
+| `/pharmacy` | Pharmacy Dashboard | Live prescription queue, decrypt & dispense |
+| `/insurance` | Insurance Dashboard | Consent-gated record requests, claim processing |
+| `/auditor` | Auditor Dashboard | DPDP-compliant immutable audit log viewer |
+| `/admin` | Admin Hub | RBAC role assignment and registry management |
 
-**Public Methods:**
-- `log_consent_granted(principal, fiduciary, purpose, expiry, scopes)`
-- `log_consent_revoked(principal, fiduciary, timestamp)`
-- `log_data_accessed(principal, fiduciary, purpose, timestamp, is_emergency)`
-- `log_access_requested(principal, fiduciary, purpose, timestamp)`
-- `log_erasure_requested(principal, timestamp)`
+### Identity & Role Resolution
 
-**Role:** Write-only audit contract; other contracts call it via inner transactions to log events. Events are queryable via Algorand indexers.
+On wallet connect, `useRole` resolves identity in three steps:
 
----
+1. **WalletMapper** box query → short patient ID
+2. **HealthcareRBAC** box query → role bitmask
+3. Hardcoded admin override for the governance wallet
 
-### 5. **DataAccessManager** (`smart_contracts/DataAccessManager/contract.py`)
-**Purpose:** Orchestrates data access by validating consent and logging access.
+Role resolution gates all routes — unregistered wallets stay on the landing page until they register a short ID.
 
-**Global State:**
-- `consent_manager_app` - App ID of consent manager (future expansion)
-- `audit_app` - App ID of AuditLog
-- `queue_app` - App ID of QueueManager
+### Feature Highlights
 
-**Public Methods:**
-- `bootstrap(consent_manager_app_id, audit_app_id, queue_app_id)` - Link to other contracts
-- `access_data(principal, index, scope, purpose)` - Normal data access with consent validation
-  - Calls consent manager to validate consent
-  - Logs to AuditLog as is_emergency=false
-- `emergency_access(principal, request_id, purpose)` - Emergency data access
-  - Verifies QueueManager approval status
-  - Logs to AuditLog as is_emergency=true
-
-**Role:** Gateway for data access; ensures all accesses are logged and (eventually) consent-validated.
+- **Patient Portal:** Full record history, QR code sharing, real-time consent approvals, beneficiary proxy mode
+- **Lab Dashboard:** Visual 5-step upload pipeline (Validating → Encrypting → Uploading → Anchoring → Done) with AES-256-GCM encryption
+- **Pharmacy Dashboard:** Live on-chain prescription queue with one-click dispense
+- **Auditor Dashboard:** Full audit event history with summary stats and DPDP compliance indicators
+- **Admin Hub:** Role assignment with color-coded bitmask badges; non-admin wallets are blocked at the page level
 
 ---
 
-### 6. **DataFiduciaryRegistry** (`smart_contracts/DataFiduciaryRegistry/contract.py`)
-**Purpose:** Registry of approved healthcare providers (fiduciaries) and their status.
+## Deployment
 
-**Data Structure:**
-```python
-Fiduciary {
-    name: String,
-    license_id: String,
-    approved: Bool,
-    suspended: Bool,
-    revoked: Bool
-}
+### Deploy Order (deploy_all.ts)
+
+The `scripts/deploy_all.ts` script deploys all 9 contracts in dependency order, runs the bootstrap linking calls, and **automatically writes the app IDs back to `projects/aegis-frontend/.env`**.
+
+```
+1.  AuditLog
+2.  QueueManager
+3.  HealthcareRBAC
+4.  DataFiduciaryRegistry
+5.  ConsentManager
+6.  MedicalRecords
+7.  DataAccessManager
+8.  WalletMapper
+9.  VolunteerRegistry
+→   bootstrap: MedicalRecords.bootstrap(audit_app_id)
+→   bootstrap: DataAccessManager.bootstrap(consent_app_id, audit_app_id, queue_app_id)
+→   auto-write: frontend .env updated with all VITE_*_APP_ID variables
 ```
 
-**Global State:**
-- `admin` - Admin address (deployer)
-- `fiduciaries` - BoxMap[Address → Fiduciary]
+### Environment Variables (frontend)
 
-**Public Methods:**
-- `register_fiduciary(name, license_id)` - Any account can self-register (pending approval)
-  - Emits `FiduciaryRegistered` event
-- `approve_fiduciary(fiduciary)` - Admin approves a fiduciary
-- `suspend_fiduciary(fiduciary)` - Admin temporarily suspends access
-- `revoke_fiduciary(fiduciary)` - Admin permanently revokes access
-- `is_approved(fiduciary)` - Check if fiduciary is active (approved, not suspended, not revoked)
-- `get_fiduciary(fiduciary)` - Retrieve fiduciary details
-
-**Role:** Provider governance; ensures only qualified healthcare providers can interact with the system.
+```env
+VITE_ALGOD_NETWORK=localnet
+VITE_AUDITLOG_APP_ID=<app-id>
+VITE_QUEUE_MANAGER_APP_ID=<app-id>
+VITE_HEALTHCARE_RBAC_APP_ID=<app-id>
+VITE_DATA_FIDUCIARY_REGISTRY_APP_ID=<app-id>
+VITE_CONSENT_MANAGER_APP_ID=<app-id>
+VITE_MEDICAL_RECORDS_APP_ID=<app-id>
+VITE_DATA_ACCESS_MANAGER_APP_ID=<app-id>
+VITE_WALLET_MAPPER_APP_ID=<app-id>
+VITE_VOLUNTEER_REGISTRY_APP_ID=<app-id>
+```
 
 ---
 
-### 7. **QueueManager** (`smart_contracts/QueueManager/contract.py`)
-**Purpose:** Manages access request queues with emergency prioritization.
+## Quick Start
 
-**Data Structure:**
-```python
-QueueRequest {
-    id: uint64,
-    requester: Address,
-    target: Address,         # Patient (data subject)
-    purpose: String,
-    request_type: uint8,     # 1=Normal, 2=Emergency
-    timestamp: uint64,
-    status: uint8            # 0=Pending, 1=Approved, 2=Rejected, 3=Expired
-}
+### Prerequisites
+
+- Git, Node.js 20+, Python 3.12, Poetry, AlgoKit CLI, Docker Desktop
+
+```powershell
+pipx install poetry
+pipx install algokit
+pipx ensurepath
 ```
 
-**Global State:**
-- `request_counter` - Incremental request ID
-- `admin` - Hardcoded admin for emergency overrides
-- `requests` - BoxMap[UInt64 → QueueRequest]
-- `patient_requests` - BoxMap[Address → DynamicArray[UInt64]]
+### First-Time Setup
 
-**Public Methods:**
-- `submit_request(target, purpose, is_emergency)` - Create new access request
-  - Returns request ID
-  - Sets type to 2 if emergency, else 1
-  - Emits `RequestSubmitted` event
-- `approve_request(request_id)` - Approve a request
-  - For emergency: only admin or target can approve
-  - For normal: only target patient can approve
-  - Status → 1
-- `reject_request(request_id)` - Reject a request
-  - Similar permissions to approve
-  - Status → 2
-- `check_status(request_id)` - Quick status check (helper)
-- `get_patient_queue(patient)` - Retrieve patient's requests (emergency pending first, then normal)
-- `get_request(request_id)` - Retrieve specific request details
+```powershell
+git clone <repo-url>
+cd Aegis-Care
 
-**Role:** Request orchestration; handles both routine consent and emergency access workflows.
+# Point Poetry at Python 3.12
+cd projects/Aegis-contracts
+poetry env use "<absolute-path-to-python3.12.exe>"
+
+# Install all dependencies
+cd ../..
+algokit project bootstrap all
+
+# Start local Algorand network
+algokit localnet start
+
+# Build contracts
+cd projects/Aegis-contracts
+algokit project run build
+
+# Deploy all contracts + auto-update frontend .env
+algokit project deploy localnet
+
+# Run the frontend
+cd ../Aegis-frontend
+npm run dev
+```
+
+Open `http://localhost:5173/` in your browser.
+
+### Daily Development
+
+```powershell
+algokit localnet start
+cd projects/Aegis-frontend
+npm run dev
+```
+
+Only re-run build and deploy when you modify `projects/aegis-contracts/smart_contracts/*/contract.py`.
+
+### Useful Commands
+
+```powershell
+algokit localnet status   # check network health
+algokit localnet reset    # reset if state gets inconsistent
+algokit localnet stop     # stop the network
+```
 
 ---
 
-### 8. **VolunteerRegistry** (`smart_contracts/VolunteerRegistry/contract.py`)
-**Purpose:** Track volunteer healthcare workers with hashed identity.
+## Testnet / Mainnet Deployment
 
-**Data Structure:**
-```python
-Volunteer {
-    cid: String,      # IPFS content hash of volunteer data
-    active: Bool
-}
-```
+1. Create `.env.testnet` or `.env.mainnet`
+2. Set `ALGOD_SERVER`, `ALGOD_TOKEN`, `INDEXER_SERVER`, `INDEXER_TOKEN`
+3. Fund deployer account: [bank.testnet.algorand.network](https://bank.testnet.algorand.network/) (testnet)
 
-**Global State:**
-- `volunteers` - BoxMap[bytes32 (hash) → Volunteer]
-
-**Public Methods:**
-- `add_volunteer(hash_id, cid)` - Register a volunteer with hashed identity
-  - Emits `VolunteerAdded` event
-- `update_status(hash_id, active)` - Enable/disable volunteer
-  - Emits `StatusUpdated` event
-- `get_volunteer(hash_id)` - Retrieve volunteer details
-
-**Role:** Privacy-preserving volunteer management; identity hashing protects volunteer data.
-
----
-
-### 9. **WalletMapper** (`smart_contracts/WalletMapper/contract.py`)
-**Purpose:** Map patient wallets to short IDs and manage beneficiary relationships.
-
-**Data Structure:**
-```python
-BeneficiaryRecord {
-    beneficiary_id: bytes[6],  # Short ID
-    beneficiary_wallet: Address,
-    hashed_password: String,
-    created_at: uint64
-}
-```
-
-**Global State:**
-- `short_id_to_address` - BoxMap[bytes[6] → Address]
-- `address_to_short_id` - BoxMap[Address → bytes[6]]
-- `beneficiaries` - BoxMap[Address → DynamicArray[BeneficiaryRecord]]
-
-**Public Methods:**
-- `fund_app(pay)` - Helper to fund contract MBR (no-op in logic, used for payment tracking)
-- `register_short_id(short_id)` - Caller registers a 6-byte short ID
-  - Idempotent: same ID twice returns; different ID requires clear
-  - Emits `ShortIdRegistered` event
-- `clear_registration()` - Remove short ID mapping
-- `get_wallet_from_short_id(short_id)` - Lookup wallet by short ID
-- `get_short_id_from_wallet(wallet)` - Lookup short ID by wallet
-- `add_beneficiary(beneficiary_id, hashed_password)` - Add proxy beneficiary
-  - Prevents self-beneficiary and duplicates
-  - Stores hashed password for later verification
-- `clear_beneficiaries()` - Remove all beneficiaries for caller
-- `get_beneficiaries(owner)` - Retrieve all beneficiaries for an address
-
-**Role:** Identity mapping; enables shorter patient IDs while supporting healthcare proxy/beneficiary relationships.
-
----
-
-## Deployment Architecture
-
-### Project Structure
-```
-projects/Aegis-contracts/
-├── smart_contracts/
-│   ├── __init__.py
-│   ├── __main__.py
-│   ├── index.ts                    # TypeScript deployment orchestrator
-│   ├── config.py                   # Python build config
-│   ├── AccessControl/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   ├── HealthcareRBAC/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   ├── MedicalRecords/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   ├── AuditLog/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   ├── DataAccessManager/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   ├── DataFiduciaryRegistry/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   ├── QueueManager/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   ├── VolunteerRegistry/
-│   │   ├── contract.py
-│   │   └── deploy-config.ts
-│   └── WalletMapper/
-│       ├── contract.py
-│       └── deploy-config.ts
-├── package.json                    # npm dependencies
-├── pyproject.toml                  # Python/Poetry config
-└── tsconfig.json
-```
-
-### Deployment Flow
-1. **Build** (`algokit project run build`):
-   - Python Puya compiler converts contract.py → TEAL
-   - Generates ARC-56 JSON artifacts
-   - Generates TypeScript client stubs
-
-2. **Deploy** (`algokit project run deploy localnet`):
-   - `index.ts` reads all `deploy-config.ts` files
-   - Each contract's deployer runs in sequence
-   - Contracts are created on Algorand
-   - App IDs are captured
-
-3. **Bootstrap**:
-   - After all contracts deployed, linking methods called:
-     - `MedicalRecords.bootstrap(audit_app_id)`
-     - `DataAccessManager.bootstrap(consent_app_id, audit_app_id, queue_app_id)`
-   - Cross-contract inner transaction calls enabled
-
-### Environment Configuration
-- `.env.localnet` - LocalNet development (Algorand in Docker)
-- `.env.testnet` - Algorand Testnet
-- `.env.mainnet` - Algorand Mainnet (production)
-
----
-
-## Data Flow Examples
-
-### Example 1: Patient Medical Record Upload
-```
-1. Doctor (provider) calls:
-   MedicalRecords.add_record(
-       patient=alice_addr,
-       cid="QmXxxx...",           # IPFS hash of encrypted record
-       record_type="Lab Result",
-       bill_amount=50000000       # microAlgos
-   )
-
-2. MedicalRecords contract:
-   - Increments record_counter
-   - Creates Record struct
-   - Appends to patient_records[alice_addr]
-   - Calls via inner txn:
-     AuditLog.log_data_accessed(
-         principal=alice_addr,
-         fiduciary=doctor_addr,
-         purpose="Uploaded new record",
-         timestamp=now,
-         is_emergency=false
-     )
-   - Emits ARC-28 event: RecordAdded
-
-3. Audit trail exists on-chain in AuditLog events
-4. Medical data (encrypted) stored on IPFS
-```
-
-### Example 2: Prescription Workflow
-```
-1. Doctor calls:
-   MedicalRecords.add_prescription(
-       patient=alice_addr,
-       patient_name="Alice Smith",
-       cid="QmYyyy..."
-   )
-
-2. MedicalRecords:
-   - Creates prescription queue item
-   - Adds to prescription_queue (keyed by index)
-   - Adds to patient history
-   - Logs to AuditLog
-
-3. Pharmacy retrieves pending prescriptions:
-   MedicalRecords.get_pending_prescriptions()
-   → Returns all items with is_dispensed=false
-
-4. Pharmacy dispenses:
-   MedicalRecords.mark_prescription_dispensed(
-       record_id=1,
-       bill_amount=25000000  # microAlgos
-   )
-
-5. MedicalRecords:
-   - Finds prescription in queue
-   - Sets is_dispensed=true
-   - Updates bill_amount in both queue and patient history
-   - Emits PrescriptionDispensed event
-```
-
-### Example 3: Emergency Data Access
-```
-1. ER Doctor initiates emergency:
-   request_id = QueueManager.submit_request(
-       target=patient_addr,
-       purpose="Emergency trauma assessment",
-       is_emergency=true
-   )
-
-2. Hospital Admin approves:
-   QueueManager.approve_request(request_id)
-   → Only admin or patient can approve emergencies
-
-3. ER Doctor accesses data:
-   DataAccessManager.emergency_access(
-       principal=patient_addr,
-       request_id=request_id,
-       purpose="Emergency trauma assessment"
-   )
-
-4. DataAccessManager:
-   - Verifies status == 1 (approved) via QueueManager
-   - Logs to AuditLog with is_emergency=true
-   - Grant proceeds
-
-5. Audit shows emergency access with timestamp
+```bash
+algokit project deploy testnet
 ```
 
 ---
 
 ## Security Considerations
 
-### Hardcoded Addresses
-Several contracts hardcode a super admin address:
+### Hardcoded Admin Address
+Several contracts hardcode the initial super admin:
 ```
 ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
 ```
-This is acceptable for governance initialization but should be rotated in production.
+Acceptable for governance initialization; should be rotated in production.
 
 ### Access Control Patterns
-1. **HealthcareRBAC**: Role-based checks via bitmasks
-2. **Approver checks**: Only target patient or admin can approve access requests
-3. **Admin guards**: Only admins can revoke or suspend providers
+- **HealthcareRBAC:** Role-based checks via bitmasks
+- **QueueManager:** Only the target patient or admin can approve emergency requests
+- **DataFiduciaryRegistry:** Admin-gated provider approval/suspension/revocation
 
 ### Data Privacy
-- Off-chain storage: Medical records stored on IPFS (encrypted by application layer)
-- On-chain: Only references (CID) and metadata on-chain
-- Audit trail: Events logged immutably but queryable
+- Medical record content stored encrypted on IPFS; only CID hashes on-chain
+- Volunteer identities stored as 32-byte hashes
+- Beneficiary passwords stored as bcrypt hashes
 
 ### Audit Trail
-- All data access logged via AuditLog contract
-- Events enable compliance audits
-- Timestamps prove when access occurred
-- Emergency flag distinguishes routine vs. critical access
-
----
-
-## Development Workflow
-
-### Local Development
-```bash
-# Start local Algorand network
-algokit localnet start
-
-# Install dependencies
-algokit project bootstrap all
-
-# Build contracts
-algokit project run build
-
-# Deploy contracts
-algokit project run deploy localnet
-
-# Run tests (if configured)
-algokit project run test
-```
-
-### Contract Modification
-1. Edit contract.py
-2. Run `algokit project run build`
-3. Review generated TEAL in artifacts/
-4. Update deploy-config.ts if new params needed
-5. Test via deploy to localnet
-
-### Debugging
-- Use AlgoKit AVM Debugger VS Code extension
-- Enable debug logging in index.ts
-- Monitor local node logs: `algokit localnet logs`
-
----
-
-## Testnet/Mainnet Deployment
-
-### Prerequisites
-1. Create .env.testnet or .env.mainnet
-2. Set ALGOD_SERVER, ALGOD_TOKEN, INDEXER_SERVER, INDEXER_TOKEN
-3. Fund deployer account at https://bank.testnet.algorand.network/ (testnet)
-
-### Deploy
-```bash
-algokit project deploy testnet
-```
-
-### Verify
-```bash
-algokit app call --name MedicalRecords --method get_patient_records testnet
-```
-
----
-
-## Future Enhancements
-
-### Planned Features
-1. **Consent Manager Contract** - Formal consent workflow with expiry
-2. **Data Marketplace** - Enable patients to monetize anonymized data
-3. **Insurance Integration** - Direct insurance claim processing
-4. **Multi-Sig Governance** - DAOs for community oversight
-5. **Privacy Proofs** - ZK proofs for compliance verification
-
-### Known Limitations
-1. No consensus-based consent validation (centralized approval)
-2. Prescription queue O(n) iteration on dispensing
-3. No expiry logic for emergency access requests
-4. Volunteer registry hash collision potential (mitigated by 32-byte hash)
-
----
-
-## Testing & Validation
-
-### Test Coverage Areas (to implement)
-- Access control enforcement (unauthorized calls should fail)
-- Record storage and retrieval
-- Prescription workflow state transitions
-- Audit logging completeness
-- Cross-contract inner call success
-
-### Current Status
-- Contracts compiled and deployed to testnet (commit ba711f1)
-- account.txt generated for testnet wallet
-- Build/deploy errors exist in historical logs (resolved in v1.0)
+- All data access logged immutably via AuditLog ARC-28 events
+- Emergency flag (`is_emergency=true`) distinguishes routine vs. critical access
+- Events queryable via Algorand indexers for compliance audits
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+| Problem | Fix |
+|---------|-----|
+| `poetry: command not found` | Run `pipx ensurepath`, reopen terminal |
+| `Python version not supported` | Re-run `poetry env use <path-to-python3.12.exe>` |
+| `Cannot connect to Docker` | Start Docker Desktop, then `algokit localnet start` |
+| Frontend shows `APP_ID = 0` errors | Redeploy contracts and update `.env` with new app IDs |
+| LocalNet state inconsistent | `algokit localnet reset`, then repeat steps 4–7 |
+| `Inner transaction fails: App not found` | Ensure `bootstrap()` was called to link app IDs |
+| `Box MBR insufficient` | Call `WalletMapper.fund_app()` with sufficient payment |
+| `Deploy fails: Insufficient balance` | Fund testnet account at https://bank.testnet.algorand.network/ |
 
-**Build Error: "Module not found"**
-```bash
-poetry install
-algokit project bootstrap all
-```
+---
 
-**Deploy fails: "Insufficient balance"**
-→ Fund testnet account at faucet: https://bank.testnet.algorand.network/
+## Future Enhancements
 
-**Inner transaction fails: "App not found"**
-→ Ensure bootstrap() called to link app IDs
+1. **Data Marketplace** — Enable patients to monetize anonymized data
+2. **Insurance Integration** — Direct on-chain insurance claim processing
+3. **Multi-Sig Governance** — DAO-based community oversight
+4. **Privacy Proofs** — ZK proofs for compliance verification
+5. **Consent Expiry** — Time-bounded emergency access requests
 
-**Box MBR insufficient**
-→ Call WalletMapper.fund_app() with sufficient payment to cover box storage
+### Known Limitations
+- No consensus-based consent validation (centralized approval for now)
+- Prescription queue O(n) iteration on dispensing
+- No expiry logic for emergency access requests
+- Volunteer registry hash collision potential (mitigated by 32-byte hash)
 
 ---
 
@@ -721,13 +427,4 @@ algokit project bootstrap all
 
 ---
 
-## Team & Contacts
-
-**Project:** Aegis Care v1.0  
-**Status:** Initial Release (Healthcare RBAC + Medical Records + Audit)  
-**Git:** Main branch (ba711f1 V1.0, 34d47ca Initial commit)
-
----
-
-*Documentation generated: 2026-04-18*
-*Last Updated: v1.0 Release*
+**Project:** Aegis Care v1.0 — Healthcare RBAC + Medical Records + Audit + React Frontend

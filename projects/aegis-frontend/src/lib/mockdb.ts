@@ -79,7 +79,7 @@ export interface InboundRequest {
 export const patients: Patient[] = [
   { id: 'p1', name: 'Ishaan Kapoor', shortId: '847KOR', walletAddress: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HVY', dob: '14 Mar 1994', bloodGroup: 'O+', allergies: ['Penicillin', 'Latex'], since: 'Mar 2026', avatar: 'IK', avatarColor: 'lime' },
   { id: 'p2', name: 'Priya Rajan', shortId: '512RAJ', walletAddress: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBY5HVY', dob: '28 Jul 1989', bloodGroup: 'A-', allergies: ['Sulfa'], since: 'Jan 2026', avatar: 'PR', avatarColor: 'coral' },
-  { id: 'p3', name: 'Arjun Mehta', shortId: '391MEH', walletAddress: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCY5HVY', dob: '02 Nov 1997', bloodGroup: 'B+', allergies: [], since: 'Apr 2026', avatar: 'AM', avatarColor: 'sky' },
+  { id: 'p3', name: 'Vedaang Sharma', shortId: '391MEH', walletAddress: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCY5HVY', dob: '02 Nov 1997', bloodGroup: 'B+', allergies: [], since: 'Apr 2026', avatar: 'AM', avatarColor: 'sky' },
   { id: 'p4', name: 'Sneha Verma', shortId: '204VER', walletAddress: 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDY5HVY', dob: '19 Feb 1992', bloodGroup: 'AB+', allergies: ['Aspirin'], since: 'Feb 2026', avatar: 'SV', avatarColor: 'sun' },
   { id: 'p5', name: 'Rohan Nair', shortId: '768NAI', walletAddress: 'EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEY5HVY', dob: '07 Aug 1986', bloodGroup: 'O-', allergies: ['Ibuprofen'], since: 'Dec 2025', avatar: 'RN', avatarColor: 'violet' },
 ];

@@ -1,10 +1,14 @@
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
-import * as fs from 'fs'
-import * as path from 'path'
+
+declare const __dirname: string
+declare const require: any
+
+const fs = require('fs')
+const path = require('path')
 
 // Factories
 import { AccessControlFactory } from '../smart_contracts/artifacts/access_control/AccessControlClient'
-import { AuditLogFactory } from '../smart_contracts/artifacts/Auditlog/AuditLogClient'
+import { AuditLogFactory } from '../smart_contracts/artifacts/audit_log/AuditLogClient'
 import { ConsentManagerFactory } from '../smart_contracts/artifacts/consent_manager/ConsentManagerClient'
 import { DataAccessManagerFactory } from '../smart_contracts/artifacts/data_access_manager/DataAccessManagerClient'
 import { DataFiduciaryRegistryFactory } from '../smart_contracts/artifacts/data_fiduciary_registry/DataFiduciaryRegistryClient'
