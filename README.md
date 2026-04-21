@@ -3,6 +3,7 @@
 **Aegis Care** is a decentralized healthcare data management system built on the **Algorand** blockchain. It provides a privacy-preserving platform for managing medical records, prescriptions, volunteer data, and healthcare access control — with a full React frontend connecting directly to on-chain smart contracts.
 
 **Primary Goals:**
+
 - Enable secure medical record management on-chain
 - Implement role-based access control (RBAC) for healthcare providers
 - Track data access and consent through immutable audit logs
@@ -15,7 +16,7 @@
 ## Technology Stack
 
 | Component | Technology | Purpose |
-|-----------|-----------|---------|
+| --------- | ---------- | ------- |
 | **Blockchain** | Algorand Layer 1 | Smart contract execution & data settlement |
 | **Smart Contracts** | Python (Puya) | Contract logic via AlgoKit |
 | **Data Storage** | IPFS (CID) | Off-chain encrypted medical records |
@@ -31,7 +32,7 @@
 
 ## Repository Structure
 
-```
+```text
 Aegis-Care/
 ├── projects/
 │   ├── aegis-contracts/          # Smart contracts (Python/Puya + TypeScript deployer)
@@ -64,7 +65,7 @@ Aegis-Care/
 
 ## Architecture Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     Aegis CARE ECOSYSTEM                      │
 ├─────────────────────────────────────────────────────────────┤
@@ -114,7 +115,7 @@ Aegis-Care/
 
 ### Contract Interaction Flow
 
-```
+```text
 1. REGISTRATION & SETUP
    Patient registers → WalletMapper creates short ID → DataFiduciaryRegistry approves providers
 
@@ -215,7 +216,7 @@ Maps patient wallets to short 6-byte IDs and manages beneficiary (proxy) relatio
 ## Frontend Portals
 
 | Route | Portal | Description |
-|-------|--------|-------------|
+| ----- | ------ | ----------- |
 | `/` | Landing | Wallet connect, role detection, portal routing |
 | `/beneficiary-login` | Beneficiary Login | Proxy access with bcrypt password verification |
 | `/patient` | Patient Portal | Records, consent management, access request approvals |
@@ -253,7 +254,7 @@ Role resolution gates all routes — unregistered wallets stay on the landing pa
 
 The `scripts/deploy_all.ts` script deploys all 9 contracts in dependency order, runs the bootstrap linking calls, and **automatically writes the app IDs back to `projects/aegis-frontend/.env`**.
 
-```
+```text
 1.  AuditLog
 2.  QueueManager
 3.  HealthcareRBAC
@@ -363,23 +364,29 @@ algokit project deploy testnet
 ## Security Considerations
 
 ### Hardcoded Admin Address
+
 Several contracts hardcode the initial super admin:
-```
+
+```text
 ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
 ```
+
 Acceptable for governance initialization; should be rotated in production.
 
 ### Access Control Patterns
+
 - **HealthcareRBAC:** Role-based checks via bitmasks
 - **QueueManager:** Only the target patient or admin can approve emergency requests
 - **DataFiduciaryRegistry:** Admin-gated provider approval/suspension/revocation
 
 ### Data Privacy
+
 - Medical record content stored encrypted on IPFS; only CID hashes on-chain
 - Volunteer identities stored as 32-byte hashes
 - Beneficiary passwords stored as bcrypt hashes
 
 ### Audit Trail
+
 - All data access logged immutably via AuditLog ARC-28 events
 - Emergency flag (`is_emergency=true`) distinguishes routine vs. critical access
 - Events queryable via Algorand indexers for compliance audits
@@ -388,16 +395,16 @@ Acceptable for governance initialization; should be rotated in production.
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| `poetry: command not found` | Run `pipx ensurepath`, reopen terminal |
-| `Python version not supported` | Re-run `poetry env use <path-to-python3.12.exe>` |
-| `Cannot connect to Docker` | Start Docker Desktop, then `algokit localnet start` |
-| Frontend shows `APP_ID = 0` errors | Redeploy contracts and update `.env` with new app IDs |
-| LocalNet state inconsistent | `algokit localnet reset`, then repeat steps 4–7 |
-| `Inner transaction fails: App not found` | Ensure `bootstrap()` was called to link app IDs |
-| `Box MBR insufficient` | Call `WalletMapper.fund_app()` with sufficient payment |
-| `Deploy fails: Insufficient balance` | Fund testnet account at https://bank.testnet.algorand.network/ |
+| Problem                                    | Fix                                                           |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| `poetry: command not found`                | Run `pipx ensurepath`, reopen terminal                        |
+| `Python version not supported`             | Re-run `poetry env use <path-to-python3.12.exe>`              |
+| `Cannot connect to Docker`                 | Start Docker Desktop, then `algokit localnet start`           |
+| Frontend shows `APP_ID = 0` errors         | Redeploy contracts and update `.env` with new app IDs         |
+| LocalNet state inconsistent                | `algokit localnet reset`, then repeat steps 4–7               |
+| `Inner transaction fails: App not found`   | Ensure `bootstrap()` was called to link app IDs               |
+| `Box MBR insufficient`                     | Call `WalletMapper.fund_app()` with sufficient payment        |
+| `Deploy fails: Insufficient balance`       | [Testnet faucet](https://bank.testnet.algorand.network/)      |
 
 ---
 
@@ -410,6 +417,7 @@ Acceptable for governance initialization; should be rotated in production.
 5. **Consent Expiry** — Time-bounded emergency access requests
 
 ### Known Limitations
+
 - No consensus-based consent validation (centralized approval for now)
 - Prescription queue O(n) iteration on dispensing
 - No expiry logic for emergency access requests
