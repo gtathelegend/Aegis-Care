@@ -25,38 +25,4 @@ export async function deploy() {
     })
   }
 
-  // --------------------------------------------------
-  // Example: addVolunteer
-  // --------------------------------------------------
-  const method = 'addVolunteer'
-
-  // ⚠️ 32-byte hash (must be exactly 32 bytes)
-  const hashId = new Uint8Array(32).fill(1)
-
-  const response = await appClient.send.addVolunteer({
-    args: {
-      hashId: hashId,
-      cid: 'QmVolunteerCID123',
-    },
-  })
-
-  console.log(
-    `Called ${method} on ${appClient.appClient.appName} (${appClient.appClient.appId})`
-  )
-
-  // --------------------------------------------------
-  // Example: getVolunteer
-  // --------------------------------------------------
-  const getMethod = 'getVolunteer'
-
-  const volunteer = await appClient.send.getVolunteer({
-    args: {
-      hashId: hashId,
-    },
-  })
-
-  console.log(
-    `Called ${getMethod}, result:`,
-    volunteer.return
-  )
 }
