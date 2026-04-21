@@ -745,7 +745,7 @@ export default function Landing() {
               <div>
                 <h5>Contact</h5>
                 <ul>
-                  <li><a href="mailto:hello@Aegis-care.io">hello@Aegis-care.io</a></li>
+                  <li><a href="mailto:vedaangsharma2006@gmail.com">vedaangsharma2006@gmail.com</a></li>
                   <li><a href="#">Status</a></li>
                   <li><a href="#">Security</a></li>
                 </ul>
