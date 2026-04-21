@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import { WalletMapperClient } from '../contracts/WalletMapperClient'
@@ -18,49 +18,48 @@ export interface PatientProfile {
 }
 
 export function useWalletProfile() {
-  const { activeAddress, signer } = useWallet()
+  const { activeAddress, transactionSigner } = useWallet()
   const [profile, setProfile] = useState<PatientProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch patient profile
+  const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), [])
+  const mapperId = useMemo(() => Number(import.meta.env.VITE_WALLET_MAPPER_APP_ID || 0), [])
+
   useEffect(() => {
-    if (!activeAddress) return
+    if (!activeAddress || mapperId === 0) return
 
     const fetchProfile = async () => {
       try {
         setLoading(true)
-        const algodClient = await getAlgorandClientFromViteEnvironment()
-        const contract = new WalletMapperClient({
-          client: algodClient,
-          sender: { addr: activeAddress, signer: undefined as any },
+        const contract = new WalletMapperClient({ appId: BigInt(mapperId), algorand })
+        const result = await contract.getShortIdFromWallet({
+          args: { wallet: activeAddress },
+          sender: activeAddress,
         })
 
-        // Get short ID from wallet
-        const shortId = await contract.getShortIdFromWallet({ wallet: activeAddress })
+        const shortIdBytes = result.return as Uint8Array
+        const shortId = String.fromCharCode(...Array.from(shortIdBytes)).replace(/\0/g, '')
 
         if (shortId) {
-          // In production, fetch full profile from IPFS via patient registry
           setProfile({
             shortId,
             walletAddress: activeAddress,
-            name: 'Patient Name', // Would fetch from IPFS
+            name: 'Patient Name',
           })
         }
       } catch (err: any) {
         console.warn('Profile not found:', err.message)
-        // Profile may not exist yet — that's okay
       } finally {
         setLoading(false)
       }
     }
 
     fetchProfile()
-  }, [activeAddress, signer])
+  }, [activeAddress, mapperId, algorand])
 
-  // Register new short ID
   const registerShortId = async (shortId: string) => {
-    if (!activeAddress || !signer) {
+    if (!activeAddress || !transactionSigner) {
       setError('Wallet not connected')
       return false
     }
@@ -69,13 +68,16 @@ export function useWalletProfile() {
       setLoading(true)
       setError(null)
 
-      const algodClient = await getAlgorandClientFromViteEnvironment()
-      const contract = new WalletMapperClient({
-        client: algodClient,
-        sender: { addr: activeAddress, signer },
-      })
+      const shortIdBytes = new Uint8Array(6)
+      const encoded = new TextEncoder().encode(shortId)
+      shortIdBytes.set(encoded.slice(0, 6))
 
-      await contract.registerShortId({ short_id: shortId })
+      const contract = new WalletMapperClient({ appId: BigInt(mapperId), algorand })
+      await contract.send.registerShortId({
+        args: { shortId: shortIdBytes },
+        sender: activeAddress,
+        signer: transactionSigner,
+      })
 
       setProfile({
         shortId,
@@ -93,7 +95,6 @@ export function useWalletProfile() {
     }
   }
 
-  // Get shareable profile URL with QR
   const getShareableUrl = () => {
     if (!profile) return null
     return `${window.location.origin}/share/${profile.shortId}?wallet=${profile.walletAddress}`

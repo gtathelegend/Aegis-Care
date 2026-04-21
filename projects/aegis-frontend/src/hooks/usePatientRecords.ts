@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import { MedicalRecordsClient } from '../contracts/MedicalRecordsClient'
@@ -10,27 +10,24 @@ export function usePatientRecords(patientAddress?: string) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), [])
+  const appId = useMemo(() => Number(import.meta.env.VITE_MEDICAL_RECORDS_APP_ID || 0), [])
+
   useEffect(() => {
-    if (!activeAddress || !patientAddress) return
+    if (!activeAddress || !patientAddress || appId === 0) return
 
     const fetchRecords = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        const algodClient = await getAlgorandClientFromViteEnvironment()
-        const contract = new MedicalRecordsClient({
-          client: algodClient,
-          sender: { addr: activeAddress, signer: undefined as any },
+        const contract = new MedicalRecordsClient({ appId: BigInt(appId), algorand })
+        const result = await contract.getPatientRecords({
+          args: { patient: patientAddress },
+          sender: activeAddress,
         })
 
-        // This would call the contract's get_patient_records method
-        // For now, mock data integration — replace with actual contract call
-        const contractRecords = await contract.getPatientRecords({ patient: patientAddress })
-
-        // Transform contract records to match MedicalRecord type
-        // This is placeholder — actual structure depends on contract return type
-        setRecords(contractRecords as any || [])
+        setRecords((result.return as any) || [])
       } catch (err: any) {
         setError(err.message || 'Failed to fetch records')
         console.error('Error fetching patient records:', err)
@@ -40,7 +37,7 @@ export function usePatientRecords(patientAddress?: string) {
     }
 
     fetchRecords()
-  }, [activeAddress, patientAddress])
+  }, [activeAddress, patientAddress, appId, algorand])
 
   return { records, loading, error }
 }

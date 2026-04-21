@@ -33,7 +33,7 @@ if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
       id: WalletId.WALLETCONNECT,
       options: {
         projectId: walletConnectProjectId,
-      },
+      } as any,
     },
     {
       id: WalletId.KMD,
@@ -53,7 +53,7 @@ if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
       id: WalletId.WALLETCONNECT,
       options: {
         projectId: walletConnectProjectId,
-      },
+      } as any,
     },
   ]
 }
