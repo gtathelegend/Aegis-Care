@@ -143,6 +143,7 @@ dist
 # Local credentials and helper outputs
 account.txt
 deployer.txt
+fund_mapper.js
 
 # Contract/frontend local diagnostic files
 projects/**/build_err*.txt
