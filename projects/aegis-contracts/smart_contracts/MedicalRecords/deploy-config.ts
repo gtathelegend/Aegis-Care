@@ -47,24 +47,4 @@ export async function deploy() {
       console.warn(`[MedicalRecords] Skipping bootstrap: VITE_AUDIT_LOG_APP_ID not set in environment.`)
   }
 
-  // --------------------------------------------------
-  // Example: addRecord — only runs if bootstrap linked a real AuditLog,
-  // otherwise the inner audit log call inside the contract would fail.
-  // --------------------------------------------------
-  if (AUDIT_APP_ID > 0n) {
-    await appClient.send.addRecord({
-      args: {
-        patient: deployer.addr,
-        cid: 'QmTestCID123',
-        previousCid: '',
-        recordType: 'LabReport',
-        billAmount: BigInt(100),
-      },
-    })
-    console.log(
-      `Called addRecord on ${appClient.appClient.appName} (${appClient.appClient.appId})`
-    )
-  } else {
-    console.log('[MedicalRecords] Skipping addRecord demo (no VITE_AUDIT_LOG_APP_ID).')
-  }
 }
