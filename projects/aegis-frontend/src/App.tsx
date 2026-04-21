@@ -60,6 +60,8 @@ if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
 
 const algodConfig = getAlgodConfigFromViteEnvironment()
 
+const algodPort = algodConfig.port ? Number(algodConfig.port) : ''
+
 const walletManager = new WalletManager({
   wallets: supportedWallets,
   defaultNetwork: algodConfig.network,
@@ -67,8 +69,8 @@ const walletManager = new WalletManager({
     [algodConfig.network]: {
       algod: {
         baseServer: algodConfig.server,
-        port: Number(algodConfig.port),
-        token: algodConfig.token as any,
+        ...(algodPort !== '' ? { port: algodPort } : {}),
+        token: (algodConfig.token || '') as any,
       },
     },
   },
