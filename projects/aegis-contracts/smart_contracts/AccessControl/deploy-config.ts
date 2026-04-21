@@ -40,7 +40,7 @@ export async function deploy() {
     args: [],
   })
 
-  const SUPER_ADMIN = 'ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM'
+  const SUPER_ADMIN = 'RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ'
   const deployerIsSuperAdmin = deployer.addr.toString() === SUPER_ADMIN
 
   if (deployerIsSuperAdmin) {

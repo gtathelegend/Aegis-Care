@@ -26,7 +26,7 @@ class QueueManager(ARC4Contract):
         
         # Admin for emergency overrides overrides
         self.admin = GlobalState(arc4.Address, key="admin")
-        self.admin.value = arc4.Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM")
+        self.admin.value = arc4.Address("RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ")
 
         # BoxMap for quick lookup by ID, we maintain two lists per patient: normal and emergency
         self.requests = BoxMap(arc4.UInt64, QueueRequest, key_prefix=b"req_")

@@ -19,8 +19,8 @@ from algopy import subroutine
 class HealthcareRBAC(ARC4Contract):
 
     def __init__(self) -> None:
-        # Hardcoded Admin: ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
-        admin_addr = arc4.Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM")
+        # Hardcoded Admin: RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ
+        admin_addr = arc4.Address("RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ")
         
         self.initial_admin = GlobalState(arc4.Address, key="init_admin")
         self.initial_admin.value = admin_addr

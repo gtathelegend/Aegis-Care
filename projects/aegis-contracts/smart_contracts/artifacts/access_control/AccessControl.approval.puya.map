@@ -14,7 +14,7 @@
       "op": "intcblock 1 0 32"
     },
     "6": {
-      "op": "bytecblock \"admins\" \"super_admin\" 0x80 base32(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPA)"
+      "op": "bytecblock \"admins\" \"super_admin\" 0x80 base32(RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET2Q)"
     },
     "62": {
       "op": "txn ApplicationID",
@@ -39,14 +39,14 @@
       ]
     },
     "68": {
-      "op": "bytec_3 // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM",
+      "op": "bytec_3 // addr RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ",
       "defined_out": [
         "\"super_admin\"",
-        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+        "Address(RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ)"
       ],
       "stack_out": [
         "\"super_admin\"",
-        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+        "Address(RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ)"
       ]
     },
     "69": {
@@ -188,14 +188,14 @@
       ]
     },
     "129": {
-      "op": "bytec_3 // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM",
+      "op": "bytec_3 // addr RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ",
       "defined_out": [
         "\"super_admin\"",
-        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+        "Address(RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ)"
       ],
       "stack_out": [
         "\"super_admin\"",
-        "Address(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM)"
+        "Address(RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ)"
       ]
     },
     "130": {

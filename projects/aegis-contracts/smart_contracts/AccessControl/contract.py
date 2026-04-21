@@ -4,15 +4,15 @@ from algopy.arc4 import Address
 
 class AccessControl(ARC4Contract):
     def __init__(self) -> None:
-        # ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
-        self.super_admin = GlobalState(Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM"), key="super_admin")
+        # RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ
+        self.super_admin = GlobalState(Address("RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ"), key="super_admin")
         self.admins = LocalState(arc4.Bool, key="admins")
 
     @arc4.abimethod(create="require")
     def initialize(self) -> None:
         """Called only on contract creation."""
         # Hardcoded super admin
-        self.super_admin.value = Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM")
+        self.super_admin.value = Address("RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ")
 
     @arc4.abimethod(allow_actions=["OptIn"])
     def opt_in(self) -> None:

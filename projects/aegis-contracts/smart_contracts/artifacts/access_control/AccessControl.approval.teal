@@ -4,14 +4,14 @@
 // algopy.arc4.ARC4Contract.approval_program() -> uint64:
 main:
     intcblock 1 0 32
-    bytecblock "admins" "super_admin" 0x80 base32(ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPA)
+    bytecblock "admins" "super_admin" 0x80 base32(RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET2Q)
     txn ApplicationID
     bnz main_after_if_else@2
     // smart_contracts/AccessControl/contract.py:7-8
-    // # ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
-    // self.super_admin = GlobalState(Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM"), key="super_admin")
+    // # RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ
+    // self.super_admin = GlobalState(Address("RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ"), key="super_admin")
     bytec_1 // "super_admin"
-    bytec_3 // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
+    bytec_3 // addr RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ
     app_global_put
 
 main_after_if_else@2:
@@ -45,9 +45,9 @@ main_create_NoOp@10:
 main_initialize_route@11:
     // smart_contracts/AccessControl/contract.py:14-15
     // # Hardcoded super admin
-    // self.super_admin.value = Address("ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM")
+    // self.super_admin.value = Address("RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ")
     bytec_1 // "super_admin"
-    bytec_3 // addr ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM
+    bytec_3 // addr RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ
     app_global_put
     // smart_contracts/AccessControl/contract.py:11
     // @arc4.abimethod(create="require")

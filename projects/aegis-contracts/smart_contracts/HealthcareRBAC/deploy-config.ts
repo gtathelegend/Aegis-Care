@@ -9,7 +9,7 @@ export async function deploy() {
 
   // Warn if not the hardcoded contract admin — on-chain admin-gated calls will
   // be skipped below if the deployer isn't the expected admin.
-  const FIXED_ADMIN = 'ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM'
+  const FIXED_ADMIN = 'RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ'
   const isFixedAdmin = deployer.addr.toString() === FIXED_ADMIN
   if (!isFixedAdmin) {
     console.warn(`[HealthcareRBAC] Deployer ${deployer.addr.toString()} is not the hardcoded admin ${FIXED_ADMIN}. Admin-only demo calls will be skipped.`)

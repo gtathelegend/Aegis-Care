@@ -9,7 +9,7 @@ export async function deploy() {
 
   // Warn if deployer is not the hardcoded on-chain admin. Deployment itself
   // does not require admin rights — admin is enforced inside the contract.
-  const FIXED_ADMIN = 'ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM'
+  const FIXED_ADMIN = 'RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ'
   if (deployer.addr.toString() !== FIXED_ADMIN) {
     console.warn(`[QueueManager] Deployer ${deployer.addr.toString()} is not the hardcoded admin ${FIXED_ADMIN}.`)
   }

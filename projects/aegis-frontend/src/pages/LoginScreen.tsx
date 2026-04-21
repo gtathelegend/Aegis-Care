@@ -8,7 +8,7 @@ import { WalletMapperClient } from '../contracts/WalletMapper'
 import { getAlgorandClientFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 import { useSnackbar } from 'notistack'
 
-const TARGET_WALLET = 'ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM'
+const TARGET_WALLET = 'RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ'
 
 const LoginScreen = () => {
   const { activeAddress, transactionSigner, wallets } = useWallet()

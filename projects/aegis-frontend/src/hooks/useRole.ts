@@ -16,7 +16,7 @@ const ROLE_BITS: Record<number, UserRole> = {
   32: 'auditor',
 }
 
-export const ADMIN_WALLET = 'ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM'
+export const ADMIN_WALLET = 'RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ'
 
 export const useRole = () => {
   const { activeAddress } = useWallet()

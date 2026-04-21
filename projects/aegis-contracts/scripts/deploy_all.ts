@@ -23,7 +23,7 @@ export async function deployAll() {
   const algorand = AlgorandClient.fromEnvironment()
   const deployer = await algorand.account.fromEnvironment('DEPLOYER')
 
-  const FIXED_ADMIN = 'ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM'
+  const FIXED_ADMIN = 'RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ'
   if (deployer.addr.toString() !== FIXED_ADMIN) {
     throw new Error(`CRITICAL: Deployment using incorrect wallet ${deployer.addr.toString()}.`)
   }

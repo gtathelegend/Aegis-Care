@@ -8,7 +8,7 @@ export async function deploy() {
   const deployer = await algorand.account.fromEnvironment('DEPLOYER')
 
   // Warn if deployer is not the hardcoded admin — not a hard requirement at deploy time.
-  const FIXED_ADMIN = 'ZB4FKAVJU6E3ANTCSPPA5PSSIA35XUUA4O2GASDKZVDLUNZ4DMPLYJMVKM'
+  const FIXED_ADMIN = 'RGXCDITOJF7HQR5KOVUXNQNEDBWTN4UQFHIEJZTZQLIN2CMNET22FZYJWQ'
   if (deployer.addr.toString() !== FIXED_ADMIN) {
     console.warn(`[WalletMapper] Deployer ${deployer.addr.toString()} is not the hardcoded admin ${FIXED_ADMIN}.`)
   }
