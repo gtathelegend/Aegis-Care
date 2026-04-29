@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useMemo } from 'react'
+import React, { ReactNode, useState, useMemo, useEffect } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import {
   ShieldCheck,
@@ -9,7 +9,9 @@ import {
   LayoutDashboard,
   FileText,
   Activity,
-  Users
+  Users,
+  Menu,
+  X
 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useRole } from '../hooks/useRole'
@@ -32,6 +34,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   
   const [registering, setRegistering] = useState(false)
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
+  useEffect(() => { setMobileSidebarOpen(false) }, [location.pathname])
 
   const algorand = useMemo(() => getAlgorandClientFromViteEnvironment(), [])
   const mapperAppId = Number(import.meta.env.VITE_WALLET_MAPPER_APP_ID || 0)
@@ -159,96 +164,131 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     return items
   }, [role])
 
+  const SidebarContent = () => (
+    <>
+      {/* Branding */}
+      <div className="h-20 flex items-center px-6 border-b border-[#dce3de] bg-[#f4f6f4]">
+        <AegisLogo showText={true} size="md" />
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {navItems.map(item => (
+          <Link
+            key={item.name}
+            to={item.path}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+              location.pathname.startsWith(item.path)
+                ? 'bg-[#eaf0e6] text-[#2d463d] shadow-sm'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <item.icon size={18} className={location.pathname.startsWith(item.path) ? 'text-[#2d463d]' : 'text-gray-400'} />
+            {item.name}
+          </Link>
+        ))}
+
+        {role !== 'patient' && role !== 'unknown' && location.pathname.startsWith(`/${role}`) && (
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <div className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Workspace</div>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gray-900 text-white shadow-md">
+              <LayoutDashboard size={18} className="opacity-75" />
+              <span className="capitalize">{role} Portal</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Lower Info */}
+      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">State Configured</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-gray-900 uppercase">TestNet</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+
   return (
     <div className="min-h-screen bg-[#f4f6f4] flex">
-      <aside className="w-64 bg-[#fcfcfc] border-r border-[#dce3de] flex flex-col flex-shrink-0 relative z-10 hidden lg:flex shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
 
-        {/* Branding */}
-        <div className="h-20 flex items-center px-6 border-b border-[#dce3de] bg-[#f4f6f4]">
-          <AegisLogo showText={true} size="md" />
+      {/* Mobile sidebar overlay */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-[#fcfcfc] border-r border-[#dce3de] flex flex-col shadow-2xl z-50">
+            <button
+              onClick={() => setMobileSidebarOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 text-gray-400 z-10"
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
+            <SidebarContent />
+          </aside>
         </div>
+      )}
 
-        {/* Navigation */}
-        <div className="flex-1 p-4 space-y-1 overflow-y-auto">
-           {navItems.map(item => (
-              <Link 
-                key={item.name}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                  location.pathname.startsWith(item.path) 
-                    ? 'bg-[#eaf0e6] text-[#2d463d] shadow-sm' 
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                <item.icon size={18} className={location.pathname.startsWith(item.path) ? 'text-[#2d463d]' : 'text-gray-400'} />
-                {item.name}
-              </Link>
-           ))}
-
-           {/* If user has a specific role dashboard currently active, show it up */}
-           {role !== 'patient' && role !== 'unknown' && location.pathname.startsWith(`/${role}`) && (
-              <div className="pt-4 mt-4 border-t border-gray-100">
-                <div className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Workspace</div>
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gray-900 text-white shadow-md">
-                   <LayoutDashboard size={18} className="opacity-75" />
-                   <span className="capitalize">{role} Portal</span>
-                </div>
-              </div>
-           )}
-        </div>
-
-        {/* Lower Info */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-           <div className="flex items-center justify-between mb-4">
-              <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">State Configured</span>
-                  <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-[10px] font-bold text-gray-900 uppercase">TestNet</span>
-                  </div>
-              </div>
-           </div>
-        </div>
+      {/* Desktop sidebar */}
+      <aside className="w-64 bg-[#fcfcfc] border-r border-[#dce3de] flex-col flex-shrink-0 relative z-10 hidden lg:flex shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <SidebarContent />
       </aside>
 
       {/* Main Column */}
       <div className="flex-1 flex flex-col min-w-0 h-screen">
-        
-        {/* 2. Top Navbar */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 flex items-center justify-between sticky top-0 z-50">
-          
-          {/* Left: Mobile Title or Breadcrumb */}
-          <div className="flex-1 flex items-center">
-            <h2 className="text-lg font-bold text-gray-900 tracking-tight">{getPageTitle()}</h2>
+
+        {/* Top Navbar */}
+        <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-40">
+
+          {/* Left: Hamburger (mobile) + Title */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500 flex-shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+            <h2 className="text-base lg:text-lg font-bold text-gray-900 tracking-tight truncate">{getPageTitle()}</h2>
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center justify-end gap-5">
-            
-            {/* ShortID Badge / Generate Button */}
-            {loading ? (
-              <div className="h-9 w-32 bg-gray-100 animate-pulse rounded-full" />
-            ) : shortId ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#eaf0e6] border border-[#dce3de] rounded-lg animate-fade-in shadow-inner">
-                <Fingerprint size={14} className="text-[#5c7a6e]" />
-                <span className="text-xs font-bold text-[#1f332c] font-mono tracking-wider">{shortId}</span>
-                <span className="text-[10px] font-black text-[#7ca390] uppercase ml-1 border-l border-[#bdc4be] pl-2">Verified</span>
-              </div>
-            ) : (
-              <button 
-                onClick={handleGenerateShortId}
-                disabled={registering}
-                className="bg-gradient-to-r from-[#2d463d] to-[#5c7a6e] hover:from-[#1f332c] hover:to-[#4e6b5f] text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg shadow-[#5c7a6e]/20 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
-              >
-                {registering ? <Loader2 size={14} className="animate-spin" /> : <Fingerprint size={14} />}
-                {registering ? 'Generating...' : 'Generate Short ID'}
-              </button>
-            )}
+          <div className="flex items-center gap-2 lg:gap-5 flex-shrink-0">
+
+            {/* ShortID Badge / Generate Button — hidden on very small screens */}
+            <div className="hidden sm:flex">
+              {loading ? (
+                <div className="h-9 w-28 bg-gray-100 animate-pulse rounded-full" />
+              ) : shortId ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-[#eaf0e6] border border-[#dce3de] rounded-lg animate-fade-in shadow-inner">
+                  <Fingerprint size={14} className="text-[#5c7a6e]" />
+                  <span className="text-xs font-bold text-[#1f332c] font-mono tracking-wider">{shortId}</span>
+                  <span className="hidden md:inline text-[10px] font-black text-[#7ca390] uppercase ml-1 border-l border-[#bdc4be] pl-2">Verified</span>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGenerateShortId}
+                  disabled={registering}
+                  className="bg-gradient-to-r from-[#2d463d] to-[#5c7a6e] hover:from-[#1f332c] hover:to-[#4e6b5f] text-white px-3 py-2 rounded-full text-xs font-bold shadow-lg shadow-[#5c7a6e]/20 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {registering ? <Loader2 size={14} className="animate-spin" /> : <Fingerprint size={14} />}
+                  <span className="hidden md:inline">{registering ? 'Generating...' : 'Generate ID'}</span>
+                </button>
+              )}
+            </div>
 
             {/* Role Switcher Dropdown (if multi-role) */}
             {roles.length > 1 && (
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setShowRoleDropdown(!showRoleDropdown)}
                   className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
                   title="Switch Portal"
@@ -275,8 +315,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left ${location.pathname.includes(r) ? 'text-[#2d463d] font-bold bg-[#eaf0e6]' : 'text-gray-600 font-medium'}`}
                         >
-                           <div className={`w-2 h-2 rounded-full ${location.pathname.includes(r) ? 'bg-[#2d463d]' : 'bg-transparent'}`} />
-                           <span className="capitalize text-sm">{r === 'patient' ? 'Patient Portal' : `${r} Dashboard`}</span>
+                          <div className={`w-2 h-2 rounded-full ${location.pathname.includes(r) ? 'bg-[#2d463d]' : 'bg-transparent'}`} />
+                          <span className="capitalize text-sm">{r === 'patient' ? 'Patient Portal' : `${r} Dashboard`}</span>
                         </button>
                       ))}
                     </div>
@@ -285,29 +325,31 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               </div>
             )}
 
-            {/* Wallet Info / Proxy Status */}
-            {isProxyActive ? (
-              <div className="flex items-center gap-3 px-3 py-1.5 bg-[#eaf0e6] border border-[#dce3de] rounded-xl shadow-sm">
-                 <div className="flex flex-col">
-                   <span className="text-[10px] font-black text-[#5c7a6e] tracking-widest uppercase">Read-Only Proxy</span>
-                   <span className="text-xs font-bold text-[#1f332c]">For: {proxyShortId}</span>
-                 </div>
-                 <button 
-                   onClick={() => { disableProxy(); navigate('/') }}
-                   className="ml-2 px-2 py-1 bg-white hover:bg-white/80 text-[#2d463d] border border-[#dce3de] text-[10px] font-bold rounded-lg transition-colors"
-                 >
-                   Exit
-                 </button>
-              </div>
-            ) : (
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
-                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                   <span className="font-mono text-xs font-bold text-gray-700">{activeAddress?.slice(0,6)}...{activeAddress?.slice(-4)}</span>
+            {/* Wallet Info / Proxy Status — hidden on small screens */}
+            <div className="hidden md:flex">
+              {isProxyActive ? (
+                <div className="flex items-center gap-3 px-3 py-1.5 bg-[#eaf0e6] border border-[#dce3de] rounded-xl shadow-sm">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-[#5c7a6e] tracking-widest uppercase">Read-Only Proxy</span>
+                    <span className="text-xs font-bold text-[#1f332c]">For: {proxyShortId}</span>
+                  </div>
+                  <button
+                    onClick={() => { disableProxy(); navigate('/') }}
+                    className="ml-2 px-2 py-1 bg-white hover:bg-white/80 text-[#2d463d] border border-[#dce3de] text-[10px] font-bold rounded-lg transition-colors"
+                  >
+                    Exit
+                  </button>
                 </div>
-            )}
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-mono text-xs font-bold text-gray-700">{activeAddress?.slice(0,6)}...{activeAddress?.slice(-4)}</span>
+                </div>
+              )}
+            </div>
 
             {/* Disconnect */}
-            <button 
+            <button
               onClick={handleDisconnect}
               className="p-2 bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all shadow-sm"
               title="Log Out"
@@ -318,8 +360,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </div>
         </header>
 
-        {/* 3. Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-8 bg-gray-50/50 relative">
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-gray-50/50 relative">
           <div className="max-w-6xl mx-auto w-full animate-fade-in-scale">
             {children}
           </div>

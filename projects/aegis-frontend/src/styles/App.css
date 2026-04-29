@@ -149,26 +149,54 @@
   z-index: 10;
 }
 
+/* Hide sidebar below lg (1024px) — hamburger in DashboardShell handles mobile nav */
+@media (max-width: 1023px) {
+  .layout-sidebar {
+    display: none;
+  }
+}
+
 .layout-main-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
 
 .layout-navbar {
   height: 70px;
-  background: var(--bg-main); /* Merges slightly into the content area visually */
+  background: var(--bg-main);
   border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
   z-index: 5;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .layout-navbar {
+    height: 60px;
+    padding: 0 1rem;
+  }
 }
 
 .layout-content-scroll {
   flex: 1;
   overflow-y: auto;
   padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .layout-content-scroll {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .layout-content-scroll {
+    padding: 0.875rem;
+  }
 }
